@@ -50,5 +50,3 @@ public class IonController {
         throw new RuntimeException("Ион с id " + id + " не найден");
     }
 }
-
-

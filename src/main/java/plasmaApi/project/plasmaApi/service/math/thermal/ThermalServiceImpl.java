@@ -27,4 +27,3 @@ public class ThermalServiceImpl implements ThermalService {
         return temps;
     }
 }
-

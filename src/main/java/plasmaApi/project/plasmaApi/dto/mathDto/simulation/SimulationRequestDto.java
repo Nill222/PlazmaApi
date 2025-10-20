@@ -7,7 +7,7 @@ public record SimulationRequestDto(
         Integer ionId,
         Integer atomListId,
         boolean generateLattice,
-        LatticeGenerationRequest latticeRequest, // твой DTO
+        LatticeGenerationRequest latticeRequest,
         double plasmaVoltage,
         double pressure,
         double electronTemp,

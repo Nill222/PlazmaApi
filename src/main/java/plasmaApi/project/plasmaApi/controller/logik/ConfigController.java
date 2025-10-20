@@ -58,4 +58,3 @@ public class ConfigController {
         throw new RuntimeException("Конфиг с id " + id + " не найден");
     }
 }
-
