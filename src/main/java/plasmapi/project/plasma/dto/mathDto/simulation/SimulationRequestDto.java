@@ -1,0 +1,21 @@
+package plasmapi.project.plasma.dto.mathDto.simulation;
+
+import plasmapi.project.plasma.dto.mathDto.lattice.LatticeGenerationRequest;
+
+public record SimulationRequestDto(
+        Integer configId,
+        Integer ionId,
+        Integer atomListId,
+        boolean generateLattice,
+        LatticeGenerationRequest latticeRequest,
+        double plasmaVoltage,
+        double pressure,
+        double electronTemp,
+        double timeStep,
+        double totalTime,
+        double impactAngle,
+        double diffusionPrefactor, // D0
+        double activationEnergy,   // Q (J)
+        double surfaceConcentration,
+        double depth
+) {}
