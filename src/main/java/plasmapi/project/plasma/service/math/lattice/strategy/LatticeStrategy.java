@@ -1,4 +1,4 @@
-package plasmapi.project.plasma.service.math.Lattice;
+package plasmapi.project.plasma.service.math.lattice.strategy;
 
 import plasmapi.project.plasma.dto.mathDto.lattice.AtomPosition;
 

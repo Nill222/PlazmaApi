@@ -14,7 +14,7 @@ import plasmapi.project.plasma.model.res.Config;
 import plasmapi.project.plasma.model.res.Ion;
 import plasmapi.project.plasma.model.res.Result;
 import plasmapi.project.plasma.repository.*;
-import plasmapi.project.plasma.service.math.Lattice.LatticeService;
+import plasmapi.project.plasma.service.math.lattice.LatticeService;
 import plasmapi.project.plasma.service.math.collision.CollisionService;
 import plasmapi.project.plasma.service.math.diffusion.DiffusionService;
 import plasmapi.project.plasma.service.math.plazma.PlasmaService;

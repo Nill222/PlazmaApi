@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import plasmapi.project.plasma.dto.ApiResponse;
 import plasmapi.project.plasma.dto.mathDto.lattice.AtomDto;
 import plasmapi.project.plasma.dto.mathDto.lattice.LatticeGenerationRequest;
-import plasmapi.project.plasma.service.math.Lattice.LatticeService;
+import plasmapi.project.plasma.service.math.lattice.LatticeService;
 
 
 import java.util.List;

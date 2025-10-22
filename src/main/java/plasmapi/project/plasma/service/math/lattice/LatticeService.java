@@ -1,4 +1,4 @@
-package plasmapi.project.plasma.service.math.Lattice;
+package plasmapi.project.plasma.service.math.lattice;
 
 import plasmapi.project.plasma.dto.mathDto.lattice.AtomDto;
 import plasmapi.project.plasma.dto.mathDto.lattice.LatticeGenerationRequest;

@@ -1,4 +1,4 @@
-package plasmapi.project.plasma.service.math.Lattice;
+package plasmapi.project.plasma.service.math.lattice;
 
 import org.springframework.stereotype.Service;
 import plasmapi.project.plasma.dto.mathDto.lattice.AtomDto;
@@ -11,6 +11,7 @@ import plasmapi.project.plasma.model.res.Config;
 import plasmapi.project.plasma.repository.AtomListRepository;
 import plasmapi.project.plasma.repository.AtomRepository;
 import plasmapi.project.plasma.repository.ConfigRepository;
+import plasmapi.project.plasma.service.math.lattice.strategy.LatticeStrategy;
 
 import java.util.List;
 import java.util.Map;
