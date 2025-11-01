@@ -1,18 +1,19 @@
 package plasmapi.project.plasma.controller.logik;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import plasmapi.project.plasma.dto.ApiResponse;
-import plasmapi.project.plasma.dto.logikDTO.AtomDTO;
-import plasmapi.project.plasma.mapper.Mapper;
-import plasmapi.project.plasma.model.atom.Atom;
+import plasmapi.project.plasma.dto.logikDTO.atom.AtomDTO;
+import plasmapi.project.plasma.dto.logikDTO.atom.AtomListDTO;
+import plasmapi.project.plasma.dto.logikDTO.atom.CreateAtomListDto;
+import plasmapi.project.plasma.mapper.atom.AtomListReadMapper;
 import plasmapi.project.plasma.model.atom.AtomList;
 import plasmapi.project.plasma.service.logik.AtomService;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/atoms")
@@ -20,49 +21,46 @@ import java.util.Optional;
 public class AtomController {
 
     private final AtomService atomService;
-    private final Mapper atomMapper;
+    private final AtomListReadMapper atomListReadMapper;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<List<AtomDTO>>> getAllAtoms() {
-        List<AtomDTO> dtos = atomService.findAll().stream()
-                .map(atomMapper::toDTO)
+    public ResponseEntity<ApiResponse<List<AtomListDTO>>> getAllAtoms() {
+        List<AtomListDTO> dtos = atomService.findAll().stream()
+                .map(atomListReadMapper::map)
                 .toList();
         return ResponseEntity.ok(new ApiResponse<>(dtos, "Все атомы получены", HttpStatus.OK.value()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<AtomDTO>> getAtomById(@PathVariable Integer id) {
-        Atom atom = atomService.findById(id)
+    public ResponseEntity<ApiResponse<AtomListDTO>> getAtomById(@PathVariable Integer id) {
+        AtomList atom = atomService.findById(id)
                 .orElseThrow(() -> new RuntimeException("Атом с id " + id + " не найден"));
-        return ResponseEntity.ok(new ApiResponse<>(atomMapper.toDTO(atom), "Атом найден", HttpStatus.OK.value()));
+        return ResponseEntity.ok(new ApiResponse<>(atomListReadMapper.map(atom), "Атом найден", HttpStatus.OK.value()));
     }
 
     @GetMapping("/config/{configId}")
     public ResponseEntity<ApiResponse<List<AtomDTO>>> getAtomsByConfig(@PathVariable Integer configId) {
-        List<AtomDTO> dtos = atomService.getAtomsByConfig(configId).stream()
-                .map(atomMapper::toDTO)
-                .toList();
-        return ResponseEntity.ok(new ApiResponse<>(dtos, "Атомы для конфига получены", HttpStatus.OK.value()));
+        List<AtomDTO> dtos = atomService.getAtomsByConfig(configId); // сервис возвращает DTO
+        return ResponseEntity.ok(
+                new ApiResponse<>(dtos, "Атомы для конфига получены", HttpStatus.OK.value())
+        );
+    }
+
+    @PostMapping
+    public ResponseEntity<ApiResponse<AtomListDTO>> createAtom(@Valid @RequestBody CreateAtomListDto atom) {
+        AtomList created = atomService.create(atom)
+                .orElseThrow(() -> new RuntimeException("Не удалось создать атом"));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(new ApiResponse<>(atomListReadMapper.map(created), "Атом создан", HttpStatus.CREATED.value()));
     }
 
     @GetMapping("/{symbol}")
-    public ResponseEntity<ApiResponse<AtomList>> getAtom(@PathVariable String symbol) {
-        Optional<AtomList> atomOpt = atomService.getAtomProperties(symbol);
-
-        if (atomOpt.isPresent()) {
-            ApiResponse<AtomList> response = new ApiResponse<>(
-                    atomOpt.get(),
-                    "Атом найден",
-                    HttpStatus.OK.value()
-            );
-            return ResponseEntity.ok(response);
-        } else {
-            ApiResponse<AtomList> response = new ApiResponse<>(
-                    null,
-                    "Атом с именем " + symbol + " не найден",
-                    HttpStatus.NOT_FOUND.value()
-            );
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
-        }
+    public ResponseEntity<ApiResponse<AtomListDTO>> getAtom(@PathVariable String symbol) {
+        return atomService.getAtomProperties(symbol)
+                .map(dto -> ResponseEntity.ok(new ApiResponse<>(dto, "Атом найден",
+                        HttpStatus.OK.value())))
+                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(new ApiResponse<>(null,
+                                "Атом с именем " + symbol + " не найден", HttpStatus.NOT_FOUND.value())));
     }
 }

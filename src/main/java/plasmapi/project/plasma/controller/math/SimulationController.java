@@ -1,5 +1,6 @@
 package plasmapi.project.plasma.controller.math;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +24,7 @@ public class SimulationController {
      */
     @PostMapping("/run")
     public ResponseEntity<ApiResponse<SimulationResultDto>> runSimulation(
-            @RequestBody SimulationRequestDto request) {
+            @Valid @RequestBody SimulationRequestDto request) {
 
         SimulationResultDto result = simulationService.runSimulation(request);
         ApiResponse<SimulationResultDto> resp = new ApiResponse<>(

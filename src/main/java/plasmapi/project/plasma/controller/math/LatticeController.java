@@ -1,5 +1,6 @@
 package plasmapi.project.plasma.controller.math;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +25,7 @@ public class LatticeController {
      * Возвращает список созданных AtomDto.
      */
     @PostMapping("/generate")
-    public ResponseEntity<ApiResponse<List<AtomDto>>> generate(@RequestBody LatticeGenerationRequest request) {
+    public ResponseEntity<ApiResponse<List<AtomDto>>> generate(@Valid @RequestBody LatticeGenerationRequest request) {
         List<AtomDto> atoms = latticeService.generateLattice(request);
         ApiResponse<List<AtomDto>> resp = new ApiResponse<>(
                 atoms,

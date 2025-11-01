@@ -1,6 +1,7 @@
 package plasmapi.project.plasma.service.logik;
 
+import plasmapi.project.plasma.dto.logikDTO.ion.CreateIonDTO;
 import plasmapi.project.plasma.model.res.Ion;
 
-public interface IonService extends MotherService<Ion, Integer>{
+public interface IonService extends MotherService<Ion, Integer, CreateIonDTO>{
 }

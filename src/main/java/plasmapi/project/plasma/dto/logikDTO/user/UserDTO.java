@@ -1,4 +1,4 @@
-package plasmapi.project.plasma.dto.logikDTO;
+package plasmapi.project.plasma.dto.logikDTO.user;
 
 import plasmapi.project.plasma.model.security.Role;
 

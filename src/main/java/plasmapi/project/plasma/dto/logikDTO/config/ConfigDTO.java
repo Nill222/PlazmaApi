@@ -1,4 +1,6 @@
-package plasmapi.project.plasma.dto.logikDTO;
+package plasmapi.project.plasma.dto.logikDTO.config;
+
+import plasmapi.project.plasma.dto.logikDTO.user.UserDTO;
 
 import java.time.LocalDateTime;
 

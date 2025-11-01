@@ -21,8 +21,7 @@ public class ConfigReadMapper implements BaseMapper<ConfigDTO, Config> {
         );
     }
 
-    private
-    UserDTO mapUser(User user) {
+    private UserDTO mapUser(User user) {
         if (user == null) return null;
         return new UserDTO(
                 user.getId(),

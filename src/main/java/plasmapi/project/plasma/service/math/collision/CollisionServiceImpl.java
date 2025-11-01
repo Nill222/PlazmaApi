@@ -1,6 +1,7 @@
 package plasmapi.project.plasma.service.math.collision;
 
 import org.springframework.stereotype.Service;
+import plasmapi.project.plasma.dto.mathDto.collision.CollisionDto;
 import plasmapi.project.plasma.dto.mathDto.collision.CollisionResult;
 
 import java.util.Random;
@@ -19,11 +20,11 @@ public class CollisionServiceImpl implements CollisionService {
      *  angle угол падения (градусы)
      *  объект CollisionResult
      */
-    public CollisionResult simulateCollision(double E, double mIon, double mAtom, double angle) {
-        double theta = Math.toRadians(angle);
-        double k = (4 * mIon * mAtom) / Math.pow(mIon + mAtom, 2);
+    public CollisionResult simulateCollision(CollisionDto collisionDto) {
+        double theta = Math.toRadians(collisionDto.angle());
+        double k = (4 * collisionDto.mIon() * collisionDto.mAtom()) / Math.pow(collisionDto.mIon() + collisionDto.mAtom(), 2);
 
-        double Etr = E * k * Math.cos(theta) * Math.cos(theta); // переданная энергия
+        double Etr = collisionDto.E() * k * Math.cos(theta) * Math.cos(theta); // переданная энергия
         double reflection = 1.0 - k; // доля отражённой энергии
         double randomScattering = (random.nextDouble() - 0.5) * 0.1; // шум
 

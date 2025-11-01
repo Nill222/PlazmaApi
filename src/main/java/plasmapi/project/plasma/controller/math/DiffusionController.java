@@ -1,5 +1,6 @@
 package plasmapi.project.plasma.controller.math;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +22,7 @@ public class DiffusionController {
      * Рассчитать профиль диффузии (уравнение Фика)
      */
     @PostMapping("/calculate")
-    public ResponseEntity<ApiResponse<DiffusionProfileDto>> calculate(@RequestBody DiffusionRequest dto) {
+    public ResponseEntity<ApiResponse<DiffusionProfileDto>> calculate(@Valid @RequestBody DiffusionRequest dto) {
         DiffusionProfileDto profile = diffusionService.calculateDiffusionProfile(dto);
         ApiResponse<DiffusionProfileDto> resp = new ApiResponse<>(
                 profile,

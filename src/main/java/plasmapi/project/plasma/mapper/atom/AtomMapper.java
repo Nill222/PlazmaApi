@@ -1,4 +1,4 @@
-package plasmapi.project.plasma.mapper;
+package plasmapi.project.plasma.mapper.atom;
 
 import org.springframework.stereotype.Component;
 import plasmapi.project.plasma.dto.mathDto.lattice.AtomDto;

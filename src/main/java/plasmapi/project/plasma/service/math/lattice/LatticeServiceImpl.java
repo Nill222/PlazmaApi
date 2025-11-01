@@ -4,7 +4,7 @@ import org.springframework.stereotype.Service;
 import plasmapi.project.plasma.dto.mathDto.lattice.AtomDto;
 import plasmapi.project.plasma.dto.mathDto.lattice.AtomPosition;
 import plasmapi.project.plasma.dto.mathDto.lattice.LatticeGenerationRequest;
-import plasmapi.project.plasma.mapper.AtomMapper;
+import plasmapi.project.plasma.mapper.atom.AtomMapper;
 import plasmapi.project.plasma.model.atom.Atom;
 import plasmapi.project.plasma.model.atom.AtomList;
 import plasmapi.project.plasma.model.res.Config;

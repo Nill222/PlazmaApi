@@ -1,11 +1,13 @@
 package plasmapi.project.plasma.controller.math;
 
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import plasmapi.project.plasma.dto.ApiResponse;
+import plasmapi.project.plasma.dto.mathDto.plasma.PlasmaDto;
 import plasmapi.project.plasma.dto.mathDto.plasma.PlasmaParameters;
 import plasmapi.project.plasma.service.math.plazma.PlasmaService;
 
@@ -22,11 +24,9 @@ public class PlasmaController {
      */
     @GetMapping("/calculate")
     public ResponseEntity<ApiResponse<PlasmaParameters>> calculate(
-            @RequestParam double voltage,
-            @RequestParam double pressure,
-            @RequestParam double temperature) {
+            @Valid @RequestBody PlasmaDto plasmaDto) {
 
-        PlasmaParameters params = plasmaService.calculate(voltage, pressure, temperature);
+        PlasmaParameters params = plasmaService.calculate(plasmaDto);
         ApiResponse<PlasmaParameters> resp = new ApiResponse<>(
                 params,
                 "Параметры плазмы рассчитаны",

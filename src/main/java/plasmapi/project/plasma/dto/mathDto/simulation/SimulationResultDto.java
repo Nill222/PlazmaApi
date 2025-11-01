@@ -14,5 +14,6 @@ public record SimulationResultDto(
         double diffusionCoefficient,
         PlasmaParameters plasmaParameters,
         List<Double> perAtomTransferredEnergies,
-        DiffusionProfileDto diffusionProfile
+        DiffusionProfileDto diffusionProfile,
+        List<Double> coolingProfile
 ) {}

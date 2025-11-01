@@ -1,4 +1,4 @@
-package plasmapi.project.plasma.dto.logikDTO;
+package plasmapi.project.plasma.dto.logikDTO.ion;
 
 public record IonDTO(
         Integer id,

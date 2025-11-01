@@ -1,13 +1,15 @@
 package plasmapi.project.plasma.controller.logik;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import plasmapi.project.plasma.controller.handler.exception.NotFoundException;
 import plasmapi.project.plasma.dto.ApiResponse;
-import plasmapi.project.plasma.dto.logikDTO.UserDTO;
-import plasmapi.project.plasma.mapper.Mapper;
+import plasmapi.project.plasma.dto.logikDTO.user.UserCreateDto;
+import plasmapi.project.plasma.dto.logikDTO.user.UserDTO;
+import plasmapi.project.plasma.mapper.user.UserReadMapper;
 import plasmapi.project.plasma.model.security.User;
 import plasmapi.project.plasma.service.logik.UserService;
 
@@ -19,12 +21,12 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
-    private final Mapper userMapper;
+    private final UserReadMapper userMapper;
 
     @GetMapping
     public ResponseEntity<ApiResponse<List<UserDTO>>> getAllUsers() {
         List<UserDTO> dtos = userService.findAll().stream()
-                .map(userMapper::toDTO)
+                .map(userMapper::map)
                 .toList();
         return ResponseEntity.ok(new ApiResponse<>(dtos, "Все пользователи получены", HttpStatus.OK.value()));
     }
@@ -33,21 +35,21 @@ public class UserController {
     public ResponseEntity<ApiResponse<UserDTO>> getUserById(@PathVariable Integer id) {
         User user = userService.findById(id)
                 .orElseThrow(() -> new RuntimeException("Пользователь с id " + id + " не найден"));
-        return ResponseEntity.ok(new ApiResponse<>(userMapper.toDTO(user), "Пользователь найден", HttpStatus.OK.value()));
+        return ResponseEntity.ok(new ApiResponse<>(userMapper.map(user), "Пользователь найден", HttpStatus.OK.value()));
     }
 
     @GetMapping("/username/{username}")
     public ResponseEntity<ApiResponse<UserDTO>> getUserByUsername(@PathVariable String username) {
         User user = userService.findByUsername(username).orElseThrow(() -> new NotFoundException("пользователь с таким именем: " + username + "не найден"));
-        return ResponseEntity.ok(new ApiResponse<>(userMapper.toDTO(user), "Пользователь найден", HttpStatus.OK.value()));
+        return ResponseEntity.ok(new ApiResponse<>(userMapper.map(user), "Пользователь найден", HttpStatus.OK.value()));
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<UserDTO>> createUser(@RequestBody User user) {
+    public ResponseEntity<ApiResponse<UserDTO>> createUser(@Valid @RequestBody UserCreateDto user) {
         User created = userService.create(user)
                 .orElseThrow(() -> new RuntimeException("Не удалось создать пользователя"));
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(new ApiResponse<>(userMapper.toDTO(created), "Пользователь создан", HttpStatus.CREATED.value()));
+                .body(new ApiResponse<>(userMapper.map(created), "Пользователь создан", HttpStatus.CREATED.value()));
     }
 
     @DeleteMapping("/{id}")

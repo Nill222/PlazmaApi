@@ -1,4 +1,4 @@
-package plasmapi.project.plasma.dto.logikDTO;
+package plasmapi.project.plasma.dto.logikDTO.atom;
 
 public record AtomListDTO(
         Integer id,

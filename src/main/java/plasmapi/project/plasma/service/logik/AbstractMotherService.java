@@ -3,15 +3,17 @@ package plasmapi.project.plasma.service.logik;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.transaction.annotation.Transactional;
+import plasmapi.project.plasma.mapper.BaseMapper;
 
 import java.util.List;
 import java.util.Optional;
 
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public abstract class AbstractMotherService<T, F> implements MotherService<T, F> {
+public abstract class AbstractMotherService<T, F, D> implements MotherService<T, F, D> {
 
     protected final JpaRepository<T, F> repository;
+    protected final BaseMapper<T, D> mapper;
 
     @Override
     public List<T> findAll() {
@@ -37,7 +39,8 @@ public abstract class AbstractMotherService<T, F> implements MotherService<T, F>
 
     @Transactional
     @Override
-    public Optional<T> create(T entity) {
+    public Optional<T> create(D dto) {
+        T entity = mapper.map(dto);
         return Optional.of(repository.saveAndFlush(entity));
     }
 }
