@@ -28,4 +28,22 @@ public class GlobalExceptionHandler {
         ApiResponse<Object> response = new ApiResponse<>(null, ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value());
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
     }
+
+    @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse<Object>> handleValidationException(
+            org.springframework.web.bind.MethodArgumentNotValidException ex) {
+
+        var errors = ex.getBindingResult().getFieldErrors().stream()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .toList();
+
+        ApiResponse<Object> response = new ApiResponse<>(
+                errors,
+                "Ошибка валидации",
+                HttpStatus.BAD_REQUEST.value()
+        );
+
+        return ResponseEntity.badRequest().body(response);
+    }
+
 }

@@ -48,6 +48,7 @@ public class AtomController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<AtomListDTO>> createAtom(@Valid @RequestBody CreateAtomListDto atom) {
+
         AtomList created = atomService.create(atom)
                 .orElseThrow(() -> new RuntimeException("Не удалось создать атом"));
         return ResponseEntity.status(HttpStatus.CREATED)
