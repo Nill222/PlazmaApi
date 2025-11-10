@@ -55,7 +55,7 @@ public class AtomController {
                 .body(new ApiResponse<>(atomListReadMapper.map(created), "Атом создан", HttpStatus.CREATED.value()));
     }
 
-    @GetMapping("/{symbol}")
+    @GetMapping("/symbol/{symbol}")
     public ResponseEntity<ApiResponse<AtomListDTO>> getAtom(@PathVariable String symbol) {
         return atomService.getAtomProperties(symbol)
                 .map(dto -> ResponseEntity.ok(new ApiResponse<>(dto, "Атом найден",

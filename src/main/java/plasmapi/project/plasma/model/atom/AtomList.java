@@ -23,6 +23,7 @@ public class AtomList {
     @Column(name = "full_name", length = 50)
     private String fullName;
 
+    @Column(name = "u")
     private Double mass; // масса атома (кг)
     private Double a; // параметр решетки (Å)
 
