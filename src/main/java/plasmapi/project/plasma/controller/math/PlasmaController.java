@@ -22,7 +22,7 @@ public class PlasmaController {
     /**
      * Рассчитать параметры плазмы (плотность электронов, скорость и т.д.)
      */
-    @GetMapping("/calculate")
+    @PostMapping("/calculate")
     public ResponseEntity<ApiResponse<PlasmaParameters>> calculate(
             @Valid @RequestBody PlasmaDto plasmaDto) {
 

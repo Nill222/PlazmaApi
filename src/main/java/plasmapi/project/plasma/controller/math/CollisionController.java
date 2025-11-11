@@ -25,7 +25,7 @@ public class CollisionController {
      * Смоделировать одно столкновение.
      * Принимает параметры через query-параметры.
      */
-    @GetMapping("/simulate")
+    @PostMapping("/simulate")
     public ResponseEntity<ApiResponse<CollisionResult>> simulate(@Valid @RequestBody CollisionDto collisionDto) {
 
         CollisionResult result = collisionService.simulateCollision(collisionDto);

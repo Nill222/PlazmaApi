@@ -14,5 +14,5 @@ public interface AtomService extends MotherService<AtomList, Integer, CreateAtom
 
     List<AtomListDTO> getAvailableAtoms();
 
-    Optional<AtomListDTO> getAtomProperties(String symbol);
+    List<AtomListDTO> getAtomProperties(String symbol);
 }

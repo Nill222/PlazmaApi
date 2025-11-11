@@ -52,8 +52,13 @@ public class AtomServiceImpl extends AbstractMotherService<AtomList, Integer, Cr
     }
 
     @Override
-    public Optional<AtomListDTO> getAtomProperties(String symbol) {
-        return atomListRepository.findByAtomName(symbol)
-                .map(atomReadMapper::map);
+    public List<AtomListDTO> getAtomProperties(String symbol) {
+        List<AtomList> atom = atomListRepository.findByAtomSymbol("%" + symbol + "%");
+        if(atom.isEmpty()){
+            throw new NotFoundException("Атомы, содержащие символ '" + symbol + "', не найдены");
+        }
+        return atom.stream()
+                .map(atomReadMapper::map)
+                .toList();
     }
 }

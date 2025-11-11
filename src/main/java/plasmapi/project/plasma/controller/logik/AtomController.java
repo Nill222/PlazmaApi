@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import plasmapi.project.plasma.controller.handler.exception.NotFoundException;
 import plasmapi.project.plasma.dto.ApiResponse;
 import plasmapi.project.plasma.dto.logikDTO.atom.AtomDTO;
 import plasmapi.project.plasma.dto.logikDTO.atom.AtomListDTO;
@@ -56,12 +57,17 @@ public class AtomController {
     }
 
     @GetMapping("/symbol/{symbol}")
-    public ResponseEntity<ApiResponse<AtomListDTO>> getAtom(@PathVariable String symbol) {
-        return atomService.getAtomProperties(symbol)
-                .map(dto -> ResponseEntity.ok(new ApiResponse<>(dto, "Атом найден",
-                        HttpStatus.OK.value())))
-                .orElseGet(() -> ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(new ApiResponse<>(null,
-                                "Атом с именем " + symbol + " не найден", HttpStatus.NOT_FOUND.value())));
+    public ResponseEntity<ApiResponse<List<AtomListDTO>>> getAtom(@PathVariable String symbol) {
+        try {
+            List<AtomListDTO> atoms = atomService.getAtomProperties(symbol);
+            return ResponseEntity.ok(
+                    new ApiResponse<>(atoms,
+                            "Найдено " + atoms.size() + " атом(ов), содержащих символ '" + symbol + "'",
+                            HttpStatus.OK.value())
+            );
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(new ApiResponse<>(null, e.getMessage(), HttpStatus.NOT_FOUND.value()));
+        }
     }
 }
