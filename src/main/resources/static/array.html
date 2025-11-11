@@ -6,6 +6,17 @@
     <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
+
+<header class="top-menu">
+    <nav>
+        <a href="index.html" class="nav-btn">Главная</a>
+        <a href="array.html" class="nav-btn">Данные массива</a>
+        <a href="chain.html" class="nav-btn active">Данные цепочки</a>
+        <a href="potential.html" class="nav-btn">Выбор потенциала</a>
+        <a href="charts.html" class="nav-btn">Просмотр графиков</a>
+    </nav>
+</header>
+
 <h1>Список атомов</h1>
 
 <section>
@@ -56,7 +67,7 @@
             if (response.ok && data.data) {
                 data.data.forEach(atom => {
                     const li = document.createElement("li");
-                    li.textContent = `${atom.id}: ${atom.atomName} (${atom.fullName}), масса = ${atom.mass}`;
+                    li.textContent = `${atom.id}: ${atom.atomName} (${atom.fullName}), масса = ${atom.mass}, параметр решетки a = ${atom.a}, валентность = ${atom.valence}`;
                     atomListEl.appendChild(li);
                 });
             } else {
