@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Плазменный модуль</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        /* Базовые стили */
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            background-color: #0b1628;
+            color: #e8eefc;
+        }
+
+        header {
+            background: linear-gradient(90deg, #0d1b3d, #162c5d);
+            padding: 15px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: #e8eefc;
+            background-color: #1e3d73;
+            padding: 8px 14px;
+            margin-left: 8px;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        nav a:hover, nav a.active {
+            background-color: #3b6ad3;
+        }
+
+        main {
+            padding: 20px 30px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .panel-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .panel {
+            background-color: #121c33;
+            padding: 20px;
+            border-radius: 12px;
+            flex: 1;
+            min-width: 280px;
+        }
+
+        .panel h3 {
+            margin-top: 0;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            margin-bottom: 4px;
+        }
+
+        input[type="number"], input[type="text"] {
+            padding: 6px 8px;
+            border-radius: 5px;
+            border: 1px solid #2a406d;
+            background-color: #0b1628;
+            color: white;
+        }
+
+        input[type="checkbox"] {
+            margin-right: 6px;
+        }
+
+        button {
+            background-color: #2f57a1;
+            border: none;
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background-color: #3b6ad3;
+        }
+
+        .graph-box {
+            width: 100%;
+            height: 400px;
+            background-color: #121c33;
+            border-radius: 12px;
+            margin-bottom: 30px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 12px;
+            background-color: #101a2d;
+            border-top: 2px solid #2a406d;
+        }
+    </style>
+</head>
+
+<body>
+<header>
+    <h1>Плазменный модуль</h1>
+    <nav>
+        <a href="index.html" class="active">Главная</a>
+        <a href="array.html">Данные массива</a>
+        <a href="chain.html">Данные цепочки</a>
+        <a href="params.html">Параметры расчета</a>
+        <a href="potential.html">Выбор потенциала</a>
+        <a href="charts.html">Просмотр графиков</a>
+    </nav>
+</header>
+
+<main>
+    <h2>Управление модулем и визуализация</h2>
+
+    <!-- График -->
+    <div id="mainGraph" class="graph-box"></div>
+
+    <!-- Параметры расчета и настройки -->
+    <div class="panel-container">
+        <!-- Параметры расчета -->
+        <div class="panel">
+            <h3>Параметры расчета</h3>
+            <form id="calcParamsForm">
+                <div class="form-group">
+                    <label for="temperature">Температура (K):</label>
+                    <input type="number" id="temperature" step="0.1" value="300">
+                </div>
+                <div class="form-group">
+                    <label for="pressure">Давление (Па):</label>
+                    <input type="number" id="pressure" step="1" value="101325">
+                </div>
+                <div class="form-group">
+                    <label for="concentration">Концентрация (м⁻³):</label>
+                    <input type="number" id="concentration" value="1e20">
+                </div>
+                <div class="form-group">
+                    <label for="energy">Энергия (эВ):</label>
+                    <input type="number" id="energy" step="0.01" value="10">
+                </div>
+                <button type="submit">Сохранить параметры</button>
+            </form>
+        </div>
+
+        <!-- Атомы -->
+        <div class="panel">
+            <h3>Атомы</h3>
+            <form id="atomsForm">
+                <div class="form-group">
+                    <input type="checkbox" id="enableAtomFile">
+                    <label for="enableAtomFile">Ввод из файла</label>
+                </div>
+                <div class="form-group">
+                    <label for="atomCount">Количество атомов:</label>
+                    <input type="number" id="atomCount" min="1" value="1">
+                </div>
+                <button type="submit">Сохранить</button>
+            </form>
+        </div>
+
+        <!-- Ионы -->
+        <div class="panel">
+            <h3>Ионы</h3>
+            <form id="ionsForm">
+                <div class="form-group">
+                    <input type="checkbox" id="enableIonFile">
+                    <label for="enableIonFile">Ввод из файла</label>
+                </div>
+                <div class="form-group">
+                    <label for="ionCount">Количество ионов:</label>
+                    <input type="number" id="ionCount" min="1" value="1">
+                </div>
+                <button type="submit">Сохранить</button>
+            </form>
+        </div>
+    </div>
+</main>
+
+<footer>
+    <p>© 2025 Плазменный модуль. Все права защищены.</p>
+</footer>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const graphDiv = document.getElementById("mainGraph");
+
+        // Пример синусоиды для графика
+        const xValues = [], yValues = [];
+        for (let i = 0; i <= 360; i += 5) {
+            xValues.push(i);
+            yValues.push(Math.sin(i * Math.PI / 180));
+        }
+
+        Plotly.newPlot(graphDiv, [{
+            x: xValues,
+            y: yValues,
+            mode: "lines",
+            line: { color: "#42a5f5", width: 3 },
+            name: "Плазменный сигнал"
+        }], {
+            paper_bgcolor: "#121c33",
+            plot_bgcolor: "#121c33",
+            font: { color: "#e8eefc" },
+            xaxis: { title: "Угол (°)" },
+            yaxis: { title: "Амплитуда" },
+            margin: { t: 40, b: 40, l: 60, r: 20 }
+        }, { displayModeBar: false });
+
+        // Обработчики форм (пока без сервера)
+        document.getElementById("calcParamsForm").addEventListener("submit", e => {
+            e.preventDefault();
+            alert("Параметры расчета сохранены!");
+        });
+
+        document.getElementById("atomsForm").addEventListener("submit", e => {
+            e.preventDefault();
+            alert("Параметры атомов сохранены!");
+        });
+
+        document.getElementById("ionsForm").addEventListener("submit", e => {
+            e.preventDefault();
+            alert("Параметры ионов сохранены!");
+        });
+    });
+</script>
+</body>
+</html>

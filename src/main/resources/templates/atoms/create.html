@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Создать атом</title>
+</head>
+<body>
+<div th:replace="fragments/header :: header"></div>
+
+<h1>Создать атом</h1>
+<form th:action="@{/atoms}" th:object="${atom}" method="post">
+    <label>Название:</label>
+    <input type="text" th:field="*{name}"/><br/>
+    <label>Масса:</label>
+    <input type="number" step="0.01" th:field="*{mass}"/><br/>
+    <button type="submit">Сохранить</button>
+</form>
+<a th:href="@{/atoms}">Назад</a>
+
+<div th:replace="fragments/footer :: footer"></div>
+</body>
+</html>

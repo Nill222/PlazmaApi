@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Данные цепочки</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Верхнее меню -->
+<header class="top-menu">
+    <nav>
+        <a href="index.html" class="nav-btn">Главная</a>
+        <a href="array.html" class="nav-btn">Данные массива</a>
+        <a href="chain.html" class="nav-btn active">Данные цепочки</a>
+        <a href="params.html" class="nav-btn">Параметры расчета</a>
+        <a href="potential.html" class="nav-btn">Выбор потенциала</a>
+        <a href="charts.html" class="nav-btn">Просмотр графиков</a>
+    </nav>
+</header>
+
+<!-- Основное содержимое -->
+<main class="center-content">
+    <h2>Данные цепочки</h2>
+
+    <!-- Таблица -->
+    <section class="data-box">
+        <table class="data-table">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Название</th>
+                <th>Масса</th>
+                <th>Заряд</th>
+            </tr>
+            </thead>
+            <tbody id="chainTableBody">
+            <tr><td colspan="5">Загрузка данных...</td></tr>
+            </tbody>
+        </table>
+    </section>
+</main>
+
+<!-- Подвал -->
+<footer class="footer">
+    <p>© 2025 Плазменный модуль. Все права защищены.</p>
+</footer>
+
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        const tableBody = document.getElementById('chainTableBody');
+
+        try {
+            const response = await fetch('/ions'); // 🔹 использует твой IonController
+            if (!response.ok) throw new Error('Ошибка при загрузке ионов');
+
+            const result = await response.json();
+            const ions = result.data || [];
+
+            if (ions.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5">Нет данных</td></tr>';
+                return;
+            }
+
+            tableBody.innerHTML = '';
+            ions.forEach(ion => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                <td>${ion.id}</td>
+                <td>${ion.name || '—'}</td>
+                <td>${ion.mass || '—'}</td>
+                <td>${ion.charge || '—'}</td>
+            `;
+                tableBody.appendChild(row);
+            });
+
+        } catch (err) {
+            console.error('Ошибка при загрузке цепочки:', err);
+            tableBody.innerHTML = '<tr><td colspan="5" style="color:red;">Ошибка загрузки данных</td></tr>';
+        }
+    });
+</script>
+
+</body>
+</html>

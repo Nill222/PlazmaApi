@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Выбор потенциала | PlasmaSim</title>
+    <link rel="stylesheet" href="css/potential.css">
+</head>
+<body>
+
+<header>
+    <h1>Plasma Simulation</h1>
+    <nav>
+        <a href="index.html" class="nav-btn">Главная</a>
+        <a href="array.html" class="nav-btn">Данные массива</a>
+        <a href="chain.html" class="nav-btn">Данные цепочки</a>
+        <a href="params.html" class="nav-btn active">Параметры расчета</a>
+        <a href="potential.html" class="active">Выбор потенциала</a>
+        <a href="charts.html" class="nav-btn">Просмотр графиков</a>
+    </nav>
+</header>
+
+<main>
+    <section class="selector">
+        <h2>Выберите тип расчёта</h2>
+        <select id="modelSelect">
+            <option value="">-- Выберите модель --</option>
+            <option value="plasma">Плазма</option>
+            <option value="collision">Столкновение</option>
+            <option value="diffusion">Диффузия</option>
+            <option value="lattice">Решётка</option>
+            <option value="simulation">Симуляция</option>
+        </select>
+    </section>
+
+    <section id="formSection">
+        <!-- Здесь динамически будет появляться форма -->
+    </section>
+
+    <section id="result-box" class="result-section">
+        <p>Результаты появятся здесь...</p>
+    </section>
+
+    <section id="chartSection" class="hidden">
+        <canvas id="collisionChart" width="600" height="400"></canvas>
+    </section>
+
+
+    <section id="validationInfo" class="hidden"></section>
+
+
+
+    <section id="resultSection">
+        <h2>Результаты расчёта</h2>
+        <pre id="resultOutput">Ожидание данных...</pre>
+    </section>
+</main>
+
+<script src="js/potential.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="js/charts.js"></script>
+
+</body>
+</html>

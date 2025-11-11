@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Список атомов</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<div th:replace="fragments/header :: header"></div>
+
+<h1>Атомы</h1>
+<a th:href="@{/atoms/create}">Создать новый атом</a>
+<table border="1">
+    <tr>
+        <th>ID</th>
+        <th>Название</th>
+        <th>Масса</th>
+        <th>Действия</th>
+    </tr>
+    <tr th:each="atom : ${atoms}">
+        <td th:text="${atom.id}"></td>
+        <td th:text="${atom.name}"></td>
+        <td th:text="${atom.mass}"></td>
+        <td>
+            <a th:href="@{'/atoms/edit/' + ${atom.id}}">Редактировать</a> |
+            <a th:href="@{'/atoms/delete/' + ${atom.id}}">Удалить</a>
+        </td>
+    </tr>
+</table>
+
+<div th:replace="fragments/footer :: footer"></div>
+</body>
+</html>
