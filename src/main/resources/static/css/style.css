@@ -1,0 +1,153 @@
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #0b1628;
+    color: #e8eefc;
+    margin: 0;
+    padding: 0;
+}
+
+/* Шапка */
+.header {
+    background: linear-gradient(90deg, #0d1b3d, #162c5d);
+    padding: 20px 0;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 32px;
+    font-weight: 700;
+    color: #fff;
+}
+
+/* Меню */
+.menu {
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+/* Верхнее меню */
+.top-menu {
+    display: flex;
+    justify-content: center; /* выравнивание по центру */
+    flex-wrap: wrap;         /* перенос кнопок на новые строки при малой ширине */
+    gap: 12px;               /* расстояние между кнопками */
+    padding: 15px 10px;
+    background: linear-gradient(90deg, #0d1b3d, #162c5d);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    border-bottom: 2px solid #2a406d;
+}
+
+.nav-btn {
+    text-decoration: none;
+    color: #e8eefc;
+    background: linear-gradient(135deg, #1e3d73, #2f57a1);
+    border-radius: 12px;
+    padding: 10px 20px;  /* увеличенный padding для кнопок */
+    font-weight: bold;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.nav-btn:hover,
+.nav-btn.active {
+    background: linear-gradient(135deg, #42a5f5, #2f57a1);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+
+/* Контент */
+.content {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 60vh;
+    padding: 30px 20px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.graph-box {
+    width: 100%;
+    max-width: 900px;
+    height: 450px;
+    background-color: #121c33;
+    border-radius: 14px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    padding: 10px;
+}
+
+/* Нижние панели */
+.bottom-panels {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    background-color: #101a2d;
+    padding: 25px 10px;
+    border-top: 2px solid #2a406d;
+    gap: 20px;
+}
+
+.panel {
+    flex: 1 1 40%;
+    background-color: #18294b;
+    padding: 25px;
+    border-radius: 14px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    min-width: 280px;
+}
+
+.panel h2 {
+    text-align: center;
+    color: #fff;
+    margin-bottom: 15px;
+}
+
+/* Формы */
+.form-group {
+    margin: 12px 0;
+    display: flex;
+    flex-direction: column;
+}
+
+input[type="text"], input[type="number"] {
+    background-color: #0b1628;
+    border: 1px solid #2a406d;
+    color: #e8eefc;
+    border-radius: 6px;
+    padding: 8px 10px;
+    transition: 0.2s;
+}
+
+input[type="text"]:focus, input[type="number"]:focus {
+    border-color: #42a5f5;
+    box-shadow: 0 0 8px rgba(66,165,245,0.6);
+    outline: none;
+}
+
+/* Кнопки */
+.save-btn {
+    background: linear-gradient(135deg, #2f57a1, #42a5f5);
+    border: none;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+.save-btn:hover {
+    background: linear-gradient(135deg, #42a5f5, #2f57a1);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}

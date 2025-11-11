@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Управление атомами</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<header class="top-menu">
+    <nav>
+        <a href="index.html" class="nav-btn">Главная</a>
+        <a href="array.html" class="nav-btn">Данные массива</a>
+        <a href="chain.html" class="nav-btn active">Данные цепочки</a>
+        <a href="potential.html" class="nav-btn">Выбор потенциала</a>
+        <a href="charts.html" class="nav-btn">Просмотр графиков</a>
+    </nav>
+</header>
+
+<h1>Список атомов</h1>
+
+<section>
+    <button id="loadAtoms">Загрузить все атомы</button>
+    <ul id="atomList"></ul>
+</section>
+
+<hr>
+
+<section>
+    <h2>Создать новый атом</h2>
+    <form id="createAtomForm">
+        <input type="text" id="atomName" placeholder="Символ (например, He)" required>
+        <input type="text" id="fullName" placeholder="Полное название" required>
+        <input type="number" id="mass" placeholder="Масса (кг)" step="any" required>
+        <input type="number" id="a" placeholder="Параметр решетки a" step="any" required>
+        <input type="number" id="debyeTemperature" placeholder="Температура Дебая" step="any" required>
+        <input type="number" id="valence" placeholder="Валентность" required>
+        <button type="submit">Создать</button>
+    </form>
+</section>
+
+<hr>
+
+<section>
+    <h2>Найти атом по символу</h2>
+    <input type="text" id="searchSymbol" placeholder="Например: He">
+    <button id="searchAtom">Поиск</button>
+    <pre id="searchResult"></pre>
+</section>
+
+<script>
+    const API_BASE = "/atoms";
+
+    document.addEventListener("DOMContentLoaded", () => {
+        const atomListEl = document.getElementById("atomList");
+        const loadAtomsBtn = document.getElementById("loadAtoms");
+        const createForm = document.getElementById("createAtomForm");
+        const searchBtn = document.getElementById("searchAtom");
+        const searchResult = document.getElementById("searchResult");
+
+        // 📘 Загрузить все атомы
+        loadAtomsBtn.addEventListener("click", async () => {
+            const response = await fetch(API_BASE);
+            const data = await response.json();
+
+            atomListEl.innerHTML = "";
+            if (response.ok && data.data) {
+                data.data.forEach(atom => {
+                    const li = document.createElement("li");
+                    li.textContent = `${atom.id}: ${atom.atomName} (${atom.fullName}), масса = ${atom.mass}, параметр решетки a = ${atom.a}, валентность = ${atom.valence}`;
+                    atomListEl.appendChild(li);
+                });
+            } else {
+                atomListEl.innerHTML = `<li>Ошибка загрузки атомов</li>`;
+            }
+        });
+
+        // ➕ Создать атом
+        createForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const atom = {
+                atomName: document.getElementById("atomName").value,
+                fullName: document.getElementById("fullName").value,
+                mass: parseFloat(document.getElementById("mass").value),
+                a: parseFloat(document.getElementById("a").value),
+                debyeTemperature: parseFloat(document.getElementById("debyeTemperature").value),
+                valence: parseInt(document.getElementById("valence").value)
+            };
+
+            const response = await fetch(API_BASE, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(atom)
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                alert("✅ " + data.message);
+                createForm.reset();
+            } else {
+                alert("❌ Ошибка: " + (data.message || "Не удалось создать атом"));
+            }
+        });
+
+        // 🔍 Найти по символу
+        searchBtn.addEventListener("click", async () => {
+            const symbol = document.getElementById("searchSymbol").value.trim();
+            if (!symbol) return;
+
+            const response = await fetch(`${API_BASE}/symbol/${symbol}`);
+            const data = await response.json();
+
+            if (response.ok && data.data) {
+                searchResult.textContent = JSON.stringify(data.data, null, 2);
+            } else {
+                searchResult.textContent = "Атом не найден";
+            }
+        });
+    });
+</script>
+</body>
+</html>
