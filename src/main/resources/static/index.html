@@ -2,135 +2,48 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Плазменный модуль</title>
+    <title>PlasmaLab — расчёты и моделирование</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="css/main.css">
 </head>
-
 <body>
-<header class="top-menu">
+<header>
     <nav>
-        <a href="index.html" class="nav-btn">Главная</a>
-        <a href="array.html" class="nav-btn">Данные массива</a>
-        <a href="chain.html" class="nav-btn active">Данные цепочки</a>
-        <a href="potential.html" class="nav-btn">Выбор потенциала</a>
-        <a href="charts.html" class="nav-btn">Просмотр графиков</a>
+        <a href="index.html" class="nav-btn active">Главная</a>
+        <a href="array.html" class="nav-btn">Атомы</a>
+        <a href="chain.html" class="nav-btn">Ионы</a>
+        <a href="potential.html" class="nav-btn">Потенциал</a>
+        <a href="charts.html" class="nav-btn">Графики</a>
     </nav>
 </header>
 
 <main>
-    <h2>Управление модулем и визуализация</h2>
+    <h1>PlasmaLab</h1>
+    <h2>Моделирование и анализ взаимодействия атомов и ионов</h2>
 
-    <!-- График -->
-    <div id="mainGraph" class="graph-box"></div>
-
-    <!-- Параметры расчета и настройки -->
-    <div class="panel-container">
-        <!-- Параметры расчета -->
-        <div class="panel">
-            <h3>Параметры расчета</h3>
-            <form id="calcParamsForm">
-                <div class="form-group">
-                    <label for="temperature">Температура (K):</label>
-                    <input type="number" id="temperature" step="0.1" value="300">
-                </div>
-                <div class="form-group">
-                    <label for="pressure">Давление (Па):</label>
-                    <input type="number" id="pressure" step="1" value="101325">
-                </div>
-                <div class="form-group">
-                    <label for="concentration">Концентрация (м⁻³):</label>
-                    <input type="number" id="concentration" value="1e20">
-                </div>
-                <div class="form-group">
-                    <label for="energy">Энергия (эВ):</label>
-                    <input type="number" id="energy" step="0.01" value="10">
-                </div>
-                <button type="submit">Сохранить параметры</button>
-            </form>
-        </div>
-
-        <!-- Атомы -->
-        <div class="panel">
+    <div class="modules">
+        <div class="module-card" onclick="location.href='array.html'">
             <h3>Атомы</h3>
-            <form id="atomsForm">
-                <div class="form-group">
-                    <input type="checkbox" id="enableAtomFile">
-                    <label for="enableAtomFile">Ввод из файла</label>
-                </div>
-                <div class="form-group">
-                    <label for="atomCount">Количество атомов:</label>
-                    <input type="number" id="atomCount" min="1" value="1">
-                </div>
-                <button type="submit">Сохранить</button>
-            </form>
+            <p>Просмотр и редактирование базы данных атомов, их параметров и свойств.</p>
         </div>
-
-        <!-- Ионы -->
-        <div class="panel">
+        <div class="module-card" onclick="location.href='chain.html'">
             <h3>Ионы</h3>
-            <form id="ionsForm">
-                <div class="form-group">
-                    <input type="checkbox" id="enableIonFile">
-                    <label for="enableIonFile">Ввод из файла</label>
-                </div>
-                <div class="form-group">
-                    <label for="ionCount">Количество ионов:</label>
-                    <input type="number" id="ionCount" min="1" value="1">
-                </div>
-                <button type="submit">Сохранить</button>
-            </form>
+            <p>Работа с ионными структурами, зарядами и энергетическими характеристиками.</p>
+        </div>
+        <div class="module-card" onclick="location.href='potential.html'">
+            <h3>Потенциал</h3>
+            <p>Выбор модели потенциала, расчёт взаимодействий и анализ плазменных параметров.</p>
+        </div>
+        <div class="module-card" onclick="location.href='charts.html'">
+            <h3>Графики</h3>
+            <p>Визуализация и сравнение результатов моделирования и расчётов.</p>
         </div>
     </div>
 </main>
 
 <footer>
-    <p>© 2025 Плазменный модуль. Все права защищены.</p>
+    <p>© 2025 PlasmaLab. Все права защищены.</p>
 </footer>
-
-<script>
-    document.addEventListener("DOMContentLoaded", () => {
-        const graphDiv = document.getElementById("mainGraph");
-
-        // Пример синусоиды для графика
-        const xValues = [], yValues = [];
-        for (let i = 0; i <= 360; i += 5) {
-            xValues.push(i);
-            yValues.push(Math.sin(i * Math.PI / 180));
-        }
-
-        Plotly.newPlot(graphDiv, [{
-            x: xValues,
-            y: yValues,
-            mode: "lines",
-            line: { color: "#42a5f5", width: 3 },
-            name: "Плазменный сигнал"
-        }], {
-            paper_bgcolor: "#121c33",
-            plot_bgcolor: "#121c33",
-            font: { color: "#e8eefc" },
-            xaxis: { title: "Угол (°)" },
-            yaxis: { title: "Амплитуда" },
-            margin: { t: 40, b: 40, l: 60, r: 20 }
-        }, { displayModeBar: false });
-
-        // Обработчики форм (пока без сервера)
-        document.getElementById("calcParamsForm").addEventListener("submit", e => {
-            e.preventDefault();
-            alert("Параметры расчета сохранены!");
-        });
-
-        document.getElementById("atomsForm").addEventListener("submit", e => {
-            e.preventDefault();
-            alert("Параметры атомов сохранены!");
-        });
-
-        document.getElementById("ionsForm").addEventListener("submit", e => {
-            e.preventDefault();
-            alert("Параметры ионов сохранены!");
-        });
-    });
-</script>
 </body>
 </html>

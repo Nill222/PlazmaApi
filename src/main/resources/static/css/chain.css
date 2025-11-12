@@ -1,86 +1,82 @@
-/* Общие стили страницы */
 body {
-    font-family: 'Roboto', sans-serif;
-    background-color: #f4f4f9;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background-color: #f6f8fa;
+    color: #333;
     margin: 0;
     padding: 0;
 }
-
-.main-container {
+.top-menu {
+    background-color: #003366;
+    padding: 12px 0;
+    text-align: center;
+}
+.nav-btn {
+    color: white;
+    text-decoration: none;
+    margin: 0 12px;
+    padding: 6px 14px;
+    border-radius: 6px;
+    transition: 0.3s;
+}
+.nav-btn:hover, .nav-btn.active {
+    background-color: #0055aa;
+}
+main {
     max-width: 900px;
-    margin: 30px auto;
-    padding: 20px;
-    background-color: #fff;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    margin: 40px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 0 12px rgba(0,0,0,0.1);
 }
-
-/* Верхняя панель кнопок */
-.toolbar {
-    margin-bottom: 20px;
-    display: flex;
-    gap: 10px;
+h1, h2 {
+    color: #003366;
 }
-
-.toolbar button.nav-btn {
-    background-color: #007bff;
-    color: #fff;
+button {
+    background-color: #0055aa;
+    color: white;
     border: none;
     padding: 8px 16px;
     border-radius: 6px;
     cursor: pointer;
-    font-weight: bold;
-    transition: background-color 0.3s;
+    transition: 0.3s;
 }
-
-.toolbar button.nav-btn:hover {
-    background-color: #0056b3;
+button:hover {
+    background-color: #0077dd;
 }
-
-/* Форма данных цепочки */
-.chain-form {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
 }
-
-/* Ряды полей формы */
-.form-row {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 15px;
+th, td {
+    border: 1px solid #ddd;
+    padding: 10px 12px;
+    text-align: left;
 }
-
-/* Подписи полей */
-.form-row label {
-    font-weight: 500;
-    min-width: 120px;
+th {
+    background-color: #f0f2f5;
 }
-
-/* Поля ввода */
-.form-row input[type="number"],
-.form-row select {
-    padding: 6px 10px;
-    border-radius: 5px;
+input {
+    padding: 8px;
+    margin: 5px 0;
+    width: 100%;
+    border-radius: 6px;
     border: 1px solid #ccc;
-    min-width: 100px;
-    font-size: 14px;
 }
-
-/* Чекбокс */
-.form-row input[type="checkbox"] {
-    margin-left: 5px;
+section {
+    margin-bottom: 30px;
 }
-
-/* Мобильная адаптация */
-@media (max-width: 600px) {
-    .form-row {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .form-row label {
-        min-width: auto;
-    }
+.delete-btn {
+    background-color: #d9534f;
+}
+.delete-btn:hover {
+    background-color: #c9302c;
+}
+footer {
+    background-color: #003366;
+    color: white;
+    text-align: center;
+    padding: 10px 0;
+    margin-top: 40px;
 }

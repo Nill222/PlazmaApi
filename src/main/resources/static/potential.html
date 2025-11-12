@@ -4,24 +4,43 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Выбор потенциала | PlasmaSim</title>
-    <link rel="stylesheet" href="css/potential.css">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        body { padding-top: 70px; }
+        .nav-link.active { font-weight: bold; }
+        .result-section { margin-top: 20px; }
+        .hidden { display: none; }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .form-grid label { display: flex; flex-direction: column; }
+    </style>
 </head>
 <body>
 
-<header class="top-menu">
-    <nav>
-        <a href="index.html" class="nav-btn">Главная</a>
-        <a href="array.html" class="nav-btn">Данные массива</a>
-        <a href="chain.html" class="nav-btn active">Данные цепочки</a>
-        <a href="potential.html" class="nav-btn">Выбор потенциала</a>
-        <a href="charts.html" class="nav-btn">Просмотр графиков</a>
-    </nav>
-</header>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <div class="container">
+        <a class="navbar-brand" href="index.html">PlasmaSim</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav">
+                <li class="nav-item"><a class="nav-link" href="index.html">Главная</a></li>
+                <li class="nav-item"><a class="nav-link" href="array.html">Атомы</a></li>
+                <li class="nav-item"><a class="nav-link" href="chain.html">Ионы</a></li>
+                <li class="nav-item"><a class="nav-link active" href="potential.html">Выбор потенциала</a></li>
+                <li class="nav-item"><a class="nav-link" href="charts.html">Просмотр графиков</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
 
-<main>
-    <section class="selector">
+<div class="container">
+    <div class="mb-4">
         <h2>Выберите тип расчёта</h2>
-        <select id="modelSelect">
+        <select id="modelSelect" class="form-select">
             <option value="">-- Выберите модель --</option>
             <option value="plasma">Плазма</option>
             <option value="collision">Столкновение</option>
@@ -29,34 +48,18 @@
             <option value="lattice">Решётка</option>
             <option value="simulation">Симуляция</option>
         </select>
-    </section>
+    </div>
 
-    <section id="formSection">
-        <!-- Здесь динамически будет появляться форма -->
-    </section>
-
-    <section id="result-box" class="result-section">
+    <div id="formSection"></div>
+    <div id="validationInfo" class="alert alert-info hidden"></div>
+    <div id="result-box" class="result-section card p-3">
         <p>Результаты появятся здесь...</p>
-    </section>
+    </div>
+    <div id="chartSection" class="mt-4"></div>
+</div>
 
-    <section id="chartSection" class="hidden">
-        <canvas id="collisionChart" width="600" height="400"></canvas>
-    </section>
-
-
-    <section id="validationInfo" class="hidden"></section>
-
-
-
-    <section id="resultSection">
-        <h2>Результаты расчёта</h2>
-        <pre id="resultOutput">Ожидание данных...</pre>
-    </section>
-</main>
-
-<script src="js/potential.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="js/charts.js"></script>
-
+<script src="js/potential.js"></script>
 </body>
 </html>
