@@ -11,7 +11,6 @@ public class ThermalServiceImpl implements ThermalService {
 
     /**
      * Моделирует охлаждение материала после нагрева плазмой.
-     *
      *  T0 начальная температура (K)
      *  lambda коэффициент теплопередачи (1/с)
      *  tMax общее время (с)
@@ -20,7 +19,7 @@ public class ThermalServiceImpl implements ThermalService {
      */
     public List<Double> simulateCooling(ThermalDto thermalDto) {
         List<Double> temps = new ArrayList<>();
-        double T = thermalDto.T0() ;
+        double T;
         for (double t = 0; t <= thermalDto.tMax(); t += thermalDto.dt()) {
             T = thermalDto.T0() * Math.exp(-thermalDto.lambda() * t);
             temps.add(T);

@@ -16,7 +16,6 @@ import plasmapi.project.plasma.service.logik.AbstractMotherService;
 import plasmapi.project.plasma.service.logik.AtomService;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class AtomServiceImpl extends AbstractMotherService<AtomList, Integer, CreateAtomListDto> implements AtomService {

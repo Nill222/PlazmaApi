@@ -19,7 +19,7 @@ public record SimulationRequestDto(
 
         boolean generateLattice,
 
-        @Valid // валидация вложенного DTO
+        @Valid
         LatticeGenerationRequest latticeRequest,
 
         @Positive(message = "Напряжение плазмы должно быть положительным")

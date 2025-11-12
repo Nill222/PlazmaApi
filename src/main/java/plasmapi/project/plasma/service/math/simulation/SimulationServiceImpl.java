@@ -2,6 +2,7 @@ package plasmapi.project.plasma.service.math.simulation;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import plasmapi.project.plasma.dto.mathDto.collision.CollisionDto;
 import plasmapi.project.plasma.dto.mathDto.collision.CollisionResult;
 import plasmapi.project.plasma.dto.mathDto.diffusion.DiffusionProfileDto;
@@ -23,8 +24,10 @@ import plasmapi.project.plasma.service.math.diffusion.DiffusionService;
 import plasmapi.project.plasma.service.math.plazma.PlasmaService;
 import plasmapi.project.plasma.service.math.thermal.ThermalService;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -50,15 +53,17 @@ public class SimulationServiceImpl implements SimulationService {
     /**
      * Run full simulation by SimulationRequest.
      */
+    @Transactional
+    @Override
     public SimulationResultDto runSimulation(SimulationRequestDto req) {
 
-        // 1️⃣ Load entities
+        // 1️⃣ Загрузка конфигурации и иона
         Config config = configRepository.findById(req.configId())
                 .orElseThrow(() -> new IllegalArgumentException("Config not found: " + req.configId()));
         Ion ion = ionRepository.findById(req.ionId())
                 .orElseThrow(() -> new IllegalArgumentException("Ion not found: " + req.ionId()));
 
-        // 2️⃣ Lattice
+        // 2️⃣ Решётка атомов
         List<Atom> atoms;
         if (req.generateLattice()) {
             latticeService.generateLattice(req.latticeRequest());
@@ -70,7 +75,7 @@ public class SimulationServiceImpl implements SimulationService {
             }
         }
 
-        // 3️⃣ Plasma parameters — используем PlasmaDto
+        // 3️⃣ Параметры плазмы
         PlasmaDto plasmaDto = new PlasmaDto(
                 req.plasmaVoltage(),
                 req.pressure() > 0 ? req.pressure() : 1e-3,
@@ -78,34 +83,45 @@ public class SimulationServiceImpl implements SimulationService {
         );
         PlasmaParameters plasmaParams = plasmaService.calculate(plasmaDto);
 
-        // 4️⃣ Ion energy
+        // 4️⃣ Энергия иона
         double ionMass = ion.getMass();
         double ionEnergy = eCharge * req.plasmaVoltage();
 
-        // 5️⃣ Collisions — используем CollisionDto
+        // 5️⃣ Симуляция столкновений
         double totalTransferred = 0.0;
-        List<CollisionResult> collisions = new ArrayList<>();
+        List<CollisionResult> collisions = new ArrayList<>(atoms.size());
+
+        // ⚙️ Добавляем кэш масс, чтобы не ходить в БД для каждого атома
+        var atomListCache = new java.util.HashMap<Integer, Double>();
 
         for (Atom atom : atoms) {
-            AtomList atomType = atomListRepository.findById(atom.getAtomList().getId())
-                    .orElseThrow(() -> new IllegalStateException("AtomList not found for atom id " + atom.getId()));
+            Integer
+                    atomListId = atom.getAtomList().getId();
+
+            double atomMass = atomListCache.computeIfAbsent(atomListId, id ->
+                    atomListRepository.findById(id)
+                            .map(AtomList::getMass)
+                            .orElseThrow(() -> new IllegalStateException("AtomList not found for atom id " + atom.getId()))
+            );
 
             CollisionDto collisionDto = new CollisionDto(
                     ionEnergy,
                     ionMass,
-                    atomType.getMass(),
+                    atomMass,
                     req.impactAngle()
             );
 
+            // 💥 Рассчитываем столкновение
             CollisionResult collRes = collisionService.simulateCollision(collisionDto);
             collisions.add(collRes);
+
             totalTransferred += collRes.transferredEnergy();
         }
 
         double avgTransferredPerAtom = totalTransferred / atoms.size();
         double estimatedTemperature = avgTransferredPerAtom / kB;
 
-        // 6️⃣ Thermal relaxation — используем ThermalDto
+        // 6️⃣ Тепловое расслабление
         ThermalDto thermalDto = new ThermalDto(
                 estimatedTemperature,
                 req.thermalConductivity() > 0 ? req.thermalConductivity() : 0.05,
@@ -116,7 +132,7 @@ public class SimulationServiceImpl implements SimulationService {
         List<Double> coolingProfile = thermalService.simulateCooling(thermalDto);
         double finalTemperature = coolingProfile.get(coolingProfile.size() - 1);
 
-        // 7️⃣ Diffusion
+        // 7️⃣ Диффузия
         double D0 = req.diffusionPrefactor() > 0 ? req.diffusionPrefactor() : 1e-4;
         double Q = req.activationEnergy() > 0 ? req.activationEnergy() : 1.6e-19;
         double diffusionCoefficient = D0 * Math.exp(-Q / (R * Math.max(1.0, finalTemperature)));
@@ -130,7 +146,7 @@ public class SimulationServiceImpl implements SimulationService {
 
         DiffusionProfileDto diffusion = diffusionService.calculateDiffusionProfile(diffReq);
 
-        // 8️⃣ Aggregate result
+        // 8️⃣ Формируем результат
         SimulationResultDto result = new SimulationResultDto(
                 ion.getName(),
                 atoms.get(0).getAtomList().getAtomName(),
@@ -139,12 +155,14 @@ public class SimulationServiceImpl implements SimulationService {
                 finalTemperature,
                 diffusionCoefficient,
                 plasmaParams,
-                collisions.stream().map(CollisionResult::transferredEnergy).collect(Collectors.toList()),
+                collisions.stream()
+                        .map(CollisionResult::transferredEnergy)
+                        .collect(Collectors.toList()), // оставляем список энергий
                 diffusion,
-                coolingProfile
+                coolingProfile // возвращаем весь список температур
         );
 
-        // 9️⃣ Persist result
+        // 9️⃣ Сохраняем итог
         Result resEntity = new Result();
         resEntity.setConfig(config);
         resEntity.setIon(ion);

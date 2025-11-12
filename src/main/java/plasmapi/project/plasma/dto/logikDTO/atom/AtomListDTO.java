@@ -7,6 +7,7 @@ public record AtomListDTO(
         Double mass,
         Double a,
         Double debyeTemperature,
-        Integer valence
+        Integer valence,
+        String structure
 ) {}
 

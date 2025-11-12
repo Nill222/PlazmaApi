@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 import plasmapi.project.plasma.dto.ApiResponse;
 import plasmapi.project.plasma.dto.mathDto.collision.CollisionDto;
 import plasmapi.project.plasma.dto.mathDto.collision.CollisionResult;
-import plasmapi.project.plasma.dto.mathDto.collision.CollisionSimRequest;
 import plasmapi.project.plasma.service.math.collision.CollisionService;
 
 

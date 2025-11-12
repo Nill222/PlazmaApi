@@ -32,4 +32,7 @@ public class AtomList {
 
     private Integer valence; // валентность
 
+    @Column(name = "atom_structure")
+    private String structure;
+
 }

@@ -28,6 +28,7 @@ public class AtomCreateMapper implements BaseMapper<AtomList, CreateAtomListDto>
         atom.setA(dto.a());
         atom.setDebyeTemperature(dto.debyeTemperature());
         atom.setValence(dto.valence());
+        atom.setStructure(dto.structure());
     }
 }
 

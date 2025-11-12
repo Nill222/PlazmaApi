@@ -57,7 +57,8 @@ public class AtomReadMapper implements BaseMapper<AtomDTO, Atom> {
                 atomList.getMass(),
                 atomList.getA(),
                 atomList.getDebyeTemperature(),
-                atomList.getValence()
+                atomList.getValence(),
+                atomList.getStructure()
         );
     }
 }

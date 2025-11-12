@@ -13,7 +13,6 @@ public class CollisionServiceImpl implements CollisionService {
 
     /**
      * Рассчитывает результат столкновения иона с атомом.
-     *
      *  E энергия иона (Дж)
      *  mIon масса иона
      *  mAtom масса атома

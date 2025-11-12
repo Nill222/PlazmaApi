@@ -9,7 +9,6 @@ public class PlasmaServiceImpl implements PlasmaService {
 
     /**
      * Расчёт параметров плазмы тлеющего разряда.
-     *
      *  voltage напряжение (В)
      * pressure давление (Па)
      * temperature температура электронов (K)
