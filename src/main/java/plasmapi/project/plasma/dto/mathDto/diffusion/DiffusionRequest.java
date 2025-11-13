@@ -20,6 +20,10 @@ public record DiffusionRequest(
 
         @Positive(message = "Глубина диффузии должна быть положительной")
         @DecimalMax(value = "1e3", message = "Глубина слишком велика для модели")
-        double depth
+        double depth,
+
+        double dx,
+
+        double dt
 
 ) {}

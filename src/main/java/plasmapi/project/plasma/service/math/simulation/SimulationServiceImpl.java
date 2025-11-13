@@ -1,6 +1,7 @@
 package plasmapi.project.plasma.service.math.simulation;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import plasmapi.project.plasma.dto.mathDto.collision.CollisionDto;
@@ -25,11 +26,11 @@ import plasmapi.project.plasma.service.math.plazma.PlasmaService;
 import plasmapi.project.plasma.service.math.thermal.ThermalService;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SimulationServiceImpl implements SimulationService {
@@ -37,6 +38,9 @@ public class SimulationServiceImpl implements SimulationService {
     private static final double kB = 1.380649e-23;
     private static final double eCharge = 1.602176634e-19;
     private static final double R = 8.314462618;
+    private static final double STABILITY_LIMIT = 0.5;
+    private static final double MIN_DT = 1e-12;  // минимальный шаг времени
+    private static final double MIN_DX = 1e-10;  // минимальный шаг по глубине
 
     private final AtomRepository atomRepository;
     private final AtomListRepository atomListRepository;
@@ -50,9 +54,6 @@ public class SimulationServiceImpl implements SimulationService {
     private final PlasmaService plasmaService;
     private final ThermalService thermalService;
 
-    /**
-     * Run full simulation by SimulationRequest.
-     */
     @Transactional
     @Override
     public SimulationResultDto runSimulation(SimulationRequestDto req) {
@@ -64,15 +65,12 @@ public class SimulationServiceImpl implements SimulationService {
                 .orElseThrow(() -> new IllegalArgumentException("Ion not found: " + req.ionId()));
 
         // 2️⃣ Решётка атомов
-        List<Atom> atoms;
         if (req.generateLattice()) {
             latticeService.generateLattice(req.latticeRequest());
-            atoms = atomRepository.findByConfigId(config.getId());
-        } else {
-            atoms = atomRepository.findByConfigId(config.getId());
-            if (atoms.isEmpty()) {
-                throw new IllegalStateException("No atoms in config " + config.getId());
-            }
+        }
+        List<Atom> atoms = atomRepository.findByConfigId(config.getId());
+        if (atoms.isEmpty()) {
+            throw new IllegalStateException("No atoms in config " + config.getId());
         }
 
         // 3️⃣ Параметры плазмы
@@ -82,6 +80,7 @@ public class SimulationServiceImpl implements SimulationService {
                 req.electronTemp() > 0 ? req.electronTemp() : 3000.0
         );
         PlasmaParameters plasmaParams = plasmaService.calculate(plasmaDto);
+        if (plasmaParams == null) plasmaParams = new PlasmaParameters(0,0,0, 0, 0, 0);
 
         // 4️⃣ Энергия иона
         double ionMass = ion.getMass();
@@ -90,35 +89,23 @@ public class SimulationServiceImpl implements SimulationService {
         // 5️⃣ Симуляция столкновений
         double totalTransferred = 0.0;
         List<CollisionResult> collisions = new ArrayList<>(atoms.size());
-
-        // ⚙️ Добавляем кэш масс, чтобы не ходить в БД для каждого атома
-        var atomListCache = new java.util.HashMap<Integer, Double>();
+        Map<Integer, Double> atomListCache = new java.util.HashMap<>();
 
         for (Atom atom : atoms) {
-            Integer
-                    atomListId = atom.getAtomList().getId();
-
+            Integer atomListId = atom.getAtomList().getId();
             double atomMass = atomListCache.computeIfAbsent(atomListId, id ->
                     atomListRepository.findById(id)
                             .map(AtomList::getMass)
-                            .orElseThrow(() -> new IllegalStateException("AtomList not found for atom id " + atom.getId()))
+                            .orElse(0.0)  // безопасное значение
             );
 
-            CollisionDto collisionDto = new CollisionDto(
-                    ionEnergy,
-                    ionMass,
-                    atomMass,
-                    req.impactAngle()
-            );
-
-            // 💥 Рассчитываем столкновение
+            CollisionDto collisionDto = new CollisionDto(ionEnergy, ionMass, atomMass, req.impactAngle());
             CollisionResult collRes = collisionService.simulateCollision(collisionDto);
-            collisions.add(collRes);
-
-            totalTransferred += collRes.transferredEnergy();
+            if (collRes != null) collisions.add(collRes);
+            totalTransferred += collRes != null ? collRes.transferredEnergy() : 0.0;
         }
 
-        double avgTransferredPerAtom = totalTransferred / atoms.size();
+        double avgTransferredPerAtom = totalTransferred / Math.max(atoms.size(), 1);
         double estimatedTemperature = avgTransferredPerAtom / kB;
 
         // 6️⃣ Тепловое расслабление
@@ -128,23 +115,39 @@ public class SimulationServiceImpl implements SimulationService {
                 req.totalTime(),
                 req.timeStep()
         );
-
         List<Double> coolingProfile = thermalService.simulateCooling(thermalDto);
-        double finalTemperature = coolingProfile.get(coolingProfile.size() - 1);
+        double finalTemperature = coolingProfile.isEmpty() ? estimatedTemperature :
+                coolingProfile.get(coolingProfile.size() - 1);
 
-        // 7️⃣ Диффузия
+        // 7️⃣ Диффузия с авто-подстройкой
         double D0 = req.diffusionPrefactor() > 0 ? req.diffusionPrefactor() : 1e-4;
         double Q = req.activationEnergy() > 0 ? req.activationEnergy() : 1.6e-19;
         double diffusionCoefficient = D0 * Math.exp(-Q / (R * Math.max(1.0, finalTemperature)));
+
+        double DX = 1e-9;
+        double dt = STABILITY_LIMIT * DX * DX / diffusionCoefficient;
+
+        // если dt слишком мал → увеличиваем DX
+        if (dt < MIN_DT) {
+            DX = Math.sqrt(MIN_DT * diffusionCoefficient / STABILITY_LIMIT);
+            dt = MIN_DT;
+            if (DX < MIN_DX) DX = MIN_DX;
+            log.warn("Авто-подстройка DX/DT для диффузии: DX={}, dt={}", DX, dt);
+        }
 
         DiffusionRequest diffReq = new DiffusionRequest(
                 diffusionCoefficient,
                 req.surfaceConcentration(),
                 req.totalTime(),
-                req.depth()
+                req.depth(),
+                DX,
+                dt
         );
 
         DiffusionProfileDto diffusion = diffusionService.calculateDiffusionProfile(diffReq);
+        if (diffusion == null || diffusion.depths().isEmpty()) {
+            diffusion = new DiffusionProfileDto(List.of(0.0), List.of(req.surfaceConcentration()));
+        }
 
         // 8️⃣ Формируем результат
         SimulationResultDto result = new SimulationResultDto(
@@ -157,12 +160,12 @@ public class SimulationServiceImpl implements SimulationService {
                 plasmaParams,
                 collisions.stream()
                         .map(CollisionResult::transferredEnergy)
-                        .collect(Collectors.toList()), // оставляем список энергий
+                        .collect(Collectors.toList()),
                 diffusion,
-                coolingProfile // возвращаем весь список температур
+                coolingProfile
         );
 
-        // 9️⃣ Сохраняем итог
+        // 9️⃣ Сохраняем результат
         Result resEntity = new Result();
         resEntity.setConfig(config);
         resEntity.setIon(ion);
