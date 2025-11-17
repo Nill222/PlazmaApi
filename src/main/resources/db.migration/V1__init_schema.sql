@@ -16,7 +16,8 @@ CREATE TABLE plazma.atom_list (
                                   u DOUBLE PRECISION,
                                   a DOUBLE PRECISION,
                                   debye_temperature DOUBLE PRECISION,
-                                  valence INT DEFAULT 1
+                                  valence INT DEFAULT 1,
+                                  atom_structure VARCHAR(50) NOT NULL
 );
 
 CREATE TABLE plazma.ions (
