@@ -32,23 +32,39 @@ public class JwtFilter extends OncePerRequestFilter {
                                     FilterChain filterChain)
             throws ServletException, IOException {
 
+        String path = request.getServletPath();
+        String method = request.getMethod();
+
+        // Всё свободно
+        if (method.equals("GET") ||
+                path.startsWith("/auth") ||
+                path.startsWith("/js") ||
+                path.startsWith("/css") ||
+                path.startsWith("/images") ||
+                path.equals("/favicon.ico")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        // Для POST/PUT/DELETE проверяем JWT
+        String header = request.getHeader("Authorization");
+        if (StringUtils.isBlank(header) || !header.startsWith("Bearer ")) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.getWriter().write("{\"error\":\"JWT token required\"}");
+            return;
+        }
+
+        String token = header.substring(7).trim();
+        if (token.isEmpty()) {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            response.getWriter().write("{\"error\":\"JWT token required\"}");
+            return;
+        }
+
         try {
-
-            String header = request.getHeader("Authorization");
-
-            if (StringUtils.isBlank(header) || !header.startsWith("Bearer ")) {
-                filterChain.doFilter(request, response);
-                return;
-            }
-
-            String token = header.substring(7).trim();
-            if (token.isEmpty()) {
-                filterChain.doFilter(request, response);
-                return;
-            }
-
             String username = jwtService.extractUserName(token);
-
             if (username != null &&
                     SecurityContextHolder.getContext().getAuthentication() == null) {
 

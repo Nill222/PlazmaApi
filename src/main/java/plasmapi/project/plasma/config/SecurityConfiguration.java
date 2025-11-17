@@ -3,6 +3,7 @@ package plasmapi.project.plasma.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -40,13 +41,19 @@ public class SecurityConfiguration {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/auth.html/**",
-                                "/swagger-ui/**",
-                                "/swagger-resources/**",
-                                "/v3/api-docs/**"
+                                "/auth.html",
+                                "/auth/**",
+                                "/js/**",
+                                "/css/**",
+                                "/swagger-ui/",
+                                "/swagger-resources/",
+                                "/v3/api-docs/"
                         ).permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .anyRequest().authenticated()
+                        .requestMatchers(HttpMethod.POST, "/**").authenticated()
+                        .requestMatchers(HttpMethod.PUT, "/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/**").authenticated()
+                        .anyRequest().permitAll()
                 )
                 .authenticationProvider(authenticationConfig.authenticationProvider())
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
