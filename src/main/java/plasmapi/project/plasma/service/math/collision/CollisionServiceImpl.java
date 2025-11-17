@@ -21,7 +21,8 @@ public class CollisionServiceImpl implements CollisionService {
      */
     public CollisionResult simulateCollision(CollisionDto collisionDto) {
         double theta = Math.toRadians(collisionDto.angle());
-        double k = (4 * collisionDto.mIon() * collisionDto.mAtom()) / Math.pow(collisionDto.mIon() + collisionDto.mAtom(), 2);
+        double k = (4 * collisionDto.mIon() * collisionDto.mAtom()) /
+                Math.pow(collisionDto.mIon() + collisionDto.mAtom(), 2);
 
         double Etr = collisionDto.E() * k * Math.cos(theta) * Math.cos(theta); // переданная энергия
         double reflection = 1.0 - k; // доля отражённой энергии
