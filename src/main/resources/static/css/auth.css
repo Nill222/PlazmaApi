@@ -1,0 +1,50 @@
+body {
+    background: black;
+    color: #00ff95;
+    font-family: "Source Code Pro", monospace;
+    text-shadow: 0 0 5px #00ff95;
+}
+
+.terminal-card {
+    border: 1px solid #00ff95;
+    padding: 25px;
+    border-radius: 10px;
+    background: rgba(0,0,0,0.8);
+    box-shadow: 0 0 15px rgba(0,255,149,0.5);
+}
+
+.nav-link {
+    color: #00ff95 !important;
+}
+
+.nav-link.active {
+    background: #00ff95 !important;
+    color: black !important;
+    text-shadow: none !important;
+}
+
+input {
+    background: black !important;
+    border: 1px solid #00ff95 !important;
+    color: #00ff95 !important;
+}
+
+input:focus {
+    box-shadow: 0 0 10px #00ff95 !important;
+}
+
+.btn-term {
+    border: 1px solid #00ff95;
+    color: #00ff95;
+}
+
+.btn-term:hover {
+    background: #00ff95;
+    color: black;
+    text-shadow: none;
+}
+
+.msg {
+    margin-top: 10px;
+    white-space: pre-line;
+}
