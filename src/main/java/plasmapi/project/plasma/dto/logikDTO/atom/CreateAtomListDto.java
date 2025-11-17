@@ -16,7 +16,7 @@ public record CreateAtomListDto(
         @NotNull(message = "Масса атома обязательна")
         @Positive(message = "Масса атома должна быть положительной")
         @DecimalMin(value = "1e-27", message = "Масса слишком мала для реального атома (кг)")
-        @DecimalMax(value = "1e-25", message = "Масса слишком велика для атома (кг)")
+        @DecimalMax(value = "1e-24", message = "Масса слишком велика для атома (кг)")
         Double mass,
 
         @NotNull(message = "Параметр решетки обязателен")
@@ -35,7 +35,7 @@ public record CreateAtomListDto(
 
         @NotBlank(message = "Название структуры атома не может быть пустым")
         @Size(min = 1, max = 50, message = "Название структуры атома должно содержать от 1 до 50 символов")
-        @Pattern(regexp = "^[A-Z][a-z]?$", message = "Название структуры атома должно начинаться с заглавной буквы")
+//        @Pattern(regexp = "^[A-Z][a-z]?$", message = "Название структуры атома должно начинаться с заглавной буквы")
 
         String structure
 ) {}

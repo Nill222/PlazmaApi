@@ -12,8 +12,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!atoms || atoms.length === 0) return "<p>Нет данных для отображения</p>";
 
         let html = `
-        <table>
-            <thead>
+        <table class="table table-hover align-middle">
+            <thead class="table-primary">
                 <tr>
                     <th>ID</th>
                     <th>Символ</th>
@@ -22,6 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <th>Парам. решетки a</th>
                     <th>Темп. Дебая</th>
                     <th>Валентность</th>
+                    <th>Структура</th>
                 </tr>
             </thead>
             <tbody>
@@ -37,6 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     <td>${atom.a}</td>
                     <td>${atom.debyeTemperature}</td>
                     <td>${atom.valence}</td>
+                    <td>${atom.structure}</td>
                 </tr>`;
         });
 
@@ -44,29 +46,28 @@ document.addEventListener("DOMContentLoaded", () => {
         return html;
     }
 
-    // 📘 Загрузить все атомы
+    // Загрузка всех атомов
     loadAtomsBtn.addEventListener("click", async () => {
         const response = await fetch(API_BASE);
         const data = await response.json();
-
         if (response.ok && data.data) {
             atomTableContainer.innerHTML = renderTable(data.data);
         } else {
-            atomTableContainer.innerHTML = `<p>Ошибка загрузки атомов</p>`;
+            atomTableContainer.innerHTML = `<p class="text-danger">Ошибка загрузки атомов</p>`;
         }
     });
 
-    // ➕ Создать атом
-    createForm.addEventListener("submit", async (e) => {
+    // Создание атома
+    createForm.addEventListener("submit", async e => {
         e.preventDefault();
-
         const atom = {
             atomName: document.getElementById("atomName").value,
             fullName: document.getElementById("fullName").value,
             mass: parseFloat(document.getElementById("mass").value),
             a: parseFloat(document.getElementById("a").value),
             debyeTemperature: parseFloat(document.getElementById("debyeTemperature").value),
-            valence: parseInt(document.getElementById("valence").value)
+            valence: parseInt(document.getElementById("valence").value),
+            structure: document.getElementById("structure").value
         };
 
         const response = await fetch(API_BASE, {
@@ -76,26 +77,32 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         const data = await response.json();
+
         if (response.ok) {
             alert("✅ " + data.message);
             createForm.reset();
         } else {
-            alert("❌ Ошибка: " + (data.message || "Не удалось создать атом"));
+            // Если бэкенд возвращает JSON с полями и сообщениями ошибок:
+            // { "atomName": "Название атома не может быть пустым", "mass": "Масса слишком мала" }
+            if (data && typeof data === "object") {
+                const messages = Object.values(data).join("\n");
+                alert("❌ Ошибки:\n" + messages);
+            } else {
+                alert("❌ Ошибка: " + (data.message || "Не удалось создать атом"));
+            }
         }
     });
 
-    // 🔍 Найти по символу
+    // Поиск атома
     searchBtn.addEventListener("click", async () => {
         const symbol = document.getElementById("searchSymbol").value.trim();
         if (!symbol) return;
-
         const response = await fetch(`${API_BASE}/symbol/${symbol}`);
         const data = await response.json();
-
         if (response.ok && data.data && data.data.length > 0) {
             searchResult.innerHTML = renderTable(data.data);
         } else {
-            searchResult.innerHTML = "<p>Атом не найден</p>";
+            searchResult.innerHTML = "<p class='text-muted'>Атом не найден</p>";
         }
     });
 });
