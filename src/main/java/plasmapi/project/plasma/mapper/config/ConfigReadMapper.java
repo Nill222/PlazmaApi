@@ -26,7 +26,7 @@ public class ConfigReadMapper implements BaseMapper<ConfigDTO, Config> {
         return new UserDTO(
                 user.getId(),
                 user.getUsername(),
-                user.getPasswordHash(),
+                user.getPassword(),
                 user.getRole()
         );
     }

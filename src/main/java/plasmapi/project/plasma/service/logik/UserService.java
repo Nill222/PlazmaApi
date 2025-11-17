@@ -7,4 +7,5 @@ import java.util.Optional;
 
 public interface UserService extends MotherService<User, Integer, UserCreateDto>{
     Optional<User> findByUsername(String username);
+    Optional<User> findByEmail(String email);
 }
