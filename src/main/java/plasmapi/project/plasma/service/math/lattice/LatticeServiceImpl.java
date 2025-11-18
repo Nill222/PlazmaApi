@@ -25,7 +25,6 @@ public class LatticeServiceImpl implements LatticeService {
     private final AtomRepository atomRepository;
     private final AtomListRepository atomListRepository;
     private final ConfigRepository configRepository;
-    private final Map<Integer, LatticeStrategy> strategies;
     private final AtomMapper atomMapper;
 
     public LatticeServiceImpl(AtomRepository atomRepository,
@@ -39,7 +38,7 @@ public class LatticeServiceImpl implements LatticeService {
         this.atomMapper = atomMapper;
 
         // dimension → strategy
-        this.strategies = strategyList.stream()
+        Map<Integer, LatticeStrategy> strategies = strategyList.stream()
                 .collect(Collectors.toMap(LatticeStrategy::getDimension, s -> s));
     }
 

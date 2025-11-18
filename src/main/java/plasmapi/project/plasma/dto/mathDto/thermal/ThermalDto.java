@@ -21,6 +21,7 @@ public record ThermalDto(
         @Positive(message = "Шаг времени dt должен быть положительным")
         @DecimalMin(value = "1e-6", message = "Шаг времени слишком мал")
         double dt,
+
         StructureType structure
 
 ) {
