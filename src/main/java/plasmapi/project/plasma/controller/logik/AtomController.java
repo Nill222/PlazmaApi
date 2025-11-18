@@ -70,4 +70,13 @@ public class AtomController {
                     .body(new ApiResponse<>(null, e.getMessage(), HttpStatus.NOT_FOUND.value()));
         }
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<Void>> deleteAtom(@PathVariable Integer id) {
+        boolean deleted = atomService.delete(id);
+        if (deleted) return ResponseEntity.ok(new ApiResponse<>(null, "Атом удален", HttpStatus.OK.value()));
+        throw new RuntimeException("Атом с id " + id + " не найден");
+    }
+
 }
+

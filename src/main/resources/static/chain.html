@@ -2,212 +2,241 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Управление ионами</title>
+    <title>Управление ионами - PlasmaLab</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/chain.css">
 </head>
-<body class="bg-light">
-
-<!-- 🔹 Верхнее меню -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+<body>
+<!-- Навигация -->
+<nav class="navbar navbar-expand-lg navbar-dark">
     <div class="container">
-        <a class="navbar-brand fw-bold" href="index.html">Плазменный модуль</a>
-        <div class="collapse navbar-collapse">
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a href="index.html" class="nav-link">Главная</a></li>
-                <li class="nav-item"><a href="array.html" class="nav-link">Атомы</a></li>
-                <li class="nav-item"><a href="chain.html" class="nav-link active">Ионы</a></li>
-                <li class="nav-item"><a class="nav-link active" href="methods.html">Методы</a></li>
-            </ul>
+        <a class="navbar-brand" href="index.html">
+            <i class="fas fa-atom me-2"></i>PlasmaLab
+        </a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <div class="navbar-nav me-auto">
+                <a class="nav-btn" href="index.html">Главная</a>
+                <a class="nav-btn" href="array.html">Атомы</a>
+                <a class="nav-btn active" href="chain.html">Ионы</a>
+                <a class="nav-btn" href="methods.html">Методы</a>
+                <a class="nav-btn" href="charts.html">Графики</a>
+            </div>
+
+            <div class="navbar-nav">
+                <div class="auth-buttons">
+                    <button class="btn btn-outline-light me-2" onclick="showAuthModal()">
+                        <i class="fas fa-sign-in-alt me-2"></i>Войти
+                    </button>
+                    <button class="btn btn-light" onclick="showAuthModal('register')">
+                        <i class="fas fa-user-plus me-2"></i>Регистрация
+                    </button>
+                </div>
+                <div class="user-menu">
+                        <span class="user-info">
+                            <i class="fas fa-user me-2"></i>
+                            <span id="usernameDisplay"></span>
+                        </span>
+                    <button class="btn btn-outline-light" onclick="logout()">
+                        <i class="fas fa-sign-out-alt me-2"></i>Выйти
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </nav>
 
-<!-- 🔹 Основное содержимое -->
+<!-- Основной контент -->
 <div class="container my-5">
-    <div class="card shadow-sm">
+    <!-- Заголовок -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5 fw-bold text-primary">
+                <i class="fas fa-bolt me-3"></i>Управление ионами
+            </h1>
+            <p class="lead text-muted">База данных ионных частиц и их характеристик</p>
+        </div>
+    </div>
+
+    <!-- Карточка со списком ионов -->
+    <div class="card">
+        <div class="card-header">
+            <h2><i class="fas fa-list me-2"></i>Список ионов</h2>
+        </div>
         <div class="card-body">
-            <h1 class="h3 mb-4 text-primary">Управление ионами</h1>
-
-            <!-- 🔸 Кнопка загрузки -->
-            <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-4">
                 <button id="loadIons" class="btn btn-primary">
-                    <i class="bi bi-arrow-clockwise"></i> Загрузить все ионы
+                    <i class="fas fa-sync-alt me-2"></i>Загрузить все ионы
                 </button>
-                <span class="text-muted" id="ionCount"></span>
+                <div class="text-muted small">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Всего ионов: <span id="ionCount">0</span>
+                </div>
             </div>
-
-            <!-- 🔸 Таблица -->
-            <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead class="table-primary">
-                    <tr>
-                        <th>ID</th>
-                        <th>Название</th>
-                        <th>Масса (кг)</th>
-                        <th>Заряд</th>
-                        <th>Действия</th>
-                    </tr>
-                    </thead>
-                    <tbody id="ionTableBody">
-                    <tr><td colspan="5" class="text-center text-muted">Загрузка данных...</td></tr>
-                    </tbody>
-                </table>
+            <div id="ionTableContainer" class="table-responsive">
+                <div class="text-center text-muted py-5">
+                    <i class="fas fa-database fa-3x mb-3"></i>
+                    <p>Нажмите "Загрузить все ионы" для отображения данных</p>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- 🔹 Добавление иона -->
-    <div class="card shadow-sm mt-4">
+    <!-- Создание нового иона (только для авторизованных) -->
+    <div class="card protected-operation">
+        <div class="card-header bg-success">
+            <h2><i class="fas fa-plus-circle me-2"></i>Создать новый ион</h2>
+        </div>
         <div class="card-body">
-            <h2 class="h5 text-success mb-3">Создать новый ион</h2>
             <form id="createIonForm" class="row g-3">
                 <div class="col-md-4">
-                    <label class="form-label">Название иона</label>
-                    <input type="text" id="ionName" class="form-control" placeholder="Na⁺" required>
+                    <label class="form-label fw-semibold">Название иона</label>
+                    <input type="text" id="ionName" class="form-control" placeholder="Na⁺, Cl⁻, Ca²⁺" required>
+                    <div class="form-text">Используйте стандартные обозначения</div>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">Масса (кг)</label>
-                    <input type="number" id="mass" class="form-control" step="any" required>
+                    <label class="form-label fw-semibold">Масса (кг)</label>
+                    <input type="number" id="mass" class="form-control" step="any" placeholder="3.818e-26" required>
+                    <div class="form-text">Масса в килограммах</div>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label">Заряд</label>
-                    <input type="number" id="charge" class="form-control" required>
+                    <label class="form-label fw-semibold">Заряд (e)</label>
+                    <input type="number" id="charge" class="form-control" placeholder="1, -1, 2" required>
+                    <div class="form-text">Заряд в элементарных зарядах</div>
                 </div>
                 <div class="col-12 text-end">
-                    <button type="submit" class="btn btn-success">
-                        <i class="bi bi-plus-circle"></i> Создать
+                    <button type="submit" class="btn btn-success btn-lg">
+                        <i class="fas fa-save me-2"></i>Создать ион
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- 🔹 Удаление иона -->
-    <div class="card shadow-sm mt-4 mb-5">
+    <!-- Поиск иона -->
+    <div class="card">
+        <div class="card-header bg-info">
+            <h2><i class="fas fa-search me-2"></i>Поиск иона</h2>
+        </div>
         <div class="card-body">
-            <h2 class="h5 text-danger mb-3">Удалить ион</h2>
-            <div class="input-group">
-                <input type="number" id="deleteIonId" class="form-control" placeholder="Введите ID иона">
-                <button id="deleteIon" class="btn btn-danger">
-                    <i class="bi bi-trash"></i> Удалить
-                </button>
+            <div class="row g-3 align-items-end">
+                <div class="col-md-8">
+                    <label class="form-label fw-semibold">Найти ион по ID</label>
+                    <input type="number" id="searchIonId" class="form-control" placeholder="Введите ID иона">
+                </div>
+                <div class="col-md-4">
+                    <button id="searchIon" class="btn btn-info w-100">
+                        <i class="fas fa-search me-2"></i>Найти
+                    </button>
+                </div>
+            </div>
+            <div id="searchResult" class="mt-4"></div>
+        </div>
+    </div>
+
+    <!-- Управление ионами -->
+    <div class="card">
+        <div class="card-header bg-warning">
+            <h2><i class="fas fa-cogs me-2"></i>Управление ионами</h2>
+        </div>
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-8">
+                    <label class="form-label fw-semibold">Удалить ион по ID</label>
+                    <input type="number" id="deleteIonId" class="form-control" placeholder="Введите ID иона для удаления">
+                </div>
+                <div class="col-md-4">
+                    <button id="deleteIon" class="btn btn-danger w-100" style="margin-top: 2rem;">
+                        <i class="fas fa-trash me-2"></i>Удалить ион
+                    </button>
+                </div>
+            </div>
+            <div class="mt-3">
+                <small class="text-muted">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    Внимание: удаление иона невозможно отменить
+                </small>
             </div>
         </div>
     </div>
 </div>
 
-<!-- 🔹 Footer -->
-<footer class="bg-primary text-white text-center py-3 mt-auto">
-    <p class="mb-0">© 2025 Плазменный модуль. Все права защищены.</p>
+<!-- Футер -->
+<footer>
+    <div class="container text-center">
+        <p class="mb-2">© 2025 PlasmaLab. Все права защищены.</p>
+        <p class="text-light small">Профессиональная платформа для вычислительного моделирования</p>
+    </div>
 </footer>
 
-<!-- Bootstrap Icons -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-
-<script>
-    const API_BASE = "/ions";
-
-    document.addEventListener("DOMContentLoaded", () => {
-        const tableBody = document.getElementById("ionTableBody");
-        const ionCount = document.getElementById("ionCount");
-        const loadBtn = document.getElementById("loadIons");
-        const createForm = document.getElementById("createIonForm");
-        const deleteBtn = document.getElementById("deleteIon");
-        const searchBtn = document.getElementById("searchIon");
-        const searchResult = document.getElementById("searchResult");
-
-        // 🔸 Функция рендеринга таблицы
-        function renderTable(ions) {
-            if (!ions || ions.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">Нет данных</td></tr>`;
-                ionCount.textContent = "";
-                return;
-            }
-
-            ionCount.textContent = `Всего: ${ions.length}`;
-            tableBody.innerHTML = ions.map(ion => `
-                <tr>
-                    <td>${ion.id}</td>
-                    <td>${ion.name || "—"}</td>
-                    <td>${ion.mass || "—"}</td>
-                    <td>${ion.charge || "—"}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${ion.id}">
-                            <i class="bi bi-trash"></i> Удалить
+<!-- Модальное окно авторизации -->
+<div class="modal fade auth-modal" id="authModal" tabindex="-1">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <ul class="nav nav-tabs auth-tabs w-100">
+                    <li class="nav-item w-50">
+                        <button class="nav-link active w-100" data-bs-toggle="tab" data-bs-target="#login">
+                            <i class="fas fa-sign-in-alt me-2"></i>Вход
                         </button>
-                    </td>
-                </tr>
-            `).join("");
+                    </li>
+                    <li class="nav-item w-50">
+                        <button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#register">
+                            <i class="fas fa-user-plus me-2"></i>Регистрация
+                        </button>
+                    </li>
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="login">
+                        <form id="loginForm">
+                            <div class="mb-3">
+                                <label class="form-label">Имя пользователя</label>
+                                <input type="text" class="form-control" name="username" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Пароль</label>
+                                <input type="password" class="form-control" name="password" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 py-2">
+                                <i class="fas fa-sign-in-alt me-2"></i>Войти в систему
+                            </button>
+                        </form>
+                    </div>
+                    <div class="tab-pane fade" id="register">
+                        <form id="registerForm">
+                            <div class="mb-3">
+                                <label class="form-label">Имя пользователя</label>
+                                <input type="text" class="form-control" name="username" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <input type="email" class="form-control" name="email" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Пароль</label>
+                                <input type="password" class="form-control" name="password" required>
+                            </div>
+                            <button type="submit" class="btn btn-success w-100 py-2">
+                                <i class="fas fa-user-plus me-2"></i>Создать аккаунт
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-            document.querySelectorAll(".delete-btn").forEach(btn => {
-                btn.addEventListener("click", async () => {
-                    const id = btn.dataset.id;
-                    if (confirm(`Удалить ион с ID ${id}?`)) {
-                        const res = await fetch(`${API_BASE}/${id}`, { method: "DELETE" });
-                        const json = await res.json();
-                        if (res.ok) {
-                            alert("✅ " + json.message);
-                            loadBtn.click();
-                        } else {
-                            alert("❌ Ошибка: " + (json.message || "Не удалось удалить ион"));
-                        }
-                    }
-                });
-            });
-        }
-
-        // 🔹 Загрузка всех ионов
-        loadBtn.addEventListener("click", async () => {
-            const response = await fetch(API_BASE);
-            const data = await response.json();
-            if (response.ok && data.data) renderTable(data.data);
-            else tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Ошибка загрузки данных</td></tr>`;
-        });
-
-        // 🔹 Создание иона
-        createForm.addEventListener("submit", async e => {
-            e.preventDefault();
-            const ion = {
-                name: document.getElementById("ionName").value,
-                mass: parseFloat(document.getElementById("mass").value),
-                charge: parseInt(document.getElementById("charge").value)
-            };
-            const response = await fetch(API_BASE, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(ion)
-            });
-            const data = await response.json();
-            if (response.ok) {
-                alert("✅ " + data.message);
-                createForm.reset();
-                loadBtn.click();
-            } else {
-                alert("❌ Ошибка: " + (data.message || "Не удалось создать ион"));
-            }
-        });
-
-        // 🔹 Удаление по ID
-        deleteBtn.addEventListener("click", async () => {
-            const id = document.getElementById("deleteIonId").value.trim();
-            if (!id) return alert("Введите ID иона");
-            if (!confirm(`Удалить ион с ID ${id}?`)) return;
-            const response = await fetch(`${API_BASE}/${id}`, { method: "DELETE" });
-            const data = await response.json();
-            if (response.ok) {
-                alert("✅ " + data.message);
-                document.getElementById("deleteIonId").value = "";
-                loadBtn.click();
-            } else {
-                alert("❌ Ошибка: " + (data.message || "Не удалось удалить ион"));
-            }
-        });
-
-
-        // Загрузка при открытии страницы
-        loadBtn.click();
-    });
-</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/chain.js"></script>
 </body>
 </html>
