@@ -3,6 +3,7 @@ package plasmapi.project.plasma.dto.mathDto.diffusion;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
+import plasmapi.project.plasma.model.atom.StructureType;
 
 public record DiffusionRequest(
 
@@ -24,6 +25,7 @@ public record DiffusionRequest(
 
         double dx,
 
-        double dt
+        double dt,
 
+        StructureType structure
 ) {}

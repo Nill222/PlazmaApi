@@ -4,6 +4,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import plasmapi.project.plasma.dto.mathDto.diffusion.DiffusionProfileDto;
 import plasmapi.project.plasma.dto.mathDto.diffusion.DiffusionRequest;
+import plasmapi.project.plasma.model.atom.StructureType;
+import plasmapi.project.plasma.service.math.lattice.LatticePhysics;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,7 +16,7 @@ import java.util.List;
 @Service
 public class DiffusionServiceImpl implements DiffusionService {
 
-    private static final double DX = 1e-9; // шаг по глубине (м)
+    private static final double DX = 1e-9;       // шаг по глубине (м)
     private static final double DT_DEFAULT = 0.1; // шаг по времени (с)
 
     /**
@@ -31,19 +33,28 @@ public class DiffusionServiceImpl implements DiffusionService {
         double[] C = new double[n];
         C[0] = dto.c0();
 
+        // Базовый коэффициент диффузии
         double D = dto.D();
+
+        // Влияние структуры решётки (SC/BCC/FCC/HCP)
+        StructureType structure = dto.structure();
+        if (structure != null) {
+            double factor = LatticePhysics.diffusionStructureFactor(structure);
+            D *= factor;
+        }
+
         double dt = DT_DEFAULT;
 
         // Число шагов по времени
         int tSteps = (int) (dto.tMax() / dt);
 
-        // Формируем коэффициенты для матрицы Crank-Nicolson
+        // Коэффициент r в схеме Crank-Nicolson
         double r = D * dt / (2 * DX * DX);
 
-        // Трёхдиагональная матрица (n x n)
-        double[] a = new double[n - 1]; // поддиагональ
-        double[] b = new double[n];     // диагональ
-        double[] c = new double[n - 1]; // наддиагональ
+        // Трёхдиагональная матрица
+        double[] a = new double[n - 1];
+        double[] b = new double[n];
+        double[] c = new double[n - 1];
 
         Arrays.fill(b, 1 + 2 * r);
         for (int i = 0; i < n - 1; i++) {
@@ -55,22 +66,19 @@ public class DiffusionServiceImpl implements DiffusionService {
         double[] Cnew;
         for (int t = 0; t < tSteps; t++) {
 
-            // Правая часть
             double[] d = new double[n];
-            d[0] = C[0]; // граничное условие
-            d[n - 1] = C[n - 1]; // ∂C/∂x = 0 на глубине
+            d[0] = C[0];
+            d[n - 1] = C[n - 1];
 
             for (int i = 1; i < n - 1; i++) {
                 d[i] = r * C[i - 1] + (1 - 2 * r) * C[i] + r * C[i + 1];
             }
 
-            // Решаем трёхдиагональную систему
             Cnew = thomasAlgorithm(a, b, c, d);
-
             System.arraycopy(Cnew, 0, C, 0, n);
         }
 
-        // Формируем профиль концентрации
+        // Формирование результата
         List<Double> depths = new ArrayList<>(n);
         List<Double> concentrations = new ArrayList<>(n);
         for (int i = 0; i < n; i++) {
@@ -82,7 +90,7 @@ public class DiffusionServiceImpl implements DiffusionService {
     }
 
     /**
-     * Метод решения трёхдиагональной системы (Thomas algorithm)
+     * Thomas algorithm — решение трёхдиагональной системы
      */
     private double[] thomasAlgorithm(double[] a, double[] b, double[] c, double[] d) {
         int n = b.length;
@@ -97,13 +105,16 @@ public class DiffusionServiceImpl implements DiffusionService {
             cPrime[i] = c[i] / m;
             dPrime[i] = (d[i] - a[i - 1] * dPrime[i - 1]) / m;
         }
-        dPrime[n - 1] = (d[n - 1] - a[n - 2] * dPrime[n - 2]) / (b[n - 1] - a[n - 2] * cPrime[n - 2]);
+
+        dPrime[n - 1] = (d[n - 1] - a[n - 2] * dPrime[n - 2])
+                / (b[n - 1] - a[n - 2] * cPrime[n - 2]);
 
         double[] x = new double[n];
         x[n - 1] = dPrime[n - 1];
         for (int i = n - 2; i >= 0; i--) {
             x[i] = dPrime[i] - cPrime[i] * x[i + 1];
         }
+
         return x;
     }
 }
