@@ -3,6 +3,7 @@ package plasmapi.project.plasma.service.math.collision;
 import org.springframework.stereotype.Service;
 import plasmapi.project.plasma.dto.mathDto.collision.CollisionDto;
 import plasmapi.project.plasma.dto.mathDto.collision.CollisionResult;
+import plasmapi.project.plasma.service.math.lattice.LatticePhysics;
 
 import java.util.Random;
 
@@ -19,14 +20,19 @@ public class CollisionServiceImpl implements CollisionService {
      *  angle угол падения (градусы)
      *  объект CollisionResult
      */
-    public CollisionResult simulateCollision(CollisionDto collisionDto) {
-        double theta = Math.toRadians(collisionDto.angle());
-        double k = (4 * collisionDto.mIon() * collisionDto.mAtom()) /
-                Math.pow(collisionDto.mIon() + collisionDto.mAtom(), 2);
+    @Override
+    public CollisionResult simulateCollision(CollisionDto dto) {
+        double theta = Math.toRadians(dto.angle());
+        double mIon = dto.mIon();
+        double mAtom = dto.mAtom();
+        double k = (4 * mIon * mAtom) / Math.pow(mIon + mAtom, 2);
 
-        double Etr = collisionDto.E() * k * Math.cos(theta) * Math.cos(theta); // переданная энергия
-        double reflection = 1.0 - k; // доля отражённой энергии
-        double randomScattering = (random.nextDouble() - 0.5) * 0.1; // шум
+        // structure factor from dto (may contain latticeStructure)
+        double structFactor = dto.structure() != null ? LatticePhysics.collisionStructureFactor(dto.structure()) : 1.0;
+
+        double Etr = dto.E() * k * Math.cos(theta) * Math.cos(theta) * structFactor;
+        double reflection = Math.max(0.0, 1.0 - k * structFactor);
+        double randomScattering = (random.nextDouble() - 0.5) * 0.1 * structFactor;
 
         return new CollisionResult(Etr, reflection + randomScattering);
     }

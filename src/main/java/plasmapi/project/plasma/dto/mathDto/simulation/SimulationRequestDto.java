@@ -1,68 +1,72 @@
-package plasmapi.project.plasma.dto.mathDto.simulation;
+        package plasmapi.project.plasma.dto.mathDto.simulation;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.*;
-import plasmapi.project.plasma.dto.mathDto.lattice.LatticeGenerationRequest;
+        import jakarta.validation.Valid;
+        import jakarta.validation.constraints.*;
+        import plasmapi.project.plasma.dto.mathDto.lattice.LatticeGenerationRequest;
+        import plasmapi.project.plasma.dto.mathDto.potential.PotentialDto;
+        import plasmapi.project.plasma.model.atom.StructureType;
 
-public record SimulationRequestDto(
-        @NotNull(message = "ID конфигурации обязателен")
-        @Positive(message = "ID конфигурации должен быть положительным")
-        Integer configId,
+        public record SimulationRequestDto(
 
-        @NotNull(message = "ID иона обязателен")
-        @Positive(message = "ID иона должен быть положительным")
-        Integer ionId,
+                // --- Основные сущности ---
+                @NotNull @Positive
+                Integer configId,
 
-        @NotNull(message = "ID атома обязателен")
-        @Positive(message = "ID атома должен быть положительным")
-        Integer atomListId,
+                @NotNull @Positive
+                Integer ionId,
 
-        boolean generateLattice,
+                @NotNull @Positive
+                Integer atomListId,
 
-        @Valid
-        LatticeGenerationRequest latticeRequest,
+                // --- Генерация решётки ---
+                boolean generateLattice,
+                @Valid LatticeGenerationRequest latticeRequest,
 
-        @Positive(message = "Напряжение плазмы должно быть положительным")
-        @DecimalMax(value = "1e6", message = "Напряжение слишком велико")
-        double plasmaVoltage,
+                // --- Структура решётки ---
+                @NotNull
+                StructureType latticeStructure,
 
-        @Positive(message = "Давление должно быть положительным")
-        @DecimalMax(value = "1e5", message = "Давление слишком велико")
-        double pressure,
+                // --- Плазма ---
+                @NotNull @Positive
+                Double plasmaVoltage,
 
-        @Positive(message = "Электронная температура должна быть положительной")
-        @DecimalMax(value = "1e5", message = "Электронная температура слишком высока")
-        double electronTemp,
+                @NotNull @Positive
+                Double pressure,
 
-        @Positive(message = "Шаг времени должен быть положительным")
-        @DecimalMin(value = "1e-6", message = "Шаг времени слишком мал")
-        double timeStep,
+                @NotNull @Positive
+                Double electronTemp,
 
-        @Positive(message = "Общее время должно быть положительным")
-        @DecimalMax(value = "1e6", message = "Общее время слишком велико")
-        double totalTime,
+                // --- Потенциалы ---
+                @Valid
+                PotentialDto potential,
 
-        @DecimalMin(value = "0.0", inclusive = true, message = "Угол столкновения не может быть меньше 0°")
-        @DecimalMax(value = "180.0", inclusive = true, message = "Угол столкновения не может быть больше 180°")
-        double impactAngle,
+                // --- Столкновения ---
+                @NotNull
+                @DecimalMin("0.0") @DecimalMax("180.0")
+                Double impactAngle,
 
-        @Positive(message = "Коэффициент диффузии (D0) должен быть положительным")
-        @DecimalMax(value = "1e-2", message = "Коэффициент диффузии слишком велик")
-        double diffusionPrefactor,
+                // --- Диффузия ---
+                @NotNull @Positive
+                Double diffusionPrefactor,   // D0
 
-        @Positive(message = "Энергия активации (Q) должна быть положительной")
-        @DecimalMax(value = "1e6", message = "Энергия активации слишком велика")
-        double activationEnergy,
+                @NotNull @Positive
+                Double activationEnergy,     // Q
 
-        @PositiveOrZero(message = "Поверхностная концентрация не может быть отрицательной")
-        @DecimalMax(value = "1e3", message = "Поверхностная концентрация слишком велика")
-        double surfaceConcentration,
+                @NotNull @PositiveOrZero
+                Double surfaceConcentration,
 
-        @Positive(message = "Глубина должна быть положительной")
-        @DecimalMax(value = "1e3", message = "Глубина слишком велика")
-        double depth,
+                @NotNull @Positive
+                Double depth,
 
-        @Positive(message = "Теплопроводность должна быть положительной")
-        @DecimalMax(value = "1e3", message = "Теплопроводность слишком велика")
-        double thermalConductivity
-) {}
+                // --- Время ---
+                @NotNull @Positive
+                Double timeStep,
+
+                @NotNull @Positive
+                Double totalTime,
+
+                // --- Материальные свойства ---
+                @NotNull @Positive
+                Double thermalConductivity
+        ) {}
+

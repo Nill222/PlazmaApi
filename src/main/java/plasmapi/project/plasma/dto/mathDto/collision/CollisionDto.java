@@ -3,6 +3,7 @@ package plasmapi.project.plasma.dto.mathDto.collision;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Positive;
+import plasmapi.project.plasma.model.atom.StructureType;
 
 public record CollisionDto(
         @Positive(message = "Энергия столкновения должна быть положительной")
@@ -19,7 +20,9 @@ public record CollisionDto(
 
         @DecimalMin(value = "0.0", inclusive = true, message = "Угол должен быть не меньше 0°")
         @DecimalMax(value = "180.0", inclusive = true, message = "Угол должен быть не больше 180°")
-        double angle
+        double angle,
+
+        StructureType structure
 
 ) {
 }

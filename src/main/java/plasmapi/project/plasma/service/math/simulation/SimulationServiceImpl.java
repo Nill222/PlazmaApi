@@ -99,7 +99,7 @@ public class SimulationServiceImpl implements SimulationService {
                             .orElse(0.0)  // безопасное значение
             );
 
-            CollisionDto collisionDto = new CollisionDto(ionEnergy, ionMass, atomMass, req.impactAngle());
+            CollisionDto collisionDto = new CollisionDto(ionEnergy, ionMass, atomMass, req.impactAngle(), req.latticeStructure());
             CollisionResult collRes = collisionService.simulateCollision(collisionDto);
             if (collRes != null) collisions.add(collRes);
             totalTransferred += collRes != null ? collRes.transferredEnergy() : 0.0;
@@ -113,7 +113,8 @@ public class SimulationServiceImpl implements SimulationService {
                 estimatedTemperature,
                 req.thermalConductivity() > 0 ? req.thermalConductivity() : 0.05,
                 req.totalTime(),
-                req.timeStep()
+                req.timeStep(),
+                req.latticeStructure()
         );
         List<Double> coolingProfile = thermalService.simulateCooling(thermalDto);
         double finalTemperature = coolingProfile.isEmpty() ? estimatedTemperature :

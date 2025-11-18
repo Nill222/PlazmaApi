@@ -2,25 +2,28 @@ package plasmapi.project.plasma.dto.mathDto.potential;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.PositiveOrZero;
+import plasmapi.project.plasma.model.atom.StructureType;
 import plasmapi.project.plasma.service.math.potential.PotentialType;
 
 public record PotentialDto(
 
-        @NotNull(message = "Тип потенциала обязателен")
-        PotentialType type,
+        @NotNull PotentialType type,
 
-        @NotNull(message = "Расстояние r обязательно")
-        @Positive(message = "r должно быть положительным")
-        Double r,
+        // расстояние
+        @NotNull @Positive Double r,
 
-        // MORSE
-        Double De,
-        Double a,
-        Double re,
+        // Morse
+        @PositiveOrZero Double De,
+        @PositiveOrZero Double a,
+        @PositiveOrZero Double re,
 
-        // Lennard-Jones
-        Double sigma,
-        Double epsilon
+        // LJ
+        @PositiveOrZero Double sigma,
+        @PositiveOrZero Double epsilon,
+
+        StructureType structure
 ) {}
+
 
 

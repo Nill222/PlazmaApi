@@ -27,7 +27,9 @@ public class Atom {
 
     private Double x;
     private Double y;
+    private Double z;
     private Double vx;
     private Double vy;
+    private Double vz;
 }
 

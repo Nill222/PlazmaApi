@@ -1,6 +1,7 @@
 package plasmapi.project.plasma.dto.logikDTO.atom;
 
 import jakarta.validation.constraints.*;
+import plasmapi.project.plasma.model.atom.StructureType;
 
 public record CreateAtomListDto(
 
@@ -37,5 +38,5 @@ public record CreateAtomListDto(
         @Size(min = 1, max = 50, message = "Название структуры атома должно содержать от 1 до 50 символов")
 //        @Pattern(regexp = "^[A-Z][a-z]?$", message = "Название структуры атома должно начинаться с заглавной буквы")
 
-        String structure
+        StructureType structure
 ) {}

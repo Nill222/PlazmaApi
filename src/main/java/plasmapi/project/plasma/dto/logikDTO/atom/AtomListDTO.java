@@ -1,5 +1,7 @@
 package plasmapi.project.plasma.dto.logikDTO.atom;
 
+import plasmapi.project.plasma.model.atom.StructureType;
+
 public record AtomListDTO(
         Integer id,
         String atomName,
@@ -8,6 +10,6 @@ public record AtomListDTO(
         Double a,
         Double debyeTemperature,
         Integer valence,
-        String structure
+        StructureType structure
 ) {}
 
