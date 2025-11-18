@@ -142,7 +142,8 @@ public class SimulationServiceImpl implements SimulationService {
                 req.totalTime(),
                 req.depth(),
                 DX,
-                dt
+                dt,
+                req.latticeStructure()
         );
 
         DiffusionProfileDto diffusion = diffusionService.calculateDiffusionProfile(diffReq);

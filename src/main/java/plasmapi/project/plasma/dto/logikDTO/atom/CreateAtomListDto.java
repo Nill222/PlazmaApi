@@ -35,7 +35,5 @@ public record CreateAtomListDto(
         Integer valence,
 
         @NotNull(message = "Название структуры атома не может быть пустым")
-        @Size(min = 1, max = 50, message = "Название структуры атома должно содержать от 1 до 50 символов")
-//        @Pattern(regexp = "^[A-Z][a-z]?$", message = "Название структуры атома должно начинаться с заглавной буквы")
         StructureType structure
 ) {}

@@ -23,22 +23,21 @@ public class LatticePhysics {
         };
     }
 
-    public static double potentialReFactor(StructureType s) {
-        // factor to multiply base lattice parameter to get re
-        return switch (s) {
-            case SC -> 1.0;
-            case BCC -> 0.86602540378; // sqrt(3)/2
-            case FCC -> 0.70710678118; // sqrt(2)/2
-            case HCP -> 1.0;
-        };
-    }
-
     public static double collisionStructureFactor(StructureType s) {
         return switch (s) {
             case SC -> 1.0;
             case BCC -> 1.08;
             case FCC -> 1.15;
             case HCP -> 1.18;
+        };
+    }
+
+    public static double morseReFactor(StructureType type) {
+        return switch (type) {
+            case SC -> 1.0;
+            case BCC -> 0.95;
+            case FCC -> 0.90;
+            case HCP -> 0.90;
         };
     }
 

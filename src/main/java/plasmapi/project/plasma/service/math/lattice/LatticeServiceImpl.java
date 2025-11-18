@@ -16,8 +16,6 @@ import plasmapi.project.plasma.service.math.lattice.strategy.CrystalLatticeStrat
 import plasmapi.project.plasma.service.math.lattice.strategy.LatticeStrategy;
 
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 public class LatticeServiceImpl implements LatticeService {
@@ -27,33 +25,32 @@ public class LatticeServiceImpl implements LatticeService {
     private final ConfigRepository configRepository;
     private final AtomMapper atomMapper;
 
-    public LatticeServiceImpl(AtomRepository atomRepository,
-                              AtomListRepository atomListRepository,
-                              ConfigRepository configRepository,
-                              List<LatticeStrategy> strategyList,
-                              AtomMapper atomMapper) {
+    public LatticeServiceImpl(
+            AtomRepository atomRepository,
+            AtomListRepository atomListRepository,
+            ConfigRepository configRepository,
+            AtomMapper atomMapper) {
+
         this.atomRepository = atomRepository;
         this.atomListRepository = atomListRepository;
         this.configRepository = configRepository;
         this.atomMapper = atomMapper;
-
-        // dimension → strategy
-        Map<Integer, LatticeStrategy> strategies = strategyList.stream()
-                .collect(Collectors.toMap(LatticeStrategy::getDimension, s -> s));
     }
 
     @Override
     public List<AtomDto> generateLattice(LatticeGenerationRequest request) {
+
         Config config = configRepository.findById(request.configId())
                 .orElseThrow(() -> new IllegalArgumentException("Config not found"));
 
         AtomList atomType = atomListRepository.findById(request.atomListId())
                 .orElseThrow(() -> new IllegalArgumentException("Atom type not found"));
 
-        double a = atomType.getA() * 1e-10; // Å -> m
-        StructureType structure = atomType.getStructure() != null ? atomType.getStructure() : request.structure();
+        double a = atomType.getA() * 1e-10;
 
-        // choose appropriate strategy (factory or new CrystalLatticeStrategy(structure))
+        StructureType structure =
+                atomType.getStructure() != null ? atomType.getStructure() : request.structure();
+
         LatticeStrategy strategy = new CrystalLatticeStrategy(structure);
 
         List<AtomPosition> positions = strategy.generate(request.count(), a);
