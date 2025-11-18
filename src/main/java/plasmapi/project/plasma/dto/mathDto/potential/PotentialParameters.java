@@ -8,6 +8,7 @@ public record PotentialParameters(
         Double De,
         Double a,
         Double re,
-        Double sigma
+        Double sigma,
+        double stiffness
 ) {}
 

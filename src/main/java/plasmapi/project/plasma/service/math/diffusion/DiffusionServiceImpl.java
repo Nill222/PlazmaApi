@@ -4,7 +4,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import plasmapi.project.plasma.dto.mathDto.diffusion.DiffusionProfileDto;
 import plasmapi.project.plasma.dto.mathDto.diffusion.DiffusionRequest;
-import plasmapi.project.plasma.model.atom.StructureType;
 import plasmapi.project.plasma.service.math.lattice.LatticePhysics;
 
 import java.util.ArrayList;
@@ -26,32 +25,27 @@ public class DiffusionServiceImpl implements DiffusionService {
     public DiffusionProfileDto calculateDiffusionProfile(DiffusionRequest dto) {
 
         int n = (int) (dto.depth() / DX);
-        if (n < 2) {
-            throw new IllegalArgumentException("Глубина слишком мала для расчёта: n=" + n);
-        }
+        if (n < 2) throw new IllegalArgumentException("Глубина слишком мала: n=" + n);
 
         double[] C = new double[n];
         C[0] = dto.c0();
 
-        // Базовый коэффициент диффузии
         double D = dto.D();
-
-        // Влияние структуры решётки (SC/BCC/FCC/HCP)
-        StructureType structure = dto.structure();
-        if (structure != null) {
-            double factor = LatticePhysics.diffusionStructureFactor(structure);
-            D *= factor;
+        if (dto.structure() != null) {
+            D *= LatticePhysics.diffusionStructureFactor(dto.structure());
         }
 
-        double dt = DT_DEFAULT;
+        if (dto.potential() != null) {
+            // stiffer potential -> lower mobility. берем простую зависимость: D := D / (1 + alpha * stiffness)
+            double stiffness = dto.potential().stiffness();
+            double alpha = 1e-19; // масштаб — подбирай под единицы stiffness
+            D /= (1.0 + alpha * stiffness);
+        }
 
-        // Число шагов по времени
+        double dt = dto.dt() > 0 ? dto.dt() : DT_DEFAULT;
         int tSteps = (int) (dto.tMax() / dt);
-
-        // Коэффициент r в схеме Crank-Nicolson
         double r = D * dt / (2 * DX * DX);
 
-        // Трёхдиагональная матрица
         double[] a = new double[n - 1];
         double[] b = new double[n];
         double[] c = new double[n - 1];
@@ -62,23 +56,18 @@ public class DiffusionServiceImpl implements DiffusionService {
             c[i] = -r;
         }
 
-        // Основной цикл по времени
         double[] Cnew;
         for (int t = 0; t < tSteps; t++) {
-
             double[] d = new double[n];
             d[0] = C[0];
             d[n - 1] = C[n - 1];
-
             for (int i = 1; i < n - 1; i++) {
                 d[i] = r * C[i - 1] + (1 - 2 * r) * C[i] + r * C[i + 1];
             }
-
             Cnew = thomasAlgorithm(a, b, c, d);
             System.arraycopy(Cnew, 0, C, 0, n);
         }
 
-        // Формирование результата
         List<Double> depths = new ArrayList<>(n);
         List<Double> concentrations = new ArrayList<>(n);
         for (int i = 0; i < n; i++) {
@@ -88,6 +77,7 @@ public class DiffusionServiceImpl implements DiffusionService {
 
         return new DiffusionProfileDto(depths, concentrations);
     }
+    // thomasAlgorithm same as before...
 
     /**
      * Thomas algorithm — решение трёхдиагональной системы

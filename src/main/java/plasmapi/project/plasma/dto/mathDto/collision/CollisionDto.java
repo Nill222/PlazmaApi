@@ -3,6 +3,7 @@ package plasmapi.project.plasma.dto.mathDto.collision;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Positive;
+import plasmapi.project.plasma.dto.mathDto.potential.PotentialParameters;
 import plasmapi.project.plasma.model.atom.StructureType;
 
 public record CollisionDto(
@@ -18,9 +19,11 @@ public record CollisionDto(
         @DecimalMax(value = "1e-20", message = "Масса атома слишком велика для модели")
         double mAtom,
 
-        @DecimalMin(value = "0.0", inclusive = true, message = "Угол должен быть не меньше 0°")
-        @DecimalMax(value = "180.0", inclusive = true, message = "Угол должен быть не больше 180°")
+        @DecimalMin(value = "0.0", message = "Угол должен быть не меньше 0°")
+        @DecimalMax(value = "180.0", message = "Угол должен быть не больше 180°")
         double angle,
+
+        PotentialParameters potential,
 
         StructureType structure
 

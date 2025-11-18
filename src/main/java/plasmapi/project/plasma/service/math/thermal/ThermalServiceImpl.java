@@ -20,7 +20,14 @@ public class ThermalServiceImpl implements ThermalService {
      */
     @Override
     public List<Double> simulateCooling(ThermalDto dto) {
-        double lambda = dto.lambda() * LatticePhysics.thermalConductivityFactor(dto.structure());
+        double structFactor = dto.structure() != null ? LatticePhysics.thermalConductivityFactor(dto.structure()) : 1.0;
+        double potentialFactor = 1.0;
+        if (dto.potential() != null) {
+            potentialFactor = 1.0 + Math.log1p(dto.potential().stiffness()) * 0.01; // мягкое влияние
+        }
+
+        double lambda = dto.lambda() * structFactor * potentialFactor;
+
         List<Double> temps = new ArrayList<>();
         for (double t = 0.0; t <= dto.tMax(); t += dto.dt()) {
             temps.add(dto.T0() * Math.exp(-lambda * t));

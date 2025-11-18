@@ -3,6 +3,7 @@ package plasmapi.project.plasma.dto.mathDto.thermal;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Positive;
+import plasmapi.project.plasma.dto.mathDto.potential.PotentialParameters;
 import plasmapi.project.plasma.model.atom.StructureType;
 
 public record ThermalDto(
@@ -21,6 +22,8 @@ public record ThermalDto(
         @Positive(message = "Шаг времени dt должен быть положительным")
         @DecimalMin(value = "1e-6", message = "Шаг времени слишком мал")
         double dt,
+
+        PotentialParameters potential,
 
         StructureType structure
 
