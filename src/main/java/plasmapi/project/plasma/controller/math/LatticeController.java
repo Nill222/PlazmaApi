@@ -18,20 +18,20 @@ import java.util.List;
 @RequiredArgsConstructor
 public class LatticeController {
 
-    private final LatticeService latticeService;
-
-    /**
-     * Сгенерировать решётку атомов и сохранить в конфигурацию.
-     * Возвращает список созданных AtomDto.
-     */
-    @PostMapping("/generate")
-    public ResponseEntity<ApiResponse<List<AtomDto>>> generate(@Valid @RequestBody LatticeGenerationRequest request) {
-        List<AtomDto> atoms = latticeService.generateLattice(request);
-        ApiResponse<List<AtomDto>> resp = new ApiResponse<>(
-                atoms,
-                "Решётка сгенерирована",
-                HttpStatus.CREATED.value()
-        );
-        return ResponseEntity.status(HttpStatus.CREATED).body(resp);
-    }
+//    private final LatticeService latticeService;
+//
+//    /**
+//     * Сгенерировать решётку атомов и сохранить в конфигурацию.
+//     * Возвращает список созданных AtomDto.
+//     */
+//    @PostMapping("/generate")
+//    public ResponseEntity<ApiResponse<List<AtomDto>>> generate(@Valid @RequestBody LatticeGenerationRequest request) {
+//        List<AtomDto> atoms = latticeService.generateLattice(request);
+//        ApiResponse<List<AtomDto>> resp = new ApiResponse<>(
+//                atoms,
+//                "Решётка сгенерирована",
+//                HttpStatus.CREATED.value()
+//        );
+//        return ResponseEntity.status(HttpStatus.CREATED).body(resp);
+//    }
 }

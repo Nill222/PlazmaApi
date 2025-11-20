@@ -8,7 +8,7 @@
 
         public record SimulationRequestDto(
 
-                // --- Основные сущности ---
+                // ========= 1) Основные ID =========
                 @NotNull @Positive
                 Integer configId,
 
@@ -18,55 +18,65 @@
                 @NotNull @Positive
                 Integer atomListId,
 
-                // --- Генерация решётки ---
+
+                // ========= 2) Генерация решётки =========
                 boolean generateLattice,
                 @Valid LatticeGenerationRequest latticeRequest,
 
-                // --- Структура решётки ---
+
+                // ========= 3) Структура решётки =========
                 @NotNull
                 StructureType latticeStructure,
 
-                // --- Плазма ---
+
+                // ========= 4) Плазма (вводимые параметры) =========
+                // Остальные параметры плазмы берутся из PlasmaConfiguration
                 @NotNull @Positive
-                Double plasmaVoltage,
+                Double plasmaVoltage,       // U
 
                 @NotNull @Positive
-                Double pressure,
+                Double pressure,            // p
 
                 @NotNull @Positive
-                Double electronTemp,
+                Double electronTemp,        // T_e
 
-                // --- Потенциалы ---
+
+                // ========= 5) Потенциал (ручной выбор / override) =========
                 @Valid
                 PotentialDto potential,
 
-                // --- Столкновения ---
+
+                // ========= 6) Столкновения =========
                 @NotNull
                 @DecimalMin("0.0") @DecimalMax("180.0")
                 Double impactAngle,
 
-                // --- Диффузия ---
+
+                // ========= 7) Диффузия =========
                 @NotNull @Positive
                 Double diffusionPrefactor,   // D0
 
                 @NotNull @Positive
-                Double activationEnergy,     // Q
+                Double activationEnergy,     // Q (J/mol)
 
                 @NotNull @PositiveOrZero
-                Double surfaceConcentration,
+                Double surfaceConcentration, // C0
 
                 @NotNull @Positive
-                Double depth,
+                Double depth,                // глубина моделирования
 
-                // --- Время ---
+
+                // ========= 8) Время =========
                 @NotNull @Positive
-                Double timeStep,
+                Double timeStep,             // dt
 
                 @NotNull @Positive
-                Double totalTime,
+                Double totalTime,            // t_max
 
-                // --- Материальные свойства ---
+
+                // ========= 9) Материальные свойства поверхности =========
+                // (остальное берётся из AtomList)
                 @NotNull @Positive
-                Double thermalConductivity
+                Double thermalConductivity   // λ₀ — базовое значение
         ) {}
 

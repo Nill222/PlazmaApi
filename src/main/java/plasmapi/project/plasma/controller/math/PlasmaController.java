@@ -22,16 +22,16 @@ public class PlasmaController {
     /**
      * Рассчитать параметры плазмы (плотность электронов, скорость и т.д.)
      */
-    @PostMapping("/calculate")
-    public ResponseEntity<ApiResponse<PlasmaParameters>> calculate(
-            @Valid @RequestBody PlasmaDto plasmaDto) {
-
-        PlasmaParameters params = plasmaService.calculate(plasmaDto);
-        ApiResponse<PlasmaParameters> resp = new ApiResponse<>(
-                params,
-                "Параметры плазмы рассчитаны",
-                HttpStatus.OK.value()
-        );
-        return ResponseEntity.ok(resp);
-    }
+//    @PostMapping("/calculate")
+//    public ResponseEntity<ApiResponse<PlasmaParameters>> calculate(
+//            @Valid @RequestBody PlasmaDto plasmaDto) {
+//
+//        PlasmaParameters params = plasmaService.calculate(plasmaDto);
+//        ApiResponse<PlasmaParameters> resp = new ApiResponse<>(
+//                params,
+//                "Параметры плазмы рассчитаны",
+//                HttpStatus.OK.value()
+//        );
+//        return ResponseEntity.ok(resp);
+//    }
 }

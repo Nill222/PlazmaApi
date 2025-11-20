@@ -16,19 +16,19 @@ import plasmapi.project.plasma.service.math.diffusion.DiffusionService;
 @RequiredArgsConstructor
 public class DiffusionController {
 
-    private final DiffusionService diffusionService;
-
-    /**
-     * Рассчитать профиль диффузии (уравнение Фика)
-     */
-    @PostMapping("/calculate")
-    public ResponseEntity<ApiResponse<DiffusionProfileDto>> calculate(@Valid @RequestBody DiffusionRequest dto) {
-        DiffusionProfileDto profile = diffusionService.calculateDiffusionProfile(dto);
-        ApiResponse<DiffusionProfileDto> resp = new ApiResponse<>(
-                profile,
-                "Профиль диффузии рассчитан",
-                HttpStatus.OK.value()
-        );
-        return ResponseEntity.ok(resp);
-    }
+//    private final DiffusionService diffusionService;
+//
+//    /**
+//     * Рассчитать профиль диффузии (уравнение Фика)
+//     */
+//    @PostMapping("/calculate")
+//    public ResponseEntity<ApiResponse<DiffusionProfileDto>> calculate(@Valid @RequestBody DiffusionRequest dto) {
+//        DiffusionProfileDto profile = diffusionService.calculateDiffusionProfile(dto);
+//        ApiResponse<DiffusionProfileDto> resp = new ApiResponse<>(
+//                profile,
+//                "Профиль диффузии рассчитан",
+//                HttpStatus.OK.value()
+//        );
+//        return ResponseEntity.ok(resp);
+//    }
 }

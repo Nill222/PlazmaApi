@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import plasmapi.project.plasma.dto.ApiResponse;
 import plasmapi.project.plasma.dto.mathDto.simulation.SimulationRequestDto;
 import plasmapi.project.plasma.dto.mathDto.simulation.SimulationResultDto;
+import plasmapi.project.plasma.service.math.simulation.SimulationOrchestratorService;
 import plasmapi.project.plasma.service.math.simulation.SimulationService;
 
 
@@ -16,7 +17,7 @@ import plasmapi.project.plasma.service.math.simulation.SimulationService;
 @RequiredArgsConstructor
 public class SimulationController {
 
-    private final SimulationService simulationService;
+    private final SimulationOrchestratorService simulationService;
 
     /**
      * Запустить полную симуляцию (оркестратор).
@@ -26,7 +27,7 @@ public class SimulationController {
     public ResponseEntity<ApiResponse<SimulationResultDto>> runSimulation(
             @Valid @RequestBody SimulationRequestDto request) {
 
-        SimulationResultDto result = simulationService.runSimulation(request);
+        SimulationResultDto result = simulationService.run(request);
         ApiResponse<SimulationResultDto> resp = new ApiResponse<>(
                 result,
                 "Симуляция выполнена",

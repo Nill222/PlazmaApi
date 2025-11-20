@@ -6,29 +6,30 @@ import jakarta.validation.constraints.PositiveOrZero;
 import plasmapi.project.plasma.dto.mathDto.potential.PotentialParameters;
 import plasmapi.project.plasma.model.atom.StructureType;
 
+import java.util.List;
+
 public record DiffusionRequest(
 
-        @Positive(message = "Коэффициент диффузии D должен быть положительным")
-        @DecimalMax(value = "1e-2", message = "Коэффициент диффузии слишком велик для модели")
-        double D,
+        // --- Геометрия и шаги ---
+        double depth,        // глубина слоя, m
+        Double dx,           // шаг по глубине, m (optional, default 1e-9)
+        Double dt,           // шаг по времени, s (optional, default 0.1)
+        Double tMax,         // максимальное время, s (optional, default 1.0)
 
-        @PositiveOrZero(message = "Начальная концентрация c0 не может быть отрицательной")
-        @DecimalMax(value = "1e3", message = "Начальная концентрация слишком велика")
-        double c0,
+        // --- Диффузионные параметры ---
+        double D,            // базовый коэффициент диффузии, m^2/s
+        double c0,           // начальная концентрация на поверхности
 
-        @Positive(message = "Максимальное время tMax должно быть положительным")
-        @DecimalMax(value = "1e6", message = "Максимальное время слишком велико")
-        double tMax,
+        // --- Материал и потенциал ---
+        StructureType structure,        // структура кристалла (BCC, FCC, HCP)
+        PotentialParameters potential, // параметры потенциала (stiffness, energy)
 
-        @Positive(message = "Глубина диффузии должна быть положительной")
-        @DecimalMax(value = "1e3", message = "Глубина слишком велика для модели")
-        double depth,
+        // --- Усиленная диффузия от повреждений ---
+        Double damageEnergy, // суммарная энергия повреждений, J
+        Double damageRate,   // скорость подачи энергии повреждений, J/s
 
-        double dx,
-
-        double dt,
-
-        PotentialParameters potential,
-
-        StructureType structure
+        // --- Активационная энергия для температурной зависимости ---
+        Double activationEnergy,      // J/mol
+        Double temperature,           // K (скалярная температура)
+        List<Double> temperatureProfile // профиль температуры по времени (если есть)
 ) {}

@@ -1,31 +1,18 @@
 package plasmapi.project.plasma.dto.mathDto.collision;
 
-import jakarta.validation.constraints.DecimalMax;
-import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.Positive;
-import plasmapi.project.plasma.dto.mathDto.potential.PotentialParameters;
+import plasmapi.project.plasma.model.atom.AtomList;
 import plasmapi.project.plasma.model.atom.StructureType;
 
 public record CollisionDto(
-        @Positive(message = "Энергия столкновения должна быть положительной")
-        @DecimalMax(value = "1e6", message = "Энергия слишком велика, проверьте входные данные")
-        double E,
-
-        @Positive(message = "Масса иона должна быть положительной")
-        @DecimalMax(value = "1e-20", message = "Масса иона слишком велика для модели")
-        double mIon,
-
-        @Positive(message = "Масса атома должна быть положительной")
-        @DecimalMax(value = "1e-20", message = "Масса атома слишком велика для модели")
-        double mAtom,
-
-        @DecimalMin(value = "0.0", message = "Угол должен быть не меньше 0°")
-        @DecimalMax(value = "180.0", message = "Угол должен быть не больше 180°")
-        double angle,
-
-        PotentialParameters potential,
-
-        StructureType structure
-
+        Double distance,                // фактическое расстояние (м), может быть null → используем nn
+        double latticeParameter,        // параметр решётки (м)
+        double angle,                   // угол падения (градусы)
+        double E,                       // энергия иона (Дж)
+        double mIon,                    // масса иона (кг)
+        double mAtom,                   // масса атома мишени (кг)
+        Double xi,                      // резонансный множитель ξ
+        Double surfaceBindingEnergy,    // энергия связи на поверхности (Дж)
+        StructureType structure,        // тип кристаллической структуры (FCC, BCC, HCP)
+        AtomList atom                   // атомные параметры для выбора потенциала
 ) {
 }

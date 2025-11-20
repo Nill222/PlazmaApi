@@ -4,28 +4,30 @@ import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Positive;
 import plasmapi.project.plasma.dto.mathDto.potential.PotentialParameters;
+import plasmapi.project.plasma.model.atom.AtomList;
 import plasmapi.project.plasma.model.atom.StructureType;
 
 public record ThermalDto(
-        @Positive(message = "Начальная температура T0 должна быть положительной")
-        @DecimalMax(value = "1e5", message = "Начальная температура слишком велика")
-        double T0,
+        // --- Основные параметры времени/температуры ---
+        Double T0,               // начальная температура, K
+        Double tMax,             // максимальное время симуляции, s
+        Double dt,               // шаг времени, s
 
-        @Positive(message = "Коэффициент теплопередачи lambda должен быть положительным")
-        @DecimalMax(value = "100", message = "Коэффициент теплопередачи слишком велик")
-        double lambda,
+        // --- Параметры материала ---
+        Double density,          // кг/м3
+        Double thickness,        // m
+        Double area,             // m^2
+        Double lambda0,          // базовая теплопроводность при Tref, W/(m K)
+        Double debyeTemperature, // температура Дебая, K
+        Double molarMass,        // молярная масса, kg/mol
+        StructureType structure, // структура кристалла
+        PotentialParameters potential, // параметры потенциала (жёсткость и энергия)
+        AtomList atom,           // атомные параметры для извлечения массы/θD
 
-        @Positive(message = "Максимальное время tMax должно быть положительным")
-        @DecimalMax(value = "1e6", message = "Максимальное время слишком велико")
-        double tMax,
-
-        @Positive(message = "Шаг времени dt должен быть положительным")
-        @DecimalMin(value = "1e-6", message = "Шаг времени слишком мал")
-        double dt,
-
-        PotentialParameters potential,
-
-        StructureType structure
-
-) {
-}
+        // --- Источники энергии ---
+        Double ionEnergy,        // суммарная энергия ионов, J
+        Double exposureTime,     // время подачи энергии, s
+        Double powerInput,       // мощность внешнего источника, W
+        Double energyDensityPerSec, // энергоплотность, J/s·m3
+        Double envTemp           // температура окружающей среды, K
+) {}

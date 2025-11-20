@@ -4,5 +4,6 @@ import plasmapi.project.plasma.dto.mathDto.collision.CollisionDto;
 import plasmapi.project.plasma.dto.mathDto.collision.CollisionResult;
 
 public interface CollisionService {
-    CollisionResult simulateCollision(CollisionDto collisionDto);
+
+    CollisionResult simulate(CollisionDto dto);
 }

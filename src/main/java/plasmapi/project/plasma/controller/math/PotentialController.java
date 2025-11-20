@@ -18,16 +18,16 @@ import plasmapi.project.plasma.service.math.potential.PotentialService;
 @RequiredArgsConstructor
 public class PotentialController {
 
-    private final PotentialService potentialService;
-
-    @PostMapping("/generate")
-    public ResponseEntity<ApiResponse<PotentialParameters>> generate(@Valid @RequestBody PotentialDto potentialDto) {
-        PotentialParameters params = potentialService.computePotential(potentialDto);
-        ApiResponse<PotentialParameters> resp = new ApiResponse<>(
-                params,
-                "Параметры потенциалов рассчитаны",
-                HttpStatus.OK.value()
-        );
-        return ResponseEntity.ok(resp);
-    }
+//    private final PotentialService potentialService;
+//
+//    @PostMapping("/generate")
+//    public ResponseEntity<ApiResponse<PotentialParameters>> generate(@Valid @RequestBody PotentialDto potentialDto) {
+//        PotentialParameters params = potentialService.computePotentialForAtomByDistance(potentialDto);
+//        ApiResponse<PotentialParameters> resp = new ApiResponse<>(
+//                params,
+//                "Параметры потенциалов рассчитаны",
+//                HttpStatus.OK.value()
+//        );
+//        return ResponseEntity.ok(resp);
+//    }
 }

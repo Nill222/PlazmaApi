@@ -41,4 +41,8 @@ public class Config {
     @OneToMany(mappedBy = "config", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Result> results;
 
+    //связь с логическим Config
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "config_id")
+    private PlasmaConfiguration config;
 }

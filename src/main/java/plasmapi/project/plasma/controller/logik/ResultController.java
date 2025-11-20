@@ -15,11 +15,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ResultController {
 
-    private final ResultService resultService;
-
-    @GetMapping("/config/{configId}")
-    public ResponseEntity<ApiResponse<List<ResultDTO>>> getResultsByConfig(@PathVariable Integer configId) {
-        List<ResultDTO> dtos = resultService.findByConfig(configId);
-        return ResponseEntity.ok(new ApiResponse<>(dtos, "Результаты для конфига получены", HttpStatus.OK.value()));
-    }
+//    private final ResultService resultService;
+//
+//    @GetMapping("/config/{configId}")
+//    public ResponseEntity<ApiResponse<List<ResultDTO>>> getResultsByConfig(@PathVariable Integer configId) {
+//        List<ResultDTO> dtos = resultService.findByConfig(configId);
+//        return ResponseEntity.ok(new ApiResponse<>(dtos, "Результаты для конфига получены", HttpStatus.OK.value()));
+//    }
 }

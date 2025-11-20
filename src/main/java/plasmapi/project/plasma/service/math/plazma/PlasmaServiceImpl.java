@@ -1,28 +1,55 @@
 package plasmapi.project.plasma.service.math.plazma;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import plasmapi.project.plasma.dto.mathDto.plasma.PlasmaDto;
 import plasmapi.project.plasma.dto.mathDto.plasma.PlasmaParameters;
+import plasmapi.project.plasma.dto.mathDto.plasma.PlasmaRequestDto;
+import plasmapi.project.plasma.model.res.PlasmaConfiguration;
+import plasmapi.project.plasma.repository.PlasmaConfigurationRepository;
+
 
 @Service
+@RequiredArgsConstructor
 public class PlasmaServiceImpl implements PlasmaService {
 
-    /**
-     * Расчёт параметров плазмы тлеющего разряда.
-     *  voltage напряжение (В)
-     * pressure давление (Па)
-     * temperature температура электронов (K)
-     *  объект PlasmaParameters с основными параметрами
-     */
-    public PlasmaParameters calculate(PlasmaDto plasmaDto) {
-        double e = 1.602e-19;
-        double me = 9.11e-31;
+    private final PlasmaConfigurationRepository plasmaConfigRepo;
 
-        double n_e = plasmaDto.pressure() / (1.38e-23 * plasmaDto.temperature()); // плотность электронов
-        double v_e = Math.sqrt(2 * e * plasmaDto.voltage() / me);     // средняя скорость электронов
-        double current = e * n_e * v_e * 1e-4;            // плотность тока (приближённо)
+    private static final double KB = 1.380649e-23;
+    private static final double E_CHARGE = 1.602176634e-19;
+    private static final double ME = 9.10938356e-31;
 
-        return new PlasmaParameters(n_e, v_e, current, plasmaDto.voltage(), plasmaDto.pressure(), plasmaDto.temperature());
+    @Override
+    public PlasmaParameters calculate(PlasmaRequestDto dto) {
+        PlasmaConfiguration pc = plasmaConfigRepo.findByConfigId(dto.configId())
+                .orElseThrow(() -> new IllegalArgumentException("Plasma configuration not found"));
+
+        double Te = safe(pc.getElectronTemperature(), 300.0);
+        double p = safe(pc.getPressure(), 100.0);
+
+        double ne = p / (KB * Te);
+        double voltage = safe(pc.getVoltage(), 1000.0);
+        double current = safe(pc.getCurrent(), 0.1);
+
+        double ve = Math.sqrt(2.0 * E_CHARGE * voltage / ME);
+
+        // chamber volume (cylinder)
+        double radius = safe(pc.getChamberWidth(), 0.1) / 2.0;
+        double height = safe(pc.getChamberHeight(), 0.2);
+        double V = Math.PI * radius * radius * height;
+
+        double ionEnergy;
+        if (pc.getIonEnergyOverride() != null && pc.getIonEnergyOverride() > 0) {
+            ionEnergy = pc.getIonEnergyOverride();
+        } else {
+            double exposure = safe(pc.getExposureTime(), 1.0);
+            ionEnergy = (voltage * current * exposure) / (ne * V);
+        }
+
+        PlasmaParameters res = new PlasmaParameters(ne, ve, ionEnergy, voltage, p, Te);
+        return res;
+    }
+
+    private double safe(Double v, double fallback) {
+        return v != null ? v : fallback;
     }
 }
-

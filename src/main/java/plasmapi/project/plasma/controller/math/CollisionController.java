@@ -18,21 +18,21 @@ import plasmapi.project.plasma.service.math.collision.CollisionService;
 @RequiredArgsConstructor
 public class CollisionController {
 
-    private final CollisionService collisionService;
-
-    /**
-     * Смоделировать одно столкновение.
-     * Принимает параметры через query-параметры.
-     */
-    @PostMapping("/simulate")
-    public ResponseEntity<ApiResponse<CollisionResult>> simulate(@Valid @RequestBody CollisionDto collisionDto) {
-
-        CollisionResult result = collisionService.simulateCollision(collisionDto);
-        ApiResponse<CollisionResult> resp = new ApiResponse<>(
-                result,
-                "Результат столкновения рассчитан",
-                HttpStatus.OK.value()
-        );
-        return ResponseEntity.ok(resp);
-    }
+//    private final CollisionService collisionService;
+//
+//    /**
+//     * Смоделировать одно столкновение.
+//     * Принимает параметры через query-параметры.
+//     */
+//    @PostMapping("/simulate")
+//    public ResponseEntity<ApiResponse<CollisionResult>> simulate(@Valid @RequestBody CollisionDto collisionDto) {
+//
+//        CollisionResult result = collisionService.simulateCollision(collisionDto);
+//        ApiResponse<CollisionResult> resp = new ApiResponse<>(
+//                result,
+//                "Результат столкновения рассчитан",
+//                HttpStatus.OK.value()
+//        );
+//        return ResponseEntity.ok(resp);
+//    }
 }
