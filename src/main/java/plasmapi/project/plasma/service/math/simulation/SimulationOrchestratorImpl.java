@@ -95,7 +95,7 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
         // ===== Собираем результат =====
         return new SimulationResultDto(
                 "Ion-" + request.ionId(),
-                "Atom-" + request.configId(),
+                "Atom-" + request.atomId(),
                 totalTransferred,
                 avgTransferred,
                 avgTemperature,
