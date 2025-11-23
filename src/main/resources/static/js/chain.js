@@ -127,7 +127,6 @@ async function loadIons() {
             if (ionCount) {
                 ionCount.textContent = currentIons.length;
             }
-            showMessage(`✅ Загружено ${currentIons.length} ионов`, 'success');
         } else {
             throw new Error(result.body?.message || 'Ошибка загрузки данных');
         }

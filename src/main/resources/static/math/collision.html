@@ -21,11 +21,11 @@
 
         <div class="collapse navbar-collapse" id="navbarNav">
             <div class="navbar-nav me-auto">
-                <a class="nav-btn active" href="collision.html">Моделирование столкновений</a>
-                <a class="nav-btn" href="diffusion.html">Моделирование диффузии</a>
-                <a class="nav-btn" href="lattice.html">Решёточные методы</a>
-                <a class="nav-btn" href="plasma.html">Моделирование плазмы</a>
-                <a class="nav-btn" href="simulation.html">Запуск симуляций</a>
+                <a class="nav-btn active" href="collision.html">Столкновения</a>
+                <a class="nav-btn" href="diffusion.html">Диффузия</a>
+                <a class="nav-btn" href="lattice.html">Решётки</a>
+                <a class="nav-btn" href="plasma.html">Плазма</a>
+                <a class="nav-btn" href="simulation.html">Полная симуляция</a>
             </div>
 
             <!-- Кнопки авторизации -->
@@ -82,8 +82,8 @@
                                     <i class="fas fa-bolt me-2 text-warning"></i>Энергия E
                                 </label>
                                 <div class="input-group">
-                                    <input type="number" step="any" id="E" class="form-control"
-                                           placeholder="1.602e-19" required>
+                                    <label for="E"></label>
+                                    <input type="number" step="any" id="E" class="form-control" placeholder="1.602e-19" required>
                                     <span class="input-group-text">Дж</span>
                                 </div>
                                 <div class="parameter-help">
@@ -98,8 +98,9 @@
                                     <i class="fas fa-weight-hanging me-2 text-primary"></i>Масса иона mᵢ
                                 </label>
                                 <div class="input-group">
+                                    <label for="mIon"></label>
                                     <input type="number" step="any" id="mIon" class="form-control"
-                                           placeholder="3.818e-26" required>
+                                                                     placeholder="3.818e-26" required>
                                     <span class="input-group-text">кг</span>
                                 </div>
                                 <div class="parameter-help">
@@ -114,8 +115,9 @@
                                     <i class="fas fa-weight-hanging me-2 text-info"></i>Масса атома mₐ
                                 </label>
                                 <div class="input-group">
+                                    <label for="mAtom"></label>
                                     <input type="number" step="any" id="mAtom" class="form-control"
-                                           placeholder="3.818e-26" required>
+                                                                      placeholder="3.818e-26" required>
                                     <span class="input-group-text">кг</span>
                                 </div>
                                 <div class="parameter-help">
@@ -130,14 +132,33 @@
                                     <i class="fas fa-angle-right me-2 text-success"></i>Угол столкновения
                                 </label>
                                 <div class="input-group">
-                                    <input type="number" step="any" id="angle" class="form-control"
-                                           placeholder="45" min="0" max="180" required>
+                                    <label for="angle"></label>
+                                    <input type="number" step="any" id="angle" class="form-control" placeholder="45" min="0" max="180" required>
                                     <span class="input-group-text">°</span>
                                 </div>
                                 <div class="parameter-help">
                                     Угол между направлениями движения (0-180°)
                                 </div>
                                 <div class="error-message" id="error-angle"></div>
+                            </div>
+
+                            <!-- Кристаллическая структура -->
+                            <div class="col-md-12">
+                                <label class="form-label">
+                                    <i class="fas fa-cube me-2 text-secondary"></i>Кристаллическая структура
+                                </label>
+                                <label for="structure"></label>
+                                <select id="structure" class="form-select" required>
+                                    <option value="" disabled selected>Выберите структуру</option>
+                                    <option value="SC">Simple Cubic (Простая кубическая)</option>
+                                    <option value="BCC">Body-centered cubic (Объемно-центрированная кубическая)</option>
+                                    <option value="FCC">Face-centered cubic (Гранецентрированная кубическая)</option>
+                                    <option value="HCP">Hexagonal close-packed (Гексагональная плотноупакованная)</option>
+                                </select>
+                                <div class="parameter-help">
+                                    Выберите кристаллическую структуру атома
+                                </div>
+                                <div class="error-message" id="error-structure"></div>
                             </div>
                         </div>
 
@@ -164,7 +185,9 @@
                 </p>
                 <div class="formula-box">
                     <strong>Основная формула:</strong><br>
-                    E<sub>переданная</sub> = [4mᵢmₐ/(mᵢ+mₐ)²] × E × cos²(θ)
+                    E<sub>переданная</sub> = [4mᵢmₐ/(mᵢ+mₐ)²] × E × cos²(θ) × S
+                    <br>
+                    <small>где S - структурный фактор кристаллической решётки</small>
                 </div>
             </div>
 
@@ -212,6 +235,7 @@
                             <li>Коэффициент отражения близкий к 1 указывает на упругое столкновение</li>
                             <li>Высокая переданная энергия характерна для резонансных условий</li>
                             <li>Результаты учитывают квантовые поправки для микрочастиц</li>
+                            <li>Структурный фактор влияет на эффективность передачи энергии</li>
                         </ul>
                     </div>
                 </div>
@@ -253,11 +277,15 @@
                         <form id="loginForm">
                             <div class="mb-3">
                                 <label class="form-label">Имя пользователя</label>
-                                <input type="text" class="form-control" name="username" required>
+                                <label>
+                                    <input type="text" class="form-control" name="username" required>
+                                </label>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Пароль</label>
-                                <input type="password" class="form-control" name="password" required>
+                                <label>
+                                    <input type="password" class="form-control" name="password" required>
+                                </label>
                             </div>
                             <button type="submit" class="btn btn-primary w-100 py-2">
                                 <i class="fas fa-sign-in-alt me-2"></i>Войти в систему
@@ -268,15 +296,21 @@
                         <form id="registerForm">
                             <div class="mb-3">
                                 <label class="form-label">Имя пользователя</label>
-                                <input type="text" class="form-control" name="username" required>
+                                <label>
+                                    <input type="text" class="form-control" name="username" required>
+                                </label>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Email</label>
-                                <input type="email" class="form-control" name="email" required>
+                                <label>
+                                    <input type="email" class="form-control" name="email" required>
+                                </label>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Пароль</label>
-                                <input type="password" class="form-control" name="password" required>
+                                <label>
+                                    <input type="password" class="form-control" name="password" required>
+                                </label>
                             </div>
                             <button type="submit" class="btn btn-success w-100 py-2">
                                 <i class="fas fa-user-plus me-2"></i>Создать аккаунт

@@ -11,7 +11,7 @@
 <!-- Навигация -->
 <nav class="navbar navbar-expand-lg navbar-dark">
     <div class="container">
-        <a class="navbar-brand" href="index.html">
+        <a class="navbar-brand" href="/index.html">
             <i class="fas fa-atom me-2"></i>PlasmaLab
         </a>
 
@@ -21,11 +21,11 @@
 
         <div class="collapse navbar-collapse" id="navbarNav">
             <div class="navbar-nav me-auto">
-                <a class="nav-btn" href="collision.html">Моделирование столкновений</a>
-                <a class="nav-btn active" href="diffusion.html">Моделирование диффузии</a>
-                <a class="nav-btn" href="lattice.html">Решёточные методы</a>
-                <a class="nav-btn" href="plasma.html">Моделирование плазмы</a>
-                <a class="nav-btn" href="simulation.html">Запуск симуляций</a>
+                <a class="nav-btn" href="collision.html">Столкновения</a>
+                <a class="nav-btn active" href="diffusion.html">Диффузия</a>
+                <a class="nav-btn" href="lattice.html">Решётки</a>
+                <a class="nav-btn" href="plasma.html">Плазма</a>
+                <a class="nav-btn" href="simulation.html">Полная симуляция</a>
             </div>
 
             <!-- Кнопки авторизации -->
@@ -82,8 +82,8 @@
                                     <i class="fas fa-wave-square me-2 text-primary"></i>Коэффициент диффузии D
                                 </label>
                                 <div class="input-group">
-                                    <input type="number" step="any" id="D" class="form-control"
-                                           placeholder="1e-9" required>
+                                    <label for="D"></label><input type="number" step="any" id="D" class="form-control"
+                                                                  placeholder="1e-9" required>
                                     <span class="input-group-text">м²/с</span>
                                 </div>
                                 <div class="parameter-help">
@@ -98,8 +98,8 @@
                                     <i class="fas fa-chart-line me-2 text-success"></i>Начальная концентрация c₀
                                 </label>
                                 <div class="input-group">
-                                    <input type="number" step="any" id="c0" class="form-control"
-                                           placeholder="1.0" required>
+                                    <label for="c0"></label><input type="number" step="any" id="c0" class="form-control"
+                                                                   placeholder="1.0" required>
                                     <span class="input-group-text">моль/м³</span>
                                 </div>
                                 <div class="parameter-help">
@@ -114,8 +114,8 @@
                                     <i class="fas fa-clock me-2 text-warning"></i>Максимальное время tₘₐₓ
                                 </label>
                                 <div class="input-group">
-                                    <input type="number" step="any" id="tMax" class="form-control"
-                                           placeholder="3600" required>
+                                    <label for="tMax"></label><input type="number" step="any" id="tMax" class="form-control"
+                                                                     placeholder="3600" required>
                                     <span class="input-group-text">с</span>
                                 </div>
                                 <div class="parameter-help">
@@ -125,13 +125,13 @@
                             </div>
 
                             <!-- Глубина -->
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <label class="form-label">
                                     <i class="fas fa-ruler-vertical me-2 text-info"></i>Максимальная глубина
                                 </label>
                                 <div class="input-group">
-                                    <input type="number" step="any" id="depth" class="form-control"
-                                           placeholder="0.01" required>
+                                    <label for="depth"></label><input type="number" step="0.01" id="depth" class="form-control"
+                                                                      value="0.01">
                                     <span class="input-group-text">м</span>
                                 </div>
                                 <div class="parameter-help">
@@ -141,13 +141,13 @@
                             </div>
 
                             <!-- Шаг по глубине -->
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <label class="form-label">
                                     <i class="fas fa-footsteps me-2 text-secondary"></i>Шаг по глубине dx
                                 </label>
                                 <div class="input-group">
-                                    <input type="number" step="any" id="dx" class="form-control"
-                                           value="1e-9">
+                                    <label for="dx"></label><input type="number" step="1e-12" id="dx" class="form-control"
+                                                                   value="1e-9">
                                     <span class="input-group-text">м</span>
                                 </div>
                                 <div class="parameter-help">
@@ -157,19 +157,49 @@
                             </div>
 
                             <!-- Шаг по времени -->
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <label class="form-label">
                                     <i class="fas fa-hourglass-half me-2 text-secondary"></i>Шаг по времени dt
                                 </label>
                                 <div class="input-group">
-                                    <input type="number" step="any" id="dt" class="form-control"
-                                           value="0.1">
+                                    <label for="dt"></label>
+                                    <input type="number" step="any" id="dt" class="form-control" value="0.1">
                                     <span class="input-group-text">с</span>
                                 </div>
-                                <div class="parameter-help">
-                                    Шаг по времени
-                                </div>
+                                <div class="parameter-help">Шаг по времени</div>
                                 <div class="error-message" id="error-dt"></div>
+                            </div>
+
+                            <!-- Кристаллическая структура -->
+                            <div class="col-md-12">
+                                <label class="form-label">
+                                    <i class="fas fa-shapes me-2 text-secondary"></i>Кристаллическая структура
+                                </label>
+                                <label for="structure"></label><select id="structure" class="form-select" required>
+                                    <option value="" disabled selected>Выберите структуру</option>
+                                    <option value="SC">Simple Cubic (Простая кубическая)</option>
+                                    <option value="BCC">Body-centered cubic (Объемно-центрированная кубическая)</option>
+                                    <option value="FCC">Face-centered cubic (Гранецентрированная кубическая)</option>
+                                    <option value="HCP">Hexagonal close-packed (Гексагональная плотноупакованная)</option>
+                                </select>
+                                <div class="parameter-help">
+                                    Влияет на эффективный коэффициент диффузии через структурный фактор
+                                </div>
+                                <div class="error-message" id="error-structure"></div>
+                            </div>
+                        </div>
+
+                        <!-- Информация о структурном факторе -->
+                        <div class="row mt-3" id="structureInfo" style="display: none;">
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-info-circle me-2"></i>Структурный фактор диффузии:</h6>
+                                    <div id="structureFactorInfo"></div>
+                                    <div class="mt-2">
+                                        <small><strong>Эффективный коэффициент диффузии:</strong> D<sub>эфф</sub> = D × S</small><br>
+                                        <small>где S - структурный фактор, зависящий от типа кристаллической решётки</small>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -193,14 +223,15 @@
                 <p class="mb-3">
                     Расчет основан на решении уравнения диффузии (второй закон Фика) методом Кранка-Николсона.
                     Используется неявная схема для численного решения дифференциального уравнения в частных производных.
+                    Учитывается влияние кристаллической структуры на коэффициент диффузии через структурный фактор.
                 </p>
                 <div class="formula-box">
                     <strong>Уравнение диффузии:</strong><br>
-                    ∂c/∂t = D × ∂²c/∂x²
+                    ∂c/∂t = D × S × ∂²c/∂x²
                 </div>
                 <div class="mt-2">
                     <small class="text-muted">
-                        где D - коэффициент диффузии, c - концентрация, t - время, x - глубина
+                        где D - коэффициент диффузии, S - структурный фактор, c - концентрация, t - время, x - глубина
                     </small>
                 </div>
             </div>
@@ -237,25 +268,32 @@
 
                     <!-- Статистика -->
                     <div class="row mt-4">
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="stat-card text-center">
                                 <i class="fas fa-arrow-down stat-icon"></i>
                                 <div class="stat-value" id="maxDepth">0</div>
                                 <div class="stat-label">Макс. глубина</div>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="stat-card text-center">
                                 <i class="fas fa-percentage stat-icon"></i>
                                 <div class="stat-value" id="penetrationDepth">0</div>
                                 <div class="stat-label">Глубина проникновения</div>
                             </div>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <div class="stat-card text-center">
                                 <i class="fas fa-bolt stat-icon"></i>
                                 <div class="stat-value" id="diffusionLength">0</div>
                                 <div class="stat-label">Длина диффузии</div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card text-center">
+                                <i class="fas fa-cube stat-icon"></i>
+                                <div class="stat-value" id="structureFactor">1.0</div>
+                                <div class="stat-label">Структурный фактор</div>
                             </div>
                         </div>
                     </div>
@@ -298,11 +336,15 @@
                         <form id="loginForm">
                             <div class="mb-3">
                                 <label class="form-label">Имя пользователя</label>
-                                <input type="text" class="form-control" name="username" required>
+                                <label>
+                                    <input type="text" class="form-control" name="username" required>
+                                </label>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Пароль</label>
-                                <input type="password" class="form-control" name="password" required>
+                                <label>
+                                    <input type="password" class="form-control" name="password" required>
+                                </label>
                             </div>
                             <button type="submit" class="btn btn-primary w-100 py-2">
                                 <i class="fas fa-sign-in-alt me-2"></i>Войти в систему
@@ -313,15 +355,21 @@
                         <form id="registerForm">
                             <div class="mb-3">
                                 <label class="form-label">Имя пользователя</label>
-                                <input type="text" class="form-control" name="username" required>
+                                <label>
+                                    <input type="text" class="form-control" name="username" required>
+                                </label>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Email</label>
-                                <input type="email" class="form-control" name="email" required>
+                                <label>
+                                    <input type="email" class="form-control" name="email" required>
+                                </label>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Пароль</label>
-                                <input type="password" class="form-control" name="password" required>
+                                <label>
+                                    <input type="password" class="form-control" name="password" required>
+                                </label>
                             </div>
                             <button type="submit" class="btn btn-success w-100 py-2">
                                 <i class="fas fa-user-plus me-2"></i>Создать аккаунт

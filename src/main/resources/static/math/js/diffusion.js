@@ -8,7 +8,34 @@ document.addEventListener('DOMContentLoaded', function() {
     setupEventListeners();
     initializeAuth();
     initializeChart();
+    setupStructureInfo();
 });
+
+// Настройка информации о структурных факторах
+function setupStructureInfo() {
+    const structureFactors = {
+        'SC': { factor: 1.0, description: 'Простая кубическая - базовый коэффициент' },
+        'BCC': { factor: 0.9, description: 'Объемно-центрированная кубическая - умеренное снижение диффузии' },
+        'FCC': { factor: 0.75, description: 'Гранецентрированная кубическая - значительное снижение диффузии' },
+        'HCP': { factor: 0.7, description: 'Гексагональная плотноупакованная - максимальное снижение диффузии' }
+    };
+
+    document.getElementById('structure').addEventListener('change', function() {
+        const structure = this.value;
+        const info = structureFactors[structure];
+        const infoSection = document.getElementById('structureInfo');
+
+        if (info && structure) {
+            document.getElementById('structureFactorInfo').innerHTML = `
+                <strong>${structure}: ${info.factor}</strong><br>
+                ${info.description}
+            `;
+            infoSection.style.display = 'block';
+        } else {
+            infoSection.style.display = 'none';
+        }
+    });
+}
 
 // Инициализация авторизации
 function initializeAuth() {
@@ -37,8 +64,17 @@ function initializeAuth() {
 function setupEventListeners() {
     document.getElementById("diffusionForm").addEventListener("submit", handleFormSubmit);
 
-    document.querySelectorAll('.form-control').forEach(input => {
+    document.querySelectorAll('.form-control, .form-select').forEach(input => {
         input.addEventListener('input', function() {
+            const errorEl = document.getElementById(`error-${this.id}`);
+            if (errorEl) {
+                errorEl.textContent = "";
+                errorEl.style.display = "none";
+                this.classList.remove("is-invalid");
+            }
+        });
+
+        input.addEventListener('change', function() {
             const errorEl = document.getElementById(`error-${this.id}`);
             if (errorEl) {
                 errorEl.textContent = "";
@@ -124,7 +160,7 @@ async function handleFormSubmit(e) {
         el.textContent = "";
         el.style.display = "none";
     });
-    document.querySelectorAll(".form-control").forEach(el => el.classList.remove("is-invalid"));
+    document.querySelectorAll(".form-control, .form-select").forEach(el => el.classList.remove("is-invalid"));
 
     const calculateBtn = document.getElementById("calculateBtn");
     const spinner = calculateBtn.querySelector(".loading-spinner");
@@ -140,11 +176,12 @@ async function handleFormSubmit(e) {
     const depth = parseFloat(document.getElementById("depth").value);
     const dx = parseFloat(document.getElementById("dx").value);
     const dt = parseFloat(document.getElementById("dt").value);
+    const structure = document.getElementById("structure").value;
 
-    console.log("Получены значения:", { D, c0, tMax, depth, dx, dt });
+    console.log("Получены значения:", { D, c0, tMax, depth, dx, dt, structure });
 
-    if (isNaN(D) || isNaN(c0) || isNaN(tMax) || isNaN(depth) || isNaN(dx) || isNaN(dt)) {
-        showError("Пожалуйста, заполните все поля корректными числами");
+    if (isNaN(D) || isNaN(c0) || isNaN(tMax) || isNaN(depth) || isNaN(dx) || isNaN(dt) || !structure) {
+        showError("Пожалуйста, заполните все поля корректными значениями");
         resetButtonState(calculateBtn, buttonText, spinner);
         return;
     }
@@ -194,12 +231,17 @@ async function handleFormSubmit(e) {
         hasErrors = true;
     }
 
+    if (!structure) {
+        showFieldError("structure", "Выберите кристаллическую структуру");
+        hasErrors = true;
+    }
+
     if (hasErrors) {
         resetButtonState(calculateBtn, buttonText, spinner);
         return;
     }
 
-    const request = { D, c0, tMax, depth, dx, dt };
+    const request = { D, c0, tMax, depth, dx, dt, structure };
 
     console.log("Отправка запроса на /api/diffusion/calculate:", request);
 
@@ -272,7 +314,7 @@ async function handleFormSubmit(e) {
         if (profile && Array.isArray(profile.depths) && Array.isArray(profile.concentration)) {
             updateResultsTable(profile.depths, profile.concentration, c0);
             updateChart(profile.depths, profile.concentration);
-            updateStatistics(profile.depths, profile.concentration, D, tMax);
+            updateStatistics(profile.depths, profile.concentration, D, tMax, structure);
 
             document.getElementById("resultSection").style.display = "block";
             document.getElementById("resultSection").scrollIntoView({behavior: "smooth"});
@@ -317,7 +359,7 @@ function updateChart(depths, concentrations) {
     }
 }
 
-function updateStatistics(depths, concentrations, D, tMax) {
+function updateStatistics(depths, concentrations, D, tMax, structure) {
     const maxDepth = depths[depths.length - 1];
 
     // Находим глубину, где концентрация падает до 1% от начальной
@@ -329,11 +371,22 @@ function updateStatistics(depths, concentrations, D, tMax) {
         }
     }
 
-    const diffusionLength = Math.sqrt(D * tMax);
+    // Структурные факторы
+    const structureFactors = {
+        'SC': 1.0,
+        'BCC': 0.9,
+        'FCC': 0.75,
+        'HCP': 0.7
+    };
+
+    const structureFactor = structureFactors[structure] || 1.0;
+    const effectiveD = D * structureFactor;
+    const diffusionLength = Math.sqrt(effectiveD * tMax);
 
     document.getElementById("maxDepth").textContent = maxDepth.toExponential(3) + " м";
     document.getElementById("penetrationDepth").textContent = penetrationDepth.toExponential(3) + " м";
     document.getElementById("diffusionLength").textContent = diffusionLength.toExponential(3) + " м";
+    document.getElementById("structureFactor").textContent = structureFactor.toFixed(2);
 }
 
 function showFieldError(fieldId, message) {

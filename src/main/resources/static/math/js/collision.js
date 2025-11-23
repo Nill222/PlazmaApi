@@ -42,8 +42,18 @@ function setupEventListeners() {
     document.getElementById("collisionForm").addEventListener("submit", handleFormSubmit);
 
     // Валидация в реальном времени
-    document.querySelectorAll('.form-control').forEach(input => {
+    document.querySelectorAll('.form-control, .form-select').forEach(input => {
         input.addEventListener('input', function() {
+            const errorEl = document.getElementById(`error-${this.id}`);
+            if (errorEl) {
+                errorEl.textContent = "";
+                errorEl.style.display = "none";
+                this.classList.remove("is-invalid");
+            }
+        });
+
+        // Для select также обрабатываем изменение
+        input.addEventListener('change', function() {
             const errorEl = document.getElementById(`error-${this.id}`);
             if (errorEl) {
                 errorEl.textContent = "";
@@ -84,7 +94,7 @@ async function handleFormSubmit(e) {
         el.textContent = "";
         el.style.display = "none";
     });
-    document.querySelectorAll(".form-control").forEach(el => el.classList.remove("is-invalid"));
+    document.querySelectorAll(".form-control, .form-select").forEach(el => el.classList.remove("is-invalid"));
 
     const calculateBtn = document.getElementById("calculateBtn");
     const spinner = calculateBtn.querySelector(".loading-spinner");
@@ -100,12 +110,13 @@ async function handleFormSubmit(e) {
     const mIon = parseFloat(document.getElementById("mIon").value);
     const mAtom = parseFloat(document.getElementById("mAtom").value);
     const angle = parseFloat(document.getElementById("angle").value);
+    const structure = document.getElementById("structure").value;
 
-    console.log("Получены значения:", { E, mIon, mAtom, angle });
+    console.log("Получены значения:", { E, mIon, mAtom, angle, structure });
 
     // Проверяем валидность данных
-    if (isNaN(E) || isNaN(mIon) || isNaN(mAtom) || isNaN(angle)) {
-        showError("Пожалуйста, заполните все поля корректными числами");
+    if (isNaN(E) || isNaN(mIon) || isNaN(mAtom) || isNaN(angle) || !structure) {
+        showError("Пожалуйста, заполните все поля корректными значениями");
         resetButtonState(calculateBtn, buttonText, spinner);
         return;
     }
@@ -142,6 +153,11 @@ async function handleFormSubmit(e) {
         hasErrors = true;
     }
 
+    if (!structure) {
+        showFieldError("structure", "Выберите кристаллическую структуру");
+        hasErrors = true;
+    }
+
     if (hasErrors) {
         resetButtonState(calculateBtn, buttonText, spinner);
         return;
@@ -151,7 +167,8 @@ async function handleFormSubmit(e) {
         E: E,
         mIon: mIon,
         mAtom: mAtom,
-        angle: angle
+        angle: angle,
+        structure: structure
     };
 
     console.log("Отправка запроса на /api/collision/simulate:", request);

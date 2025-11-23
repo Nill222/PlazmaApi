@@ -95,39 +95,50 @@
         <div class="card-body">
             <form id="createAtomForm" class="row g-3">
                 <div class="col-md-4">
-                    <label class="form-label fw-semibold">Символ элемента</label>
-                    <input type="text" id="atomName" class="form-control" placeholder="He" required>
-                    <div class="form-text">Например: He, Fe, Au</div>
+                    <label for="atomName" class="form-label fw-semibold">Символ элемента</label>
+                    <input type="text" id="atomName" class="form-control" placeholder="He" maxlength="20" required>
+                    <div class="form-text">Например: He, Fe, Au (макс. 20 символов)</div>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label fw-semibold">Полное название</label>
-                    <input type="text" id="fullName" class="form-control" placeholder="Гелий" required>
+                    <label for="fullName" class="form-label fw-semibold">Полное название</label>
+                    <input type="text" id="fullName" class="form-control" placeholder="Гелий" maxlength="50" required>
+                    <div class="form-text">Макс. 50 символов</div>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label fw-semibold">Масса (кг)</label>
-                    <input type="number" id="mass" class="form-control" step="any" placeholder="6.646e-27" required>
+                    <label for="mass" class="form-label fw-semibold">Масса (кг)</label>
+                    <input type="number" id="mass" class="form-control" step="any" placeholder="6.646e-27" min="0" required>
+                    <div class="form-text">Например: 6.646e-27 для гелия</div>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label fw-semibold">Параметр решетки a (Å)</label>
-                    <input type="number" id="a" class="form-control" step="any" placeholder="4.05" required>
+                    <label for="a" class="form-label fw-semibold">Параметр решетки a (Å)</label>
+                    <input type="number" id="a" class="form-control" step="any" placeholder="4.05" min="0" required>
+                    <div class="form-text">Например: 4.05 для алюминия</div>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label fw-semibold">Температура Дебая (K)</label>
-                    <input type="number" id="debyeTemperature" class="form-control" step="any" placeholder="100" required>
+                    <label for="debyeTemperature" class="form-label fw-semibold">Температура Дебая (K)</label>
+                    <input type="number" id="debyeTemperature" class="form-control" step="any" placeholder="100" min="0" required>
+                    <div class="form-text">Например: 428 для алюминия</div>
                 </div>
                 <div class="col-md-4">
-                    <label class="form-label fw-semibold">Валентность</label>
-                    <input type="number" id="valence" class="form-control" placeholder="2" required>
+                    <label for="valence" class="form-label fw-semibold">Валентность</label>
+                    <input type="number" id="valence" class="form-control" placeholder="2" min="0" required>
+                    <div class="form-text">Например: 2 для гелия</div>
                 </div>
                 <div class="col-md-6">
                     <label for="structure" class="form-label fw-semibold">Кристаллическая структура</label>
                     <select id="structure" name="structure" class="form-select" required>
                         <option value="" disabled selected>Выберите структуру</option>
-                        <option value="Cubic">Cubic (Кубическая)</option>
-                        <option value="Body-centered cubic">Body-centered cubic (ОЦК)</option>
-                        <option value="Face-centered cubic">Face-centered cubic (ГЦК)</option>
-                        <option value="Hexagonal close-packed">Hexagonal close-packed (ГПУ)</option>
+                        <option value="SC">Simple Cubic (Простая кубическая)</option>
+                        <option value="BCC">Body-centered cubic (Объемно-центрированная кубическая)</option>
+                        <option value="FCC">Face-centered cubic (Гранецентрированная кубическая)</option>
+                        <option value="HCP">Hexagonal close-packed (Гексагональная плотноупакованная)</option>
                     </select>
+                </div>
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Примечание:</strong> Параметры потенциалов (Morse, Lennard-Jones, Born-Mayer) будут установлены в значения по умолчанию. Их можно изменить позже через API.
+                    </div>
                 </div>
                 <div class="col-12 text-end">
                     <button type="submit" class="btn btn-success btn-lg">
@@ -146,8 +157,8 @@
         <div class="card-body">
             <div class="row g-3 align-items-end">
                 <div class="col-md-8">
-                    <label class="form-label fw-semibold">Найти атом по символу</label>
-                    <input type="text" id="searchSymbol" class="form-control" placeholder="Введите символ элемента, например: He, Fe, Au">
+                    <label for="searchSymbol" class="form-label fw-semibold">Найти атом по символу</label>
+                    <input type="text" id="searchSymbol" class="form-control" placeholder="Введите символ элемента, например: He, Fe, Au" maxlength="20">
                 </div>
                 <div class="col-md-4">
                     <button id="searchAtom" class="btn btn-info w-100">

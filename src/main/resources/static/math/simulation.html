@@ -2,305 +2,526 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Полная симуляция плазмы</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Полная симуляция плазмы - PlasmaLab</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/simulation.css">
 </head>
 <body>
+<!-- Навигация -->
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+        <a class="navbar-brand" href="/index.html">
+            <i class="fas fa-atom me-2"></i>PlasmaLab
+        </a>
 
-<nav class="navbar navbar-expand-lg">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="/index.html">PlasmaLab</a>
-        <button class="navbar-toggler bg-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
         </button>
-        <div class="collapse navbar-collapse" id="nav">
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link" href="/index.html">Главная</a></li>
-                <li class="nav-item"><a class="nav-link" href="/array.html">Атомы</a></li>
-                <li class="nav-item"><a class="nav-link" href="/chain.html">Ионы</a></li>
-                <li class="nav-item"><a class="nav-link active" href="/methods.html">Методы</a></li>
-            </ul>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <div class="navbar-nav me-auto">
+                <a class="nav-btn" href="collision.html">Столкновения</a>
+                <a class="nav-btn" href="diffusion.html">Диффузия</a>
+                <a class="nav-btn" href="lattice.html">Решётки</a>
+                <a class="nav-btn" href="plasma.html">Плазма</a>
+                <a class="nav-btn active" href="simulation.html">Полная симуляция</a>
+            </div>
+
+            <!-- Кнопки авторизации -->
+            <div class="navbar-nav">
+                <div class="auth-buttons">
+                    <button class="btn btn-outline-light me-2" onclick="showAuthModal()">
+                        <i class="fas fa-sign-in-alt me-2"></i>Войти
+                    </button>
+                    <button class="btn btn-light" onclick="showAuthModal('register')">
+                        <i class="fas fa-user-plus me-2"></i>Регистрация
+                    </button>
+                </div>
+                <div class="user-menu">
+                    <span class="user-info">
+                        <i class="fas fa-user me-2"></i>
+                        <span id="usernameDisplay"></span>
+                    </span>
+                    <button class="btn btn-outline-light" onclick="logout()">
+                        <i class="fas fa-sign-out-alt me-2"></i>Выйти
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </nav>
 
-<div class="container mt-4">
-    <h2 class="text-center mb-4">⚡ Полная симуляция взаимодействия плазмы, ионов и атомов</h2>
-
-    <div class="card shadow p-4">
-        <form id="simulationForm" novalidate>
-
-            <!-- === CONFIG === -->
-            <div class="section-title">🧩 Базовые идентификаторы</div>
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label">ID конфигурации</label>
-                    <input id="configId" type="number" class="form-control">
-                    <div id="error-configId" class="error-message"></div>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">ID иона</label>
-                    <input id="ionId" type="number" class="form-control">
-                    <div id="error-ionId" class="error-message"></div>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">ID списка атомов</label>
-                    <input id="atomListId" type="number" class="form-control">
-                    <div id="error-atomListId" class="error-message"></div>
-                </div>
-            </div>
-
-            <!-- === LATTICE === -->
-            <div class="section-title">🧱 Параметры решётки</div>
-            <div class="form-check mb-2">
-                <input id="generateLattice" type="checkbox" class="form-check-input">
-                <label class="form-check-label">Генерировать решётку</label>
-            </div>
-
-            <div class="row g-3 mb-3">
-                <div class="col-md-4">
-                    <label class="form-label">Размер X</label>
-                    <input id="latX" type="number" class="form-control">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Размер Y</label>
-                    <input id="latY" type="number" class="form-control">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Размер Z</label>
-                    <input id="latZ" type="number" class="form-control">
-                </div>
-            </div>
-
-            <!-- === LATTICE STRUCTURE === -->
-            <div class="section-title">🧱 Структура решётки</div>
-            <div class="mb-3">
-                <label class="form-label">Тип структуры</label>
-                <select id="latticeStructure" class="form-select">
-                    <option value="CUBIC">CUBIC</option>
-                    <option value="BCC">BCC</option>
-                    <option value="FCC">FCC</option>
-                </select>
-            </div>
-
-            <!-- === PLASMA === -->
-            <div class="section-title">🔥 Параметры плазмы</div>
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label">Напряжение плазмы (V)</label>
-                    <input id="plasmaVoltage" type="number" step="any" class="form-control">
-                    <div id="error-plasmaVoltage" class="error-message"></div>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Давление (Па)</label>
-                    <input id="pressure" type="number" step="any" class="form-control">
-                    <div id="error-pressure" class="error-message"></div>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Электронная температура (K)</label>
-                    <input id="electronTemp" type="number" step="any" class="form-control">
-                    <div id="error-electronTemp" class="error-message"></div>
-                </div>
-            </div>
-
-            <!-- === POTENTIAL === -->
-            <div class="section-title">⚡ Потенциал (ручной выбор)</div>
-            <div class="row g-3 mb-3">
-                <div class="col-md-4">
-                    <label class="form-label">Параметр A</label>
-                    <input id="potentialA" type="number" step="any" class="form-control">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Параметр B</label>
-                    <input id="potentialB" type="number" step="any" class="form-control">
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Параметр C</label>
-                    <input id="potentialC" type="number" step="any" class="form-control">
-                </div>
-            </div>
-
-            <!-- === TIME === -->
-            <div class="section-title">⏱️ Параметры времени</div>
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <label class="form-label">Шаг времени dt</label>
-                    <input id="timeStep" type="number" step="any" class="form-control">
-                    <div id="error-timeStep" class="error-message"></div>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Общее время</label>
-                    <input id="totalTime" type="number" step="any" class="form-control">
-                    <div id="error-totalTime" class="error-message"></div>
-                </div>
-            </div>
-
-            <!-- === COLLISION === -->
-            <div class="section-title">💥 Параметры столкновения</div>
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <label class="form-label">Угол падения иона (deg)</label>
-                    <input id="impactAngle" type="number" step="any" class="form-control">
-                    <div id="error-impactAngle" class="error-message"></div>
-                </div>
-            </div>
-
-            <!-- === DIFFUSION === -->
-            <div class="section-title">🌡️ Диффузия</div>
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label">D₀ (префактор)</label>
-                    <input id="diffusionPrefactor" type="number" step="any" class="form-control">
-                    <div id="error-diffusionPrefactor" class="error-message"></div>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Q (энергия активации)</label>
-                    <input id="activationEnergy" type="number" step="any" class="form-control">
-                    <div id="error-activationEnergy" class="error-message"></div>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label">Поверхностная концентрация</label>
-                    <input id="surfaceConcentration" type="number" step="any" class="form-control">
-                    <div id="error-surfaceConcentration" class="error-message"></div>
-                </div>
-            </div>
-
-            <div class="row g-3 mt-2">
-                <div class="col-md-6">
-                    <label class="form-label">Глубина (м)</label>
-                    <input id="depth" type="number" step="any" class="form-control">
-                    <div id="error-depth" class="error-message"></div>
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Теплопроводность</label>
-                    <input id="thermalConductivity" type="number" step="any" class="form-control">
-                    <div id="error-thermalConductivity" class="error-message"></div>
-                </div>
-            </div>
-
-            <div class="text-center mt-4">
-                <button class="btn btn-primary btn-lg px-4" type="submit">
-                    ▶ Запустить симуляцию
-                </button>
-            </div>
-
-        </form>
+<!-- Герой секция -->
+<section class="hero-section">
+    <div class="container text-center">
+        <h1 class="hero-title">
+            <i class="fas fa-cogs me-3"></i>Полная симуляция плазмы
+        </h1>
+        <p class="hero-subtitle">
+            Комплексное моделирование взаимодействия плазмы с материалом
+        </p>
     </div>
+</section>
 
-    <!-- ALERT -->
-    <div id="alertBox" class="alert d-none mt-3"></div>
+<!-- Основной контент -->
+<div class="container my-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <!-- Карточка расчета -->
+            <div class="calculation-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-calculator me-2"></i>Параметры симуляции</h3>
+                </div>
+                <div class="card-body p-4">
+                    <form id="simulationForm" novalidate>
+                        <!-- === БАЗОВЫЕ ИДЕНТИФИКАТОРЫ === -->
+                        <div class="form-section">
+                            <div class="section-header">
+                                <i class="fas fa-id-card me-2"></i>Базовые идентификаторы
+                            </div>
+                            <div class="row g-4 mt-2">
+                                <div class="col-md-4">
+                                    <label class="form-label">
+                                        <i class="fas fa-cog me-2 text-primary"></i>ID конфигурации
+                                    </label>
+                                    <input id="configId" type="number" class="form-control" placeholder="1" required min="1">
+                                    <div class="error-message" id="error-configId"></div>
+                                    <div class="parameter-help">
+                                        Уникальный идентификатор конфигурации
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">
+                                        <i class="fas fa-bolt me-2 text-warning"></i>ID иона
+                                    </label>
+                                    <input id="ionId" type="number" class="form-control" placeholder="1" required min="1">
+                                    <div class="error-message" id="error-ionId"></div>
+                                    <div class="parameter-help">
+                                        Уникальный идентификатор иона
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">
+                                        <i class="fas fa-atom me-2 text-info"></i>ID атома
+                                    </label>
+                                    <input id="atomId" type="number" class="form-control" placeholder="1" required min="1">
+                                    <div class="error-message" id="error-atomId"></div>
+                                    <div class="parameter-help">
+                                        Уникальный идентификатор атома
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-    <!-- RESULT -->
-    <div id="resultSection" class="mt-5" style="display:none;">
-        <h3 class="mb-3 text-center">Результаты симуляции</h3>
-        <div class="card card-result p-3 mb-3">
-            <h5>Общие значения</h5>
-            <table class="table table-bordered">
-                <tbody>
-                <tr><th>Ион</th><td id="resIon"></td></tr>
-                <tr><th>Атом</th><td id="resAtom"></td></tr>
-                <tr><th>Общая переданная энергия</th><td id="resTotalE"></td></tr>
-                <tr><th>Средняя энергия на атом</th><td id="resAvgE"></td></tr>
-                <tr><th>Финальная температура</th><td id="resTemp"></td></tr>
-                <tr><th>Коэффициент диффузии</th><td id="resDiff"></td></tr>
-                </tbody>
-            </table>
+                        <!-- === ПАРАМЕТРЫ ПЛАЗМЫ === -->
+                        <div class="form-section">
+                            <div class="section-header">
+                                <i class="fas fa-bolt me-2"></i>Параметры плазмы
+                            </div>
+                            <div class="row g-4 mt-2">
+                                <div class="col-md-6">
+                                    <label class="form-label">
+                                        <i class="fas fa-bolt me-2 text-warning"></i>Напряжение
+                                    </label>
+                                    <div class="input-group">
+                                        <input id="voltage" type="number" step="any" class="form-control" value="1000" required min="200" max="3500">
+                                        <span class="input-group-text">В</span>
+                                    </div>
+                                    <div class="error-message" id="error-voltage"></div>
+                                    <div class="parameter-help">
+                                        Диапазон: 200 - 3500 В
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">
+                                        <i class="fas fa-bolt me-2 text-warning"></i>Ток
+                                    </label>
+                                    <div class="input-group">
+                                        <input id="current" type="number" step="any" class="form-control" value="0.1" required min="0.01" max="0.3">
+                                        <span class="input-group-text">А</span>
+                                    </div>
+                                    <div class="error-message" id="error-current"></div>
+                                    <div class="parameter-help">
+                                        Диапазон: 0.01 - 0.3 А (10 - 300 мА)
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row g-4 mt-2">
+                                <div class="col-md-4">
+                                    <label class="form-label">
+                                        <i class="fas fa-tachometer-alt me-2 text-primary"></i>Давление
+                                    </label>
+                                    <div class="input-group">
+                                        <input id="pressure" type="number" step="any" class="form-control" value="1.0" required min="0.01" max="100">
+                                        <span class="input-group-text">Па</span>
+                                    </div>
+                                    <div class="error-message" id="error-pressure"></div>
+                                    <div class="parameter-help">
+                                        Диапазон: 0.01 - 100 Па
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">
+                                        <i class="fas fa-thermometer-half me-2 text-danger"></i>Температура электронов
+                                    </label>
+                                    <div class="input-group">
+                                        <input id="electronTemperature" type="number" step="any" class="form-control" value="3000" required min="0" max="5000">
+                                        <span class="input-group-text">K</span>
+                                    </div>
+                                    <div class="error-message" id="error-electronTemperature"></div>
+                                    <div class="parameter-help">
+                                        Диапазон: 0 - 5000 K
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">
+                                        <i class="fas fa-clock me-2 text-info"></i>Время экспозиции
+                                    </label>
+                                    <div class="input-group">
+                                        <input id="exposureTime" type="number" step="any" class="form-control" value="600" required min="300" max="7200">
+                                        <span class="input-group-text">с</span>
+                                    </div>
+                                    <div class="error-message" id="error-exposureTime"></div>
+                                    <div class="parameter-help">
+                                        Диапазон: 300 - 7200 с (5 мин - 2 часа)
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- === ПАРАМЕТРЫ КАМЕРЫ === -->
+                        <div class="form-section">
+                            <div class="section-header">
+                                <i class="fas fa-box me-2"></i>Параметры камеры
+                            </div>
+                            <div class="row g-4 mt-2">
+                                <div class="col-md-6">
+                                    <label class="form-label">
+                                        <i class="fas fa-arrows-alt-h me-2 text-primary"></i>Ширина камеры
+                                    </label>
+                                    <div class="input-group">
+                                        <input id="chamberWidth" type="number" step="any" class="form-control" value="0.1" required min="0.01" max="1.0">
+                                        <span class="input-group-text">м</span>
+                                    </div>
+                                    <div class="error-message" id="error-chamberWidth"></div>
+                                    <div class="parameter-help">
+                                        Диапазон: 0.01 - 1.0 м
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">
+                                        <i class="fas fa-arrows-alt-v me-2 text-primary"></i>Глубина камеры
+                                    </label>
+                                    <div class="input-group">
+                                        <input id="chamberDepth" type="number" step="any" class="form-control" value="0.05" required min="0.01" max="0.5">
+                                        <span class="input-group-text">м</span>
+                                    </div>
+                                    <div class="error-message" id="error-chamberDepth"></div>
+                                    <div class="parameter-help">
+                                        Диапазон: 0.01 - 0.5 м
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Прогресс-бар -->
+                        <div class="progress mt-3" id="calculationProgress" style="display: none; height: 20px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                 role="progressbar" style="width: 0%"></div>
+                        </div>
+
+                        <!-- Кнопка запуска -->
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg px-5" id="runSimulationBtn">
+                                <i class="fas fa-play-circle me-2"></i>
+                                <span>Запустить симуляцию</span>
+                                <div class="loading-spinner spinner-border spinner-border-sm ms-2" role="status">
+                                    <span class="visually-hidden">Загрузка...</span>
+                                </div>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Блок с информацией -->
+            <div class="info-box">
+                <h5><i class="fas fa-info-circle me-2 text-primary"></i>О полной симуляции</h5>
+                <p class="mb-3">
+                    Полная симуляция объединяет все аспекты взаимодействия плазмы с материалом: столкновения ионов с атомами решётки,
+                    диффузию внедрённых частиц и тепловые эффекты. Моделирование позволяет получить полную картину процессов,
+                    происходящих при плазменной обработке материалов.
+                </p>
+                <div class="formula-box">
+                    <strong>Основные этапы симуляции:</strong><br>
+                    1. Моделирование плазменных параметров<br>
+                    2. Расчёт столкновений ионов с атомами<br>
+                    3. Анализ диффузионных процессов<br>
+                    4. Тепловое моделирование системы
+                </div>
+            </div>
+
+            <!-- Уведомления -->
+            <div id="alertBox" class="alert alert-custom alert-danger d-none mt-4" role="alert"></div>
+
+            <!-- Результаты -->
+            <div class="result-card mt-4" id="resultSection" style="display:none;">
+                <div class="result-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>Результаты полной симуляции
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Основные параметры -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="result-item">
+                                <i class="fas fa-atom result-icon"></i>
+                                <div class="result-content">
+                                    <div class="result-label">Атом</div>
+                                    <div class="result-value" id="resAtom">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="result-item">
+                                <i class="fas fa-fire result-icon"></i>
+                                <div class="result-content">
+                                    <div class="result-label">Общая переданная энергия</div>
+                                    <div class="result-value" id="resTotalEnergy">0 Дж</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Расчетные параметры -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="stat-card text-center">
+                                <i class="fas fa-atom stat-icon"></i>
+                                <div class="stat-value" id="resAvgEnergy">0</div>
+                                <div class="stat-label">Средняя энергия на атом</div>
+                                <div class="stat-unit">Дж</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-card text-center">
+                                <i class="fas fa-thermometer-full stat-icon"></i>
+                                <div class="stat-value" id="resTemperature">0</div>
+                                <div class="stat-label">Температура</div>
+                                <div class="stat-unit">K</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-card text-center">
+                                <i class="fas fa-wind stat-icon"></i>
+                                <div class="stat-value" id="resDiffusion">0</div>
+                                <div class="stat-label">Коэффициент диффузии</div>
+                                <div class="stat-unit">м²/с</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Параметры плазмы -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="mb-3"><i class="fas fa-bolt me-2 text-warning"></i>Параметры плазмы</h5>
+                            <div class="row g-3" id="plasmaParams">
+                                <!-- Будет заполнено JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Энергии отдельных столкновений -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="mb-3"><i class="fas fa-burst me-2 text-danger"></i>Энергии отдельных столкновений</h5>
+                            <div class="collision-energies-container">
+                                <div id="collisionEnergiesChart" style="height: 200px; background: #f8f9fa; border-radius: 8px; display: flex; align-items: end; padding: 10px; gap: 2px; margin-bottom: 15px;"></div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="stat-card text-center">
+                                            <i class="fas fa-hashtag stat-icon"></i>
+                                            <div class="stat-value" id="resCollisionsCount">0</div>
+                                            <div class="stat-label">Количество столкновений</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="stat-card text-center">
+                                            <i class="fas fa-bolt stat-icon"></i>
+                                            <div class="stat-value" id="resMaxCollisionEnergy">0</div>
+                                            <div class="stat-label">Максимальная энергия</div>
+                                            <div class="stat-unit">Дж</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Профиль диффузии -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h5 class="mb-3"><i class="fas fa-chart-line me-2 text-primary"></i>Профиль диффузии</h5>
+                            <div class="diffusion-profile-container">
+                                <div id="diffusionProfileChart" style="height: 200px; background: #f8f9fa; border-radius: 8px; display: flex; align-items: end; padding: 10px; gap: 2px; margin-bottom: 15px;"></div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="stat-card text-center">
+                                            <i class="fas fa-ruler stat-icon"></i>
+                                            <div class="stat-value" id="resMaxDepth">0</div>
+                                            <div class="stat-label">Максимальная глубина</div>
+                                            <div class="stat-unit">м</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="stat-card text-center">
+                                            <i class="fas fa-chart-bar stat-icon"></i>
+                                            <div class="stat-value" id="resMaxConcentration">0</div>
+                                            <div class="stat-label">Максимальная концентрация</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="stat-card text-center">
+                                            <i class="fas fa-balance-scale stat-icon"></i>
+                                            <div class="stat-value" id="resAvgConcentration">0</div>
+                                            <div class="stat-label">Средняя концентрация</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Профиль охлаждения -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h5 class="mb-3"><i class="fas fa-snowflake me-2 text-info"></i>Профиль охлаждения</h5>
+                            <div class="cooling-profile-container">
+                                <div id="coolingProfileChart" style="height: 200px; background: #f8f9fa; border-radius: 8px; display: flex; align-items: end; padding: 10px; gap: 2px; margin-bottom: 15px;"></div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="stat-card text-center">
+                                            <i class="fas fa-thermometer-empty stat-icon"></i>
+                                            <div class="stat-value" id="resMinTemp">0</div>
+                                            <div class="stat-label">Минимальная температура</div>
+                                            <div class="stat-unit">K</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="stat-card text-center">
+                                            <i class="fas fa-thermometer-full stat-icon"></i>
+                                            <div class="stat-value" id="resMaxTemp">0</div>
+                                            <div class="stat-label">Максимальная температура</div>
+                                            <div class="stat-unit">K</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Дополнительная информация -->
+                    <div class="mt-4 p-3 bg-light rounded-3">
+                        <h6><i class="fas fa-lightbulb me-2"></i>Интерпретация результатов:</h6>
+                        <ul class="mb-0">
+                            <li>Общая переданная энергия показывает суммарное воздействие плазмы на материал</li>
+                            <li>Средняя энергия на атом характеризует интенсивность локального нагрева</li>
+                            <li>Температура отражает тепловое состояние системы после симуляции</li>
+                            <li>Коэффициент диффузии определяет скорость перемещения частиц в материале</li>
+                            <li>Профиль диффузии показывает распределение концентрации по глубине</li>
+                            <li>Профиль охлаждения отображает изменение температуры во времени</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
-<script>
-    const resultSection = document.getElementById("resultSection");
-    const resIon = document.getElementById("resIon");
-    const resAtom = document.getElementById("resAtom");
-    const resTotalE = document.getElementById("resTotalE");
-    const resAvgE = document.getElementById("resAvgE");
-    const resTemp = document.getElementById("resTemp");
-    const resDiff = document.getElementById("resDiff");
 
-    document.getElementById("simulationForm").addEventListener("submit", async (e) => {
-        e.preventDefault();
-        document.querySelectorAll(".error-message").forEach(el => el.textContent = "");
+<!-- Футер -->
+<footer>
+    <div class="container text-center">
+        <p class="mb-2">© 2025 PlasmaLab. Все права защищены.</p>
+        <p class="text-light small">Профессиональная платформа для вычислительного моделирования физических процессов</p>
+    </div>
+</footer>
 
-        const token = localStorage.getItem("authToken"); // возвращаем токен
+<!-- Модальное окно авторизации -->
+<div class="modal fade auth-modal" id="authModal" tabindex="-1">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <ul class="nav nav-tabs auth-tabs w-100">
+                    <li class="nav-item w-50">
+                        <button class="nav-link active w-100" data-bs-toggle="tab" data-bs-target="#login">
+                            <i class="fas fa-sign-in-alt me-2"></i>Вход
+                        </button>
+                    </li>
+                    <li class="nav-item w-50">
+                        <button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#register">
+                            <i class="fas fa-user-plus me-2"></i>Регистрация
+                        </button>
+                    </li>
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="login">
+                        <form id="loginForm">
+                            <div class="mb-3">
+                                <label class="form-label">Имя пользователя</label>
+                                <label>
+                                    <input type="text" class="form-control" name="username" required>
+                                </label>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Пароль</label>
+                                <label>
+                                    <input type="password" class="form-control" name="password" required>
+                                </label>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 py-2">
+                                <i class="fas fa-sign-in-alt me-2"></i>Войти в систему
+                            </button>
+                        </form>
+                    </div>
+                    <div class="tab-pane fade" id="register">
+                        <form id="registerForm">
+                            <div class="mb-3">
+                                <label class="form-label">Имя пользователя</label>
+                                <label>
+                                    <input type="text" class="form-control" name="username" required>
+                                </label>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <label>
+                                    <input type="email" class="form-control" name="email" required>
+                                </label>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Пароль</label>
+                                <label>
+                                    <input type="password" class="form-control" name="password" required>
+                                </label>
+                            </div>
+                            <button type="submit" class="btn btn-success w-100 py-2">
+                                <i class="fas fa-user-plus me-2"></i>Создать аккаунт
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-        const req = {
-            configId: +configId.value,
-            ionId: +ionId.value,
-            atomListId: +atomListId.value,
-            generateLattice: generateLattice.checked,
-            latticeRequest: generateLattice.checked ? {
-                sizeX: +latX.value,
-                sizeY: +latY.value,
-                sizeZ: +latZ.value
-            } : null,
-            latticeStructure: latticeStructure.value,
-            plasmaVoltage: +plasmaVoltage.value,
-            pressure: +pressure.value,
-            electronTemp: +electronTemp.value,
-            timeStep: +timeStep.value,
-            totalTime: +totalTime.value,
-            impactAngle: +impactAngle.value,
-            diffusionPrefactor: +diffusionPrefactor.value,
-            activationEnergy: +activationEnergy.value,
-            surfaceConcentration: +surfaceConcentration.value,
-            depth: +depth.value,
-            thermalConductivity: +thermalConductivity.value,
-            potential: {
-                a: +potentialA.value,
-                b: +potentialB.value,
-                c: +potentialC.value
-            }
-        };
-
-        try {
-            const res = await fetch("/api/simulation/run", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
-                },
-                body: JSON.stringify(req)
-            });
-
-            const data = await res.json();
-            const alertBox = document.getElementById("alertBox");
-            alertBox.className = "alert d-none";
-
-            if (!res.ok) {
-                if (data.message === "Ошибка валидации" && Array.isArray(data.data)) {
-                    data.data.forEach(err => {
-                        const [field, msg] = err.split(": ");
-                        const el = document.getElementById(`error-${field}`);
-                        if (el) el.textContent = msg;
-                    });
-                } else {
-                    alertBox.className = "alert alert-danger";
-                    alertBox.textContent = data.message || "Ошибка симуляции";
-                }
-                resultSection.style.display = "none";
-                return;
-            }
-
-            const r = data.data;
-            resIon.textContent = r.ionName;
-            resAtom.textContent = r.atomName;
-            resTotalE.textContent = r.totalTransferredEnergy.toExponential(6);
-            resAvgE.textContent = r.avgTransferredPerAtom.toExponential(6);
-            resTemp.textContent = r.estimatedTemperature.toFixed(2);
-            resDiff.textContent = r.diffusionCoefficient.toExponential(6);
-
-            resultSection.style.display = "block";
-            resultSection.scrollIntoView({behavior: "smooth"});
-        } catch (err) {
-            console.error(err);
-            const alertBox = document.getElementById("alertBox");
-            alertBox.className = "alert alert-danger";
-            alertBox.textContent = "Ошибка соединения с сервером";
-        }
-    });
-</script>
-
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/auth.js"></script>
+<script src="js/simulation.js"></script>
 </body>
 </html>
