@@ -43,7 +43,7 @@ public class DiffusionServiceImpl implements DiffusionService {
     public DiffusionProfileDto calculateFromConfig(SimulationRequestDto dto, Integer configId, Integer atomListId, double exposureTime) {
         AtomListDto atom = simulationService.getAtomList(atomListId);
         PlasmaResultDto plasma = plasmaService.calculate(dto);
-        ThermalDto thermalInput = simulationService.getThermalInput(configId, atomListId, exposureTime);
+        ThermalDto thermalInput = simulationService.getThermalInput(dto, configId, atomListId, exposureTime);
         ThermalResultDto thermal = thermalService.simulateCooling(thermalInput);
 
         List<Double> temperatures = thermal.temperatures();

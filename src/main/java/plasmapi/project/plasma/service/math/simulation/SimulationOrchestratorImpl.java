@@ -47,7 +47,7 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
         PlasmaResultDto plasma = plasmaService.calculate(request);
 
         // ===== Тепловая симуляция =====
-        ThermalDto thermalInput = simulationService.getThermalInput(
+        ThermalDto thermalInput = simulationService.getThermalInput(request,
                 request.configId(), request.ionId(), request.exposureTime()
         );
         ThermalResultDto thermalResult = thermalService.simulateCooling(thermalInput);

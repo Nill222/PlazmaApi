@@ -70,7 +70,7 @@ public class SimulationServiceImpl implements SimulationService {
         AtomList atom = atomListRepo.findById(atomListId)
                 .orElseThrow(() -> new IllegalArgumentException("AtomList not found"));
 
-        PlasmaConfiguration pc = plasmaConfigRepo.findByConfigId(configId)
+        PlasmaConfiguration pc = plasmaConfigRepo.findByConfigId(dto.configId())
                 .orElseThrow(() -> new IllegalArgumentException("PlasmaConfiguration not found"));
 
         // --- ПОЛЯ, ПРИХОДЯЩИЕ ОТ ПОЛЬЗОВАТЕЛЯ ---
