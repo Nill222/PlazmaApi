@@ -61,7 +61,7 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
 
         for (AtomDto latticeAtom : lattice) {
             CollisionDto collisionInput = simulationService.getCollisionInput(
-                    request.ionId(),
+                    request.atomId(),
                     1e-9,
                     plasma.ionEnergy(),
                     0.0

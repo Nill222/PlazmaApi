@@ -44,7 +44,7 @@ public class CollisionServiceImpl implements CollisionService {
         double[][] localEnergy = new double[1][1]; // одномерная модель
         localEnergy[0][0] = transferred;
         var slrResult = slrService.computeSLR(localEnergy, 1.0); // slrParam=1.0
-        transferred = slrResult.globalSLR(); // усреднённая энергия после SLR
+//        transferred = slrResult.globalSLR(); // усреднённая энергия после SLR
         // ------------------------------
 
         double mu = dto.mIon() * dto.mAtom() / (dto.mIon() + dto.mAtom());

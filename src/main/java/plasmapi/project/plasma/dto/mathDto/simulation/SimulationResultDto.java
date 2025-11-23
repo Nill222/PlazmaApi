@@ -7,7 +7,8 @@ import java.util.List;
 
 public record SimulationResultDto(
         String atomName,                       // имя материала/атома
-        String s, double totalTransferredEnergy,         // общая переданная энергия (из Collision)
+        String s,
+        double totalTransferredEnergy,         // общая переданная энергия (из Collision)
         double avgTransferredPerAtom,          // средняя энергия на атом
         double estimatedTemperature,           // итоговая температура (из Thermal)
         double diffusionCoefficient,           // D_effective из диффузии
