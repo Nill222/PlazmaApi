@@ -57,6 +57,7 @@ public class DiffusionServiceImpl implements DiffusionService {
 
         // Коллизии
         CollisionDto collisionInput = simulationService.getCollisionInput(
+                dto,
                 atomListId, 1e-9, plasma.ionEnergy(),
                 plasma.electronVelocity() > 0 ? Math.atan(plasma.currentDensity() / plasma.electronVelocity()) : 0
         );

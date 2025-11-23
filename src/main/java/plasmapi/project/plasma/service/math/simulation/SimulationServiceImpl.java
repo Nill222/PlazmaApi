@@ -104,8 +104,8 @@ public class SimulationServiceImpl implements SimulationService {
 
 
     @Override
-    public CollisionDto getCollisionInput(Integer atomListId, double distance, double ionEnergy, double angle) {
-        AtomList atom = atomListRepo.findById(atomListId)
+    public CollisionDto getCollisionInput(SimulationRequestDto dto,Integer atomListId, double distance, double ionEnergy, double angle) {
+        AtomList atom = atomListRepo.findById(dto.atomId())
                 .orElseThrow(() -> new IllegalArgumentException("AtomList not found"));
 
         double aMeters = (atom.getA() != null ? atom.getA() : 2.86) * 1e-10;
