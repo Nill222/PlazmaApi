@@ -38,10 +38,10 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
     public SimulationResultDto runSimulation(SimulationRequestDto request) {
 
         // ===== Получаем атомный список =====
-        AtomListDto atom = simulationService.getAtomList(request.ionId());
+        AtomListDto atom = simulationService.getAtomList(request.atomId());
 
         // ===== Генерация решётки =====
-        List<AtomDto> lattice = latticeService.generateLattice(request.ionId(), 1000);
+        List<AtomDto> lattice = latticeService.generateLattice(request.atomId(), 1000);
 
         // ===== Параметры плазмы =====
         PlasmaResultDto plasma = plasmaService.calculate(request);

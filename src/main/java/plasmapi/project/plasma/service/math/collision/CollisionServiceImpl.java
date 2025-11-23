@@ -6,6 +6,7 @@ import plasmapi.project.plasma.dto.mathDto.atom.AtomListDto;
 import plasmapi.project.plasma.dto.mathDto.collision.CollisionDto;
 import plasmapi.project.plasma.dto.mathDto.collision.CollisionResult;
 import plasmapi.project.plasma.dto.mathDto.potential.PotentialParametersDto;
+import plasmapi.project.plasma.dto.mathDto.simulation.SimulationRequestDto;
 import plasmapi.project.plasma.service.math.potential.PotentialService;
 import plasmapi.project.plasma.service.math.simulation.SimulationService;
 import plasmapi.project.plasma.service.math.slr.SLRService;
@@ -24,12 +25,11 @@ public class CollisionServiceImpl implements CollisionService {
     @Override
     public CollisionResult simulate(CollisionDto dto) {
         if (dto == null) throw new IllegalArgumentException("CollisionDto required");
-
-        AtomListDto atom = simulationService.getAtomList(dto.atom().getId());
+        AtomListDto atom = simulationService.getAtomList(dto.simulationRequest().atomId());
         if (atom == null) throw new IllegalArgumentException("AtomList required");
 
         // Потенциал атома
-        PotentialParametersDto pot = potentialService.computePotential(dto.distance(), dto.atom().getId());
+        PotentialParametersDto pot = potentialService.computePotential(dto.distance(), dto.simulationRequest().atomId());
 
         double theta = Math.toRadians(dto.angle());
         double kin = (4 * dto.mIon() * dto.mAtom()) / Math.pow(dto.mIon() + dto.mAtom(), 2);

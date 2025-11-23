@@ -126,7 +126,7 @@ public class SimulationServiceImpl implements SimulationService {
                 1.0,
                 surfaceBindingEnergy,
                 atom.getStructure(),
-                atom
+                dto
         );
     }
 
