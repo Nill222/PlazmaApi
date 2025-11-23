@@ -61,39 +61,47 @@ public class SimulationServiceImpl implements SimulationService {
     }
 
     @Override
-    public ThermalDto getThermalInput(Integer configId, Integer atomListId, double exposureTime) {
+    public ThermalDto getThermalInput(
+            SimulationRequestDto dto,
+            Integer configId,
+            Integer atomListId,
+            double exposureTime
+    ) {
         AtomList atom = atomListRepo.findById(atomListId)
                 .orElseThrow(() -> new IllegalArgumentException("AtomList not found"));
 
-        PlasmaConfiguration pc = plasmaConfigRepo.findByConfigId(configId).orElse(null);
+        PlasmaConfiguration pc = plasmaConfigRepo.findByConfigId(configId)
+                .orElseThrow(() -> new IllegalArgumentException("PlasmaConfiguration not found"));
 
-        double density = (atom.getMass() != null) ? atom.getMass() * 1000 : 7874.0; // fallback kg/m3
-        double thickness = (pc != null && pc.getChamberWidth() != null) ? pc.getChamberWidth() * 1e-2 : 1e-6;
-        double area = (pc != null && pc.getChamberDepth() != null) ? pc.getChamberDepth() * 1e-2 : 1e-4;
-        double lambda0 = (pc != null && pc.getThermalConductivity() != null) ? pc.getThermalConductivity() : 50.0;
+        // --- ПОЛЯ, ПРИХОДЯЩИЕ ОТ ПОЛЬЗОВАТЕЛЯ ---
+        double initialTemperature = dto.electronTemperature();
+        double tMax = dto.exposureTime();
+        double dt = tMax / 200.0;
 
-        double ionEnergyEffective = (pc != null) ? safe(pc.getIonEnergyOverride(), 0.0) : 0.0;
+        // --- ИЗ БАЗЫ ДАННЫХ ---
+        double thickness = (pc.getChamberWidth() != null)
+                ? pc.getChamberWidth() * 1e-2     // см → м
+                : 1e-6;
 
+        double thermalConductivity = (pc.getThermalConductivity() != null)
+                ? pc.getThermalConductivity()
+                : 50.0;
+
+        double ionEnergy = (pc.getIonEnergyOverride() != null)
+                ? pc.getIonEnergyOverride()
+                : 0.0;
+
+        // --- Формируем ThermalDto для симуляции ---
         return new ThermalDto(
-                300.0,                       // T0
-                exposureTime,                 // tMax
-                exposureTime / 200.0,         // dt
-                density,
+                initialTemperature,
+                tMax,
+                dt,
                 thickness,
-                area,
-                lambda0,
-                atom.getDebyeTemperature(),
-                (atom.getMass() != null) ? atom.getMass() * 6.02214076e23 : 55.845e-3,
-                atom.getStructure(),
-                null,                         // potential
-                atom,
-                ionEnergyEffective,           // ionEnergy from plasma
-                exposureTime,
-                null,
-                null,
-                300.0
+                thermalConductivity,
+                ionEnergy
         );
     }
+
 
     @Override
     public CollisionDto getCollisionInput(Integer atomListId, double distance, double ionEnergy, double angle) {
