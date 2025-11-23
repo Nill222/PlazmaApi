@@ -61,7 +61,7 @@ public class SimulationServiceImpl implements SimulationService {
     }
 
     @Override
-    public ThermalDto getThermalInput(Integer configId, Integer atomListId, double exposureTime) {
+    public ThermalDto getThermalInput(Integer configId, Integer atomListId, double exposureTime, double electronTemp) {
         AtomList atom = atomListRepo.findById(atomListId)
                 .orElseThrow(() -> new IllegalArgumentException("AtomList not found"));
 
@@ -75,7 +75,7 @@ public class SimulationServiceImpl implements SimulationService {
         double ionEnergyEffective = (pc != null) ? safe(pc.getIonEnergyOverride(), 0.0) : 0.0;
 
         return new ThermalDto(
-                300.0,                       // T0
+                electronTemp,                       // T0
                 exposureTime,                 // tMax
                 exposureTime / 200.0,         // dt
                 density,
