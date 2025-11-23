@@ -1,9 +1,15 @@
 package plasmapi.project.plasma.dto.mathDto.lattice;
 
+import plasmapi.project.plasma.model.atom.StructureType;
+
 public record AtomDto(
-        Integer id,
         double x,
         double y,
-        Integer atomListId
+        double z,
+        double vx,
+        double vy,
+        double vz,
+        double a,
+        StructureType structure
 ) {
 }

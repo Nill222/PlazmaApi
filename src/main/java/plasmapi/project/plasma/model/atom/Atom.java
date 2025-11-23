@@ -32,4 +32,3 @@ public class Atom {
     private Double vy;
     private Double vz;
 }
-

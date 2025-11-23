@@ -1,6 +1,6 @@
 package plasmapi.project.plasma.dto.mathDto.collision;
 
-public record CollisionResult(
+public record CollisionResultDto(
         double transferredEnergy,
         double momentum,
         double damageEnergy,

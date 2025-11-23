@@ -1,7 +1,7 @@
 package plasmapi.project.plasma.service.math.slr;
 
-import plasmapi.project.plasma.dto.mathDto.slr.SLRResult;
+import plasmapi.project.plasma.dto.mathDto.slr.SLRResultDto;
 
 public interface SLRService {
-    SLRResult computeSLR(double[][] field, double slrParam);
+    SLRResultDto computeSLR(double[][] field, double slrParam);
 }

@@ -9,7 +9,6 @@ import plasmapi.project.plasma.dto.ApiResponse;
 import plasmapi.project.plasma.dto.mathDto.simulation.SimulationRequestDto;
 import plasmapi.project.plasma.dto.mathDto.simulation.SimulationResultDto;
 import plasmapi.project.plasma.service.math.simulation.SimulationOrchestratorService;
-import plasmapi.project.plasma.service.math.simulation.SimulationService;
 
 
 @RestController
@@ -27,7 +26,7 @@ public class SimulationController {
     public ResponseEntity<ApiResponse<SimulationResultDto>> runSimulation(
             @Valid @RequestBody SimulationRequestDto request) {
 
-        SimulationResultDto result = simulationService.run(request);
+        SimulationResultDto result = simulationService.runSimulation(request);
         ApiResponse<SimulationResultDto> resp = new ApiResponse<>(
                 result,
                 "Симуляция выполнена",

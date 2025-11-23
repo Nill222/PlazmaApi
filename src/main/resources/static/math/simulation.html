@@ -3,22 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <title>Полная симуляция плазмы</title>
-
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/simulation.css">
-
 </head>
 <body>
 
 <nav class="navbar navbar-expand-lg">
     <div class="container-fluid">
         <a class="navbar-brand" href="/index.html">PlasmaLab</a>
-
-        <button class="navbar-toggler bg-secondary" type="button" data-bs-toggle="collapse"
-                data-bs-target="#nav">
+        <button class="navbar-toggler bg-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
             <span class="navbar-toggler-icon"></span>
         </button>
-
         <div class="collapse navbar-collapse" id="nav">
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item"><a class="nav-link" href="/index.html">Главная</a></li>
@@ -34,76 +29,74 @@
     <h2 class="text-center mb-4">⚡ Полная симуляция взаимодействия плазмы, ионов и атомов</h2>
 
     <div class="card shadow p-4">
-
         <form id="simulationForm" novalidate>
 
             <!-- === CONFIG === -->
             <div class="section-title">🧩 Базовые идентификаторы</div>
             <div class="row g-3">
-
                 <div class="col-md-4">
                     <label class="form-label">ID конфигурации</label>
                     <input id="configId" type="number" class="form-control">
                     <div id="error-configId" class="error-message"></div>
                 </div>
-
                 <div class="col-md-4">
                     <label class="form-label">ID иона</label>
                     <input id="ionId" type="number" class="form-control">
                     <div id="error-ionId" class="error-message"></div>
                 </div>
-
                 <div class="col-md-4">
                     <label class="form-label">ID списка атомов</label>
                     <input id="atomListId" type="number" class="form-control">
                     <div id="error-atomListId" class="error-message"></div>
                 </div>
-
             </div>
 
             <!-- === LATTICE === -->
             <div class="section-title">🧱 Параметры решётки</div>
-
             <div class="form-check mb-2">
                 <input id="generateLattice" type="checkbox" class="form-check-input">
                 <label class="form-check-label">Генерировать решётку</label>
             </div>
 
             <div class="row g-3 mb-3">
-
                 <div class="col-md-4">
                     <label class="form-label">Размер X</label>
                     <input id="latX" type="number" class="form-control">
                 </div>
-
                 <div class="col-md-4">
                     <label class="form-label">Размер Y</label>
                     <input id="latY" type="number" class="form-control">
                 </div>
-
                 <div class="col-md-4">
                     <label class="form-label">Размер Z</label>
                     <input id="latZ" type="number" class="form-control">
                 </div>
+            </div>
 
+            <!-- === LATTICE STRUCTURE === -->
+            <div class="section-title">🧱 Структура решётки</div>
+            <div class="mb-3">
+                <label class="form-label">Тип структуры</label>
+                <select id="latticeStructure" class="form-select">
+                    <option value="CUBIC">CUBIC</option>
+                    <option value="BCC">BCC</option>
+                    <option value="FCC">FCC</option>
+                </select>
             </div>
 
             <!-- === PLASMA === -->
             <div class="section-title">🔥 Параметры плазмы</div>
-
             <div class="row g-3">
                 <div class="col-md-4">
                     <label class="form-label">Напряжение плазмы (V)</label>
                     <input id="plasmaVoltage" type="number" step="any" class="form-control">
                     <div id="error-plasmaVoltage" class="error-message"></div>
                 </div>
-
                 <div class="col-md-4">
                     <label class="form-label">Давление (Па)</label>
                     <input id="pressure" type="number" step="any" class="form-control">
                     <div id="error-pressure" class="error-message"></div>
                 </div>
-
                 <div class="col-md-4">
                     <label class="form-label">Электронная температура (K)</label>
                     <input id="electronTemp" type="number" step="any" class="form-control">
@@ -111,16 +104,31 @@
                 </div>
             </div>
 
+            <!-- === POTENTIAL === -->
+            <div class="section-title">⚡ Потенциал (ручной выбор)</div>
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <label class="form-label">Параметр A</label>
+                    <input id="potentialA" type="number" step="any" class="form-control">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Параметр B</label>
+                    <input id="potentialB" type="number" step="any" class="form-control">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Параметр C</label>
+                    <input id="potentialC" type="number" step="any" class="form-control">
+                </div>
+            </div>
+
             <!-- === TIME === -->
             <div class="section-title">⏱️ Параметры времени</div>
-
             <div class="row g-3">
                 <div class="col-md-6">
                     <label class="form-label">Шаг времени dt</label>
                     <input id="timeStep" type="number" step="any" class="form-control">
                     <div id="error-timeStep" class="error-message"></div>
                 </div>
-
                 <div class="col-md-6">
                     <label class="form-label">Общее время</label>
                     <input id="totalTime" type="number" step="any" class="form-control">
@@ -130,7 +138,6 @@
 
             <!-- === COLLISION === -->
             <div class="section-title">💥 Параметры столкновения</div>
-
             <div class="row g-3">
                 <div class="col-md-6">
                     <label class="form-label">Угол падения иона (deg)</label>
@@ -141,27 +148,22 @@
 
             <!-- === DIFFUSION === -->
             <div class="section-title">🌡️ Диффузия</div>
-
             <div class="row g-3">
-
                 <div class="col-md-4">
                     <label class="form-label">D₀ (префактор)</label>
                     <input id="diffusionPrefactor" type="number" step="any" class="form-control">
                     <div id="error-diffusionPrefactor" class="error-message"></div>
                 </div>
-
                 <div class="col-md-4">
                     <label class="form-label">Q (энергия активации)</label>
                     <input id="activationEnergy" type="number" step="any" class="form-control">
                     <div id="error-activationEnergy" class="error-message"></div>
                 </div>
-
                 <div class="col-md-4">
                     <label class="form-label">Поверхностная концентрация</label>
                     <input id="surfaceConcentration" type="number" step="any" class="form-control">
                     <div id="error-surfaceConcentration" class="error-message"></div>
                 </div>
-
             </div>
 
             <div class="row g-3 mt-2">
@@ -170,7 +172,6 @@
                     <input id="depth" type="number" step="any" class="form-control">
                     <div id="error-depth" class="error-message"></div>
                 </div>
-
                 <div class="col-md-6">
                     <label class="form-label">Теплопроводность</label>
                     <input id="thermalConductivity" type="number" step="any" class="form-control">
@@ -185,7 +186,6 @@
             </div>
 
         </form>
-
     </div>
 
     <!-- ALERT -->
@@ -194,7 +194,6 @@
     <!-- RESULT -->
     <div id="resultSection" class="mt-5" style="display:none;">
         <h3 class="mb-3 text-center">Результаты симуляции</h3>
-
         <div class="card card-result p-3 mb-3">
             <h5>Общие значения</h5>
             <table class="table table-bordered">
@@ -208,11 +207,100 @@
                 </tbody>
             </table>
         </div>
-
     </div>
-
 </div>
 
-<script src="js/simulation.js"></script>
+<script>
+    const resultSection = document.getElementById("resultSection");
+    const resIon = document.getElementById("resIon");
+    const resAtom = document.getElementById("resAtom");
+    const resTotalE = document.getElementById("resTotalE");
+    const resAvgE = document.getElementById("resAvgE");
+    const resTemp = document.getElementById("resTemp");
+    const resDiff = document.getElementById("resDiff");
+
+    document.getElementById("simulationForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        document.querySelectorAll(".error-message").forEach(el => el.textContent = "");
+
+        const token = localStorage.getItem("authToken"); // возвращаем токен
+
+        const req = {
+            configId: +configId.value,
+            ionId: +ionId.value,
+            atomListId: +atomListId.value,
+            generateLattice: generateLattice.checked,
+            latticeRequest: generateLattice.checked ? {
+                sizeX: +latX.value,
+                sizeY: +latY.value,
+                sizeZ: +latZ.value
+            } : null,
+            latticeStructure: latticeStructure.value,
+            plasmaVoltage: +plasmaVoltage.value,
+            pressure: +pressure.value,
+            electronTemp: +electronTemp.value,
+            timeStep: +timeStep.value,
+            totalTime: +totalTime.value,
+            impactAngle: +impactAngle.value,
+            diffusionPrefactor: +diffusionPrefactor.value,
+            activationEnergy: +activationEnergy.value,
+            surfaceConcentration: +surfaceConcentration.value,
+            depth: +depth.value,
+            thermalConductivity: +thermalConductivity.value,
+            potential: {
+                a: +potentialA.value,
+                b: +potentialB.value,
+                c: +potentialC.value
+            }
+        };
+
+        try {
+            const res = await fetch("/api/simulation/run", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify(req)
+            });
+
+            const data = await res.json();
+            const alertBox = document.getElementById("alertBox");
+            alertBox.className = "alert d-none";
+
+            if (!res.ok) {
+                if (data.message === "Ошибка валидации" && Array.isArray(data.data)) {
+                    data.data.forEach(err => {
+                        const [field, msg] = err.split(": ");
+                        const el = document.getElementById(`error-${field}`);
+                        if (el) el.textContent = msg;
+                    });
+                } else {
+                    alertBox.className = "alert alert-danger";
+                    alertBox.textContent = data.message || "Ошибка симуляции";
+                }
+                resultSection.style.display = "none";
+                return;
+            }
+
+            const r = data.data;
+            resIon.textContent = r.ionName;
+            resAtom.textContent = r.atomName;
+            resTotalE.textContent = r.totalTransferredEnergy.toExponential(6);
+            resAvgE.textContent = r.avgTransferredPerAtom.toExponential(6);
+            resTemp.textContent = r.estimatedTemperature.toFixed(2);
+            resDiff.textContent = r.diffusionCoefficient.toExponential(6);
+
+            resultSection.style.display = "block";
+            resultSection.scrollIntoView({behavior: "smooth"});
+        } catch (err) {
+            console.error(err);
+            const alertBox = document.getElementById("alertBox");
+            alertBox.className = "alert alert-danger";
+            alertBox.textContent = "Ошибка соединения с сервером";
+        }
+    });
+</script>
+
 </body>
 </html>

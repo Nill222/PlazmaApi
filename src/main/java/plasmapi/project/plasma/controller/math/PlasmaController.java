@@ -17,7 +17,7 @@ import plasmapi.project.plasma.service.math.plazma.PlasmaService;
 @RequiredArgsConstructor
 public class PlasmaController {
 
-    private final PlasmaService plasmaService;
+//    private final PlasmaService plasmaService;
 
     /**
      * Рассчитать параметры плазмы (плотность электронов, скорость и т.д.)

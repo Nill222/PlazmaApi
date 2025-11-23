@@ -1,164 +1,110 @@
 package plasmapi.project.plasma.service.math.diffusion;
 
-import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import plasmapi.project.plasma.dto.mathDto.atom.AtomListDto;
+import plasmapi.project.plasma.dto.mathDto.collision.CollisionDto;
+import plasmapi.project.plasma.dto.mathDto.collision.CollisionResult;
 import plasmapi.project.plasma.dto.mathDto.diffusion.DiffusionProfileDto;
-import plasmapi.project.plasma.dto.mathDto.diffusion.DiffusionRequest;
-import plasmapi.project.plasma.dto.mathDto.potential.PotentialParameters;
-import plasmapi.project.plasma.model.atom.StructureType;
-import plasmapi.project.plasma.service.math.lattice.LatticePhysics;
+import plasmapi.project.plasma.dto.mathDto.plasma.PlasmaResultDto;
+import plasmapi.project.plasma.dto.mathDto.potential.PotentialParametersDto;
+import plasmapi.project.plasma.dto.mathDto.thermal.ThermalDto;
+import plasmapi.project.plasma.dto.mathDto.thermal.ThermalResultDto;
+import plasmapi.project.plasma.service.math.collision.CollisionService;
+import plasmapi.project.plasma.service.math.plazma.PlasmaService;
+import plasmapi.project.plasma.service.math.potential.PotentialService;
+import plasmapi.project.plasma.service.math.resonanse.ResonanceService;
+import plasmapi.project.plasma.service.math.simulation.SimulationService;
+import plasmapi.project.plasma.service.math.slr.SLRService;
+import plasmapi.project.plasma.service.math.thermal.ThermalService;
 
 import java.util.ArrayList;
 import java.util.List;
 
-
-/**
- * DiffusionServiceImpl
- *
- * Реализует Crank–Nicolson решение одномерной уравнения диффузии по глубине с:
- * - учётом структуры решётки (фактор LatticePhysics.diffusionStructureFactor)
- * - влиянием потенциала (степень жёсткости stiffness -> снижение подвижности)
- * - температурной подстройкой D(T) через активационную энергию (если задана)
- * - radiation-enhanced diffusion: добавочный член пропорционален damageEnergy или damageRate
- *
- * Возвращает профиль концентрации C(x) по глубине после времени tMax (DiffusionProfileDto).
- */
-@Slf4j
 @Service
+@RequiredArgsConstructor
 public class DiffusionServiceImpl implements DiffusionService {
 
-    private static final double R = 8.314462618;
-    private static final double DEFAULT_DX = 1e-9;
-    private static final double DEFAULT_DT = 0.1;
-    private static final double MIN_DT = 1e-12;
-    private static final double MIN_DX = 1e-12;
+    private final SimulationService simulationService;
+    private final PlasmaService plasmaService;
+    private final ThermalService thermalService;
+    private final CollisionService collisionService;
+    private final PotentialService potentialService;
+    private final SLRService slrService;
+    private final ResonanceService resonanceService;
+
+    private static final double DEFAULT_D0 = 1e-18; // м^2/с
+    private static final double R_J_MOLK = 8.314462618; // Дж/(моль·К)
+    private static final int DEFAULT_NODES = 200;
 
     @Override
-    public DiffusionProfileDto calculateDiffusionProfile(DiffusionRequest dto) {
-        // grid and steps
-        double depth = dto.depth() > 0 ? dto.depth() : 1e-6;
-        double DX = dto.dx() > 0 ? dto.dx() : DEFAULT_DX;
-        DX = Math.max(DX, MIN_DX);
-        double dt = dto.dt() > 0 ? dto.dt() : DEFAULT_DT;
-        dt = Math.max(dt, MIN_DT);
-        double tMax = dto.tMax() > 0 ? dto.tMax() : 1.0;
+    public DiffusionProfileDto calculateFromConfig(Integer configId, Integer atomListId, double exposureTime) {
+        AtomListDto atom = simulationService.getAtomList(atomListId);
+        PlasmaResultDto plasma = plasmaService.calculate(configId);
+        ThermalDto thermalInput = simulationService.getThermalInput(configId, atomListId, exposureTime);
+        ThermalResultDto thermal = thermalService.simulateCooling(thermalInput);
 
-        int n = Math.max(2, (int) Math.ceil(depth / DX));
-        int tSteps = Math.max(1, (int) Math.ceil(tMax / dt));
+        List<Double> temperatures = thermal.temperatures();
+        double finalT = temperatures.get(temperatures.size() - 1);
 
-        double D0 = dto.D() > 0 ? dto.D() : 1e-18;
-        StructureType structure = dto.structure() != null ? dto.structure() : StructureType.BCC;
-        PotentialParameters pot = dto.potential();
+        double D0 = atom.diffusionPrefactor() != null ? atom.diffusionPrefactor() : DEFAULT_D0;
+        double Q = calculateActivationEnergy(atom);
 
-        double structFactor = LatticePhysics.diffusionStructureFactor(structure);
-        double potentialFactor = 1.0;
-        if (pot != null) {
-            potentialFactor = 1.0 / (1.0 + 1e-20 * Math.max(0.0, pot.stiffness()));
+        // Термально активная диффузия
+        double D_thermal = finalT > 1.0 ? D0 * Math.exp(-Q / (R_J_MOLK * finalT)) : D0;
+
+        // Коллизии
+        CollisionDto collisionInput = simulationService.getCollisionInput(
+                atomListId, 1e-9, plasma.ionEnergy(),
+                plasma.electronVelocity() > 0 ? Math.atan(plasma.currentDensity() / plasma.electronVelocity()) : 0
+        );
+        CollisionResult collision = collisionService.simulate(collisionInput);
+        double D_collision = D_thermal * (1.0 + collision.transferredEnergy() * 1e-3);
+
+        // Потенциал атома
+        PotentialParametersDto potential = potentialService.computePotential(atom.A(), atomListId);
+        double D_potential = D_collision * (1.0 + Math.abs(potential.stiffness()) * 1e-20);
+
+        // SLR
+        double[][] tempProfile = new double[1][temperatures.size()];
+        for(int i=0;i<temperatures.size();i++) tempProfile[0][i] = temperatures.get(i);
+        double slrFactor = slrService.computeSLR(tempProfile, 1.0).globalSLR();
+        double D_slr = D_potential * (1.0 + slrFactor);
+
+        // Резонанс
+        double xi = resonanceService.computeXi(atomListId, null); // можно передавать параметры, если есть
+        double D_effective = D_slr * xi;
+
+        // Средняя глубина проникновения
+        double meanDepth = Math.sqrt(2 * D_effective * exposureTime);
+        if (meanDepth < 1e-12) meanDepth = 1e-12;
+
+        // Профиль проникновения
+        List<Double> depths = new ArrayList<>();
+        List<Double> conc = new ArrayList<>();
+        double dx = meanDepth * 6.0 / (DEFAULT_NODES - 1);
+        for (int i = 0; i < DEFAULT_NODES; i++) {
+            double x = i * dx;
+            depths.add(x);
+            conc.add(Math.exp(-x / meanDepth));
         }
 
-        // damage-related enhancement
-        double damageEnergy = dto.damageEnergy() != null ? dto.damageEnergy() : 0.0;
-        double damageRate = dto.damageRate() != null ? dto.damageRate() : 0.0;
-        double betaDamage = 1e18;
-        double gammaRate = 1e12;
-
-        double[] C = new double[n];
-        double c0 = dto.c0();
-        for (int i = 0; i < n; i++) C[i] = 0.0;
-        C[0] = c0;
-
-        double[] a = new double[n - 1];
-        double[] b = new double[n];
-        double[] c = new double[n - 1];
-        double[] Cnew = new double[n];
-
-        List<Double> depths = new ArrayList<>(n);
-        for (int i = 0; i < n; i++) depths.add(i * DX);
-
-        for (int t = 0; t < tSteps; t++) {
-            double Tcur = dto.temperature() != null ? dto.temperature() : safeEstimateTemperature(dto);
-            Double Q = dto.activationEnergy(); // J/mol
-
-            double D_T = D0;
-            if (Q != null && Q > 0 && Tcur > 1.0) {
-                D_T = D0 * Math.exp(-Q / (R * Tcur));
-            }
-
-            double D_struct = D_T * structFactor * potentialFactor;
-
-            double D_from_damage = 0.0;
-            if (damageEnergy > 0.0) {
-                D_from_damage += betaDamage * damageEnergy * D0;
-            }
-            if (damageRate > 0.0) {
-                D_from_damage += gammaRate * damageRate;
-            }
-
-            double D_eff = Math.max(0.0, D_struct + D_from_damage);
-
-            double r = D_eff * dt / (2.0 * DX * DX);
-            if (r > 0.45) {
-                // stability guard: reduce dt if too large
-                double scale = 0.45 / Math.max(1e-12, r);
-                dt *= scale;
-                r = D_eff * dt / (2.0 * DX * DX);
-                log.warn("Diffusion: adjusted dt for stability, new dt={}, r={}", dt, r);
-            }
-
-            for (int i = 0; i < n - 1; i++) {
-                a[i] = -r;
-                c[i] = -r;
-            }
-            for (int i = 0; i < n; i++) b[i] = 1.0 + 2.0 * r;
-
-            // Dirichlet at 0, Neumann at end
-            b[0] = 1.0; a[0] = 0.0; c[0] = 0.0;
-            double[] d = new double[n];
-            d[0] = c0;
-            for (int i = 1; i < n - 1; i++) {
-                d[i] = r * C[i - 1] + (1.0 - 2.0 * r) * C[i] + r * C[i + 1];
-            }
-            // Neumann last: mirror
-            d[n - 1] = 2.0 * r * C[n - 2] + (1.0 - 2.0 * r) * C[n - 1];
-            if (n - 2 >= 0) a[n - 2] = -2.0 * r;
-            Cnew = thomasAlgorithm(a, b, c, d);
-
-            Cnew[0] = c0;
-            System.arraycopy(Cnew, 0, C, 0, n);
-        }
-
-        List<Double> conc = new ArrayList<>(n);
-        for (int i = 0; i < n; i++) conc.add(C[i]);
         return new DiffusionProfileDto(depths, conc);
     }
 
-    private double safeEstimateTemperature(DiffusionRequest dto) {
-        if (dto.temperature() != null) return dto.temperature();
-        return 300.0;
-    }
-
-    private double[] thomasAlgorithm(double[] a, double[] b, double[] c, double[] d) {
-        int n = b.length;
-        double[] cp = new double[n - 1];
-        double[] dp = new double[n];
-        double[] x = new double[n];
-
-        cp[0] = c[0] / b[0];
-        dp[0] = d[0] / b[0];
-        for (int i = 1; i < n - 1; i++) {
-            double m = b[i] - a[i - 1] * cp[i - 1];
-            if (Math.abs(m) < 1e-18) m = 1e-18;
-            cp[i] = c[i] / m;
-            dp[i] = (d[i] - a[i - 1] * dp[i - 1]) / m;
+    private double calculateActivationEnergy(AtomListDto atom) {
+        if (atom.cohesiveEnergyEv() != null) {
+            double Q = atom.cohesiveEnergyEv() * 1.602176634e-19 * 6.02214076e23;
+            return 0.4 * Q;
         }
-        double m = b[n - 1] - a[n - 2] * cp[n - 2];
-        if (Math.abs(m) < 1e-18) m = 1e-18;
-        dp[n - 1] = (d[n - 1] - a[n - 2] * dp[n - 2]) / m;
-
-        x[n - 1] = dp[n - 1];
-        for (int i = n - 2; i >= 0; i--) {
-            x[i] = dp[i] - cp[i] * x[i + 1];
+        if (atom.morseDeEv() != null) {
+            double Q = atom.morseDeEv() * 1.602176634e-19 * 6.02214076e23;
+            return 0.5 * Q;
         }
-        return x;
+        if (atom.DebyeTemperature() != null) {
+            final double kB = 1.380649e-23;
+            return kB * atom.DebyeTemperature() * 5 * 6.02214076e23;
+        }
+        return 1e5;
     }
 }

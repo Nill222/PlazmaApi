@@ -11,7 +11,11 @@ public class AtomMapper {
                 atom.getId(),
                 atom.getX(),
                 atom.getY(),
-                atom.getAtomList().getId()
+                atom.getAtomList().getId(),
+                atom.getZ(),
+                atom.getVx(),
+                atom.getAtomList().getA(),
+                atom.getAtomList().getStructure()
         );
     }
 }

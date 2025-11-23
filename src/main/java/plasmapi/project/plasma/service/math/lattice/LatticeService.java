@@ -6,5 +6,6 @@ import plasmapi.project.plasma.dto.mathDto.lattice.LatticeGenerationRequest;
 import java.util.List;
 
 public interface LatticeService {
-    List<AtomDto> generateLattice(LatticeGenerationRequest request);
+
+    List<AtomDto> generateLattice(Integer atomListId, int count);
 }
