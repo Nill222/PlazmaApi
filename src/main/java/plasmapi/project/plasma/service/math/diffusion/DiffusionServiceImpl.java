@@ -8,8 +8,10 @@ import plasmapi.project.plasma.dto.mathDto.collision.CollisionResult;
 import plasmapi.project.plasma.dto.mathDto.diffusion.DiffusionProfileDto;
 import plasmapi.project.plasma.dto.mathDto.plasma.PlasmaResultDto;
 import plasmapi.project.plasma.dto.mathDto.potential.PotentialParametersDto;
+import plasmapi.project.plasma.dto.mathDto.simulation.SimulationRequestDto;
 import plasmapi.project.plasma.dto.mathDto.thermal.ThermalDto;
 import plasmapi.project.plasma.dto.mathDto.thermal.ThermalResultDto;
+import plasmapi.project.plasma.model.res.Config;
 import plasmapi.project.plasma.service.math.collision.CollisionService;
 import plasmapi.project.plasma.service.math.plazma.PlasmaService;
 import plasmapi.project.plasma.service.math.potential.PotentialService;
@@ -38,9 +40,9 @@ public class DiffusionServiceImpl implements DiffusionService {
     private static final int DEFAULT_NODES = 200;
 
     @Override
-    public DiffusionProfileDto calculateFromConfig(Integer configId, Integer atomListId, double exposureTime) {
+    public DiffusionProfileDto calculateFromConfig(SimulationRequestDto dto, Integer configId, Integer atomListId, double exposureTime) {
         AtomListDto atom = simulationService.getAtomList(atomListId);
-        PlasmaResultDto plasma = plasmaService.calculate(configId);
+        PlasmaResultDto plasma = plasmaService.calculate(dto);
         ThermalDto thermalInput = simulationService.getThermalInput(configId, atomListId, exposureTime);
         ThermalResultDto thermal = thermalService.simulateCooling(thermalInput);
 

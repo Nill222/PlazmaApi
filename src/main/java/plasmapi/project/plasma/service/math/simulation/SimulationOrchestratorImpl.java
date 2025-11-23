@@ -44,10 +44,12 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
         List<AtomDto> lattice = latticeService.generateLattice(request.ionId(), 1000);
 
         // ===== Параметры плазмы =====
-        PlasmaResultDto plasma = plasmaService.calculate(request.configId());
+        PlasmaResultDto plasma = plasmaService.calculate(request);
 
         // ===== Тепловая симуляция =====
-        ThermalDto thermalInput = simulationService.getThermalInput(request.configId(), request.ionId(), request.exposureTime());
+        ThermalDto thermalInput = simulationService.getThermalInput(
+                request.configId(), request.ionId(), request.exposureTime()
+        );
         ThermalResultDto thermalResult = thermalService.simulateCooling(thermalInput);
 
         // ===== Коллизии для всех атомов =====
@@ -62,9 +64,10 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
                     request.ionId(),
                     1e-9,
                     plasma.ionEnergy(),
-                    0.0 // можно передавать угол, если нужно
+                    0.0
             );
             CollisionResult colRes = collisionService.simulate(collisionInput);
+
             totalTransferred += colRes.transferredEnergy();
             totalMomentum += colRes.momentum();
             totalDamage += colRes.damageEnergy();
@@ -72,16 +75,15 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
             perAtomTransferred.add(colRes.transferredEnergy());
         }
 
+        // ===== Средние значения =====
         double avgTransferred = totalTransferred / lattice.size();
         double avgMomentum = totalMomentum / lattice.size();
         double avgDamage = totalDamage / lattice.size();
         double avgDisplacement = totalDisplacement / lattice.size();
 
-        // ===== Диффузия с учётом потенциала, SLR и резонанса =====
+        // ===== Диффузия =====
         DiffusionProfileDto diffusion = diffusionService.calculateFromConfig(
-                request.configId(),
-                request.ionId(),
-                request.exposureTime()
+                request, request.configId(), request.ionId(), request.exposureTime()
         );
 
         // ===== Средняя температура =====
@@ -97,9 +99,9 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
                 totalTransferred,
                 avgTransferred,
                 avgTemperature,
-                0.0,                  // diffusion.meanDiffusionCoefficient() можно добавить в DiffusionProfileDto
+                0.0,                  // можно добавить diffusion.meanDiffusionCoefficient()
                 plasma,
-                perAtomTransferred,   // список по каждому атому
+                perAtomTransferred,
                 diffusion,
                 thermalResult.temperatures()
         );

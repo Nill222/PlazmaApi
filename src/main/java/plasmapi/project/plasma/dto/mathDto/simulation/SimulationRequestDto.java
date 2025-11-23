@@ -9,11 +9,13 @@ public record SimulationRequestDto(
         Integer ionId,
 
         @NotNull @Positive
-        Integer configId,      // ID конфигурации плазмы из БД
+        Integer configId,
 
-        @NotNull @Positive
-        Integer atomListId,    // ID атома (ранее было ionId, теперь правильно)
-
-        @NotNull @Positive
-        Double exposureTime    // время воздействия плазмы
+        double voltage,
+        double current,
+        double pressure,
+        double electronTemperature,
+        double chamberWidth,
+        double chamberDepth,
+        double exposureTime
 ) {}

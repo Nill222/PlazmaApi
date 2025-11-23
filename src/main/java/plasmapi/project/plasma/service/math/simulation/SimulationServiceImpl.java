@@ -4,19 +4,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import plasmapi.project.plasma.dto.mathDto.atom.AtomListDto;
 import plasmapi.project.plasma.dto.mathDto.collision.CollisionDto;
-import plasmapi.project.plasma.dto.mathDto.collision.CollisionResult;
-import plasmapi.project.plasma.dto.mathDto.diffusion.DiffusionProfileDto;
-import plasmapi.project.plasma.dto.mathDto.lattice.AtomDto;
 import plasmapi.project.plasma.dto.mathDto.plasma.PlasmaResultDto;
 import plasmapi.project.plasma.dto.mathDto.simulation.SimulationRequestDto;
-import plasmapi.project.plasma.dto.mathDto.simulation.SimulationResultDto;
 import plasmapi.project.plasma.dto.mathDto.thermal.ThermalDto;
-import plasmapi.project.plasma.dto.mathDto.thermal.ThermalResultDto;
 import plasmapi.project.plasma.model.atom.AtomList;
 import plasmapi.project.plasma.model.res.PlasmaConfiguration;
 import plasmapi.project.plasma.repository.AtomListRepository;
 import plasmapi.project.plasma.repository.PlasmaConfigurationRepository;
 import plasmapi.project.plasma.service.math.lattice.LatticePhysics;
+import plasmapi.project.plasma.service.math.plazma.PlasmaService;
 
 
 @Service
@@ -25,32 +21,14 @@ public class SimulationServiceImpl implements SimulationService {
 
     private final PlasmaConfigurationRepository plasmaConfigRepo;
     private final AtomListRepository atomListRepo;
+    private final PlasmaService plasmaService;
 
     @Override
-    public PlasmaResultDto getPlasmaParameters(Integer configId) {
-        if (configId == null) throw new IllegalArgumentException("configId required");
+    public PlasmaResultDto getPlasmaParametersFromRequest(SimulationRequestDto request) {
+        if (request == null) throw new IllegalArgumentException("SimulationRequestDto required");
 
-        PlasmaConfiguration pc = plasmaConfigRepo.findByConfigId(configId)
-                .orElseThrow(() -> new IllegalArgumentException("Plasma configuration not found"));
-
-        double voltage = safe(pc.getVoltage(), 500.0);
-        double current = safe(pc.getCurrent(), 0.1);
-        double pressure = safe(pc.getPressure(), 10.0);
-        double electronTemp = safe(pc.getElectronTemperature(), 10000.0);
-        double electronDensity = pressure / (1.380649e-23 * electronTemp);
-        double electronVelocity = Math.sqrt(2.0 * 1.602176634e-19 * voltage / 9.10938356e-31);
-        double currentDensity = current / (safe(pc.getChamberWidth(), 0.1) * safe(pc.getChamberDepth(), 0.1));
-        double ionEnergyEffective = safe(pc.getIonEnergyOverride(), voltage * current * safe(pc.getExposureTime(), 1.0));
-
-        return new PlasmaResultDto(
-                electronDensity,
-                electronVelocity,
-                currentDensity,
-                ionEnergyEffective,
-                voltage,
-                pressure,
-                electronTemp
-        );
+        // Делегируем вычисления PlasmaService
+        return plasmaService.calculate(request);
     }
 
     @Override

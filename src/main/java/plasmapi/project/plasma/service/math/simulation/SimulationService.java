@@ -9,7 +9,7 @@ import plasmapi.project.plasma.dto.mathDto.thermal.ThermalDto;
 
 public interface SimulationService {
 
-    PlasmaResultDto getPlasmaParameters(Integer configId);
+    PlasmaResultDto getPlasmaParametersFromRequest(SimulationRequestDto request);
 
     AtomListDto getAtomList(Integer atomListId);
 
