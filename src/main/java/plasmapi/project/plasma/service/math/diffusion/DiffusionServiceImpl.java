@@ -40,10 +40,10 @@ public class DiffusionServiceImpl implements DiffusionService {
     private static final int DEFAULT_NODES = 200;
 
     @Override
-    public DiffusionProfileDto calculateFromConfig(SimulationRequestDto dto, Integer configId, Integer atomListId, double exposureTime) {
+    public DiffusionProfileDto calculateFromConfig(SimulationRequestDto dto, Integer configId, Integer atomListId, double exposureTime, double temp) {
         AtomListDto atom = simulationService.getAtomList(atomListId);
         PlasmaResultDto plasma = plasmaService.calculate(dto);
-        ThermalDto thermalInput = simulationService.getThermalInput(configId, atomListId, exposureTime);
+        ThermalDto thermalInput = simulationService.getThermalInput(configId, atomListId, exposureTime, temp);
         ThermalResultDto thermal = thermalService.simulateCooling(thermalInput);
 
         List<Double> temperatures = thermal.temperatures();
