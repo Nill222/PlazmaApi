@@ -11,6 +11,9 @@ public record SimulationRequestDto(
         @NotNull @Positive
         Integer configId,
 
+        @NotNull @Positive
+        Integer atomId,
+
         double voltage,
         double current,
         double pressure,
