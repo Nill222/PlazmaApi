@@ -112,7 +112,7 @@ async function loadAtoms() {
             if (atomCount) {
                 atomCount.textContent = currentAtoms.length;
             }
-            showMessage(`✅ Загружено ${currentAtoms.length} атомов`, 'success');
+
         } else {
             throw new Error(result.body?.message || 'Ошибка загрузки данных');
         }
@@ -160,7 +160,18 @@ async function handleCreateAtom(e) {
             a: parseFloat(document.getElementById("a").value),
             debyeTemperature: parseFloat(document.getElementById("debyeTemperature").value),
             valence: parseInt(document.getElementById("valence").value),
-            structure: document.getElementById("structure").value
+            structure: document.getElementById("structure").value,
+            // Новые поля - можно сделать опциональными
+            morseDeEv: null,
+            morseA: null,
+            ljSigma: null,
+            ljEpsilonEv: null,
+            bornMayerA: null,
+            bornMayerAParam: null,
+            cohesiveEnergyEv: null,
+            screeningLength: null,
+            packingFactor: null,
+            notes: "Создан через веб-интерфейс"
         };
 
         // Валидация данных
@@ -178,6 +189,8 @@ async function handleCreateAtom(e) {
         if (result.ok) {
             showMessage("✅ " + (result.body?.message || "Атом успешно создан"), 'success');
             form.reset();
+            // Сбрасываем селект к начальному состоянию
+            document.getElementById("structure").selectedIndex = 0;
             // Обновляем таблицу
             loadAtoms();
         } else {
@@ -246,12 +259,12 @@ async function handleSearchAtom() {
 
 // Валидация данных атома
 function validateAtomData(atomData) {
-    if (!atomData.atomName || atomData.atomName.length > 10) {
-        showMessage('Символ атома обязателен и не должен превышать 10 символов', 'error');
+    if (!atomData.atomName || atomData.atomName.length > 20) {
+        showMessage('Символ атома обязателен и не должен превышать 20 символов', 'error');
         return false;
     }
-    if (!atomData.fullName || atomData.fullName.length > 100) {
-        showMessage('Полное название обязательно и не должно превышать 100 символов', 'error');
+    if (!atomData.fullName || atomData.fullName.length > 50) {
+        showMessage('Полное название обязательно и не должно превышать 50 символов', 'error');
         return false;
     }
     if (!atomData.mass || atomData.mass <= 0) {
@@ -313,11 +326,11 @@ function renderAtomTable(atoms) {
                 <td><span class="badge bg-secondary">${atom.id}</span></td>
                 <td><strong class="text-primary">${atom.atomName}</strong></td>
                 <td>${atom.fullName}</td>
-                <td>${formatScientific(atom.mass)}</td>
+                <td>${formatScientific(atom.mass)}</td> 
                 <td>${atom.a}</td>
                 <td>${atom.debyeTemperature}</td>
                 <td><span class="badge bg-info">${atom.valence}</span></td>
-                <td><span class="badge bg-light text-dark border">${atom.structure}</span></td>
+                <td><span class="badge bg-light text-dark border">${formatStructure(atom.structure)}</span></td>
                 <td class="text-center">
                     <div class="btn-group btn-group-sm">
                         <button class="btn btn-outline-danger btn-action" 
@@ -376,13 +389,24 @@ function renderSearchResult(atoms, searchTerm) {
                     </strong>
                 </td>
                 <td>${atom.fullName}</td>
-                <td>${formatScientific(atom.mass)}</td>
-                <td><span class="badge bg-light text-dark border">${atom.structure}</span></td>
+                <td>${formatScientific(atom.mass)}</td> 
+                <td><span class="badge bg-light text-dark border">${formatStructure(atom.structure)}</span></td>
             </tr>`;
     });
 
     html += `</tbody></table></div>`;
     searchResult.innerHTML = html;
+}
+
+// Функция для преобразования enum структуры в читаемый формат
+function formatStructure(structure) {
+    const structureMap = {
+        'SC': 'Simple Cubic',
+        'BCC': 'Body-centered cubic',
+        'FCC': 'Face-centered cubic',
+        'HCP': 'Hexagonal close-packed'
+    };
+    return structureMap[structure] || structure;
 }
 
 // Удаление атома

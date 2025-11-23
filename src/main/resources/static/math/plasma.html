@@ -2,73 +2,329 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Расчёт параметров плазмы</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Расчёт параметров плазмы - PlasmaLab</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/plasma.css">
-    <link rel="stylesheet" href="css/error.css">
 </head>
 <body>
+<!-- Навигация -->
+<nav class="navbar navbar-expand-lg navbar-dark">
+    <div class="container">
+        <a class="navbar-brand" href="/index.html">
+            <i class="fas fa-atom me-2"></i>PlasmaLab
+        </a>
 
-<nav class="navbar navbar-expand-lg">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="/index.html">PlasmaLab</a>
-
-        <button class="navbar-toggler bg-secondary" type="button" data-bs-toggle="collapse"
-                data-bs-target="#nav">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
             <span class="navbar-toggler-icon"></span>
         </button>
 
-        <div class="collapse navbar-collapse" id="nav">
-            <ul class="navbar-nav ms-auto">
-                <li class="nav-item"><a class="nav-link" href="/index.html">Главная</a></li>
-                <li class="nav-item"><a class="nav-link" href="/array.html">Атомы</a></li>
-                <li class="nav-item"><a class="nav-link" href="/chain.html">Ионы</a></li>
-                <li class="nav-item"><a class="nav-link active" href="/methods.html">Методы</a></li>
-            </ul>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <div class="navbar-nav me-auto">
+                <a class="nav-btn" href="collision.html">Столкновения</a>
+                <a class="nav-btn" href="diffusion.html">Диффузия</a>
+                <a class="nav-btn" href="lattice.html">Решётки</a>
+                <a class="nav-btn active" href="plasma.html">Плазма</a>
+                <a class="nav-btn" href="simulation.html">Полная симуляция</a>
+            </div>
+
+            <!-- Кнопки авторизации -->
+            <div class="navbar-nav">
+                <div class="auth-buttons">
+                    <button class="btn btn-outline-light me-2" onclick="showAuthModal()">
+                        <i class="fas fa-sign-in-alt me-2"></i>Войти
+                    </button>
+                    <button class="btn btn-light" onclick="showAuthModal('register')">
+                        <i class="fas fa-user-plus me-2"></i>Регистрация
+                    </button>
+                </div>
+                <div class="user-menu">
+                    <span class="user-info">
+                        <i class="fas fa-user me-2"></i>
+                        <span id="usernameDisplay"></span>
+                    </span>
+                    <button class="btn btn-outline-light" onclick="logout()">
+                        <i class="fas fa-sign-out-alt me-2"></i>Выйти
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </nav>
 
-<div class="container mt-5">
-    <h2 class="text-center mb-4">⚡ Расчёт параметров плазмы</h2>
-
-    <div class="card p-4 shadow-sm">
-        <form id="plasmaForm" novalidate>
-            <div class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">Напряжение (В)</label>
-                    <input type="number" step="any" id="voltage" class="form-control" required>
-                    <div class="error-message" id="error-voltage"></div>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">Давление (Па)</label>
-                    <input type="number" step="any" id="pressure" class="form-control" required>
-                    <div class="error-message" id="error-pressure"></div>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">Температура (K)</label>
-                    <input type="number" step="any" id="temperature" class="form-control" required>
-                    <div class="error-message" id="error-temperature"></div>
-                </div>
-            </div>
-
-            <div class="mt-4 text-center">
-                <button type="submit" class="btn btn-primary btn-lg">Рассчитать</button>
-            </div>
-        </form>
+<!-- Герой секция -->
+<section class="hero-section">
+    <div class="container text-center">
+        <h1 class="hero-title">
+            <i class="fas fa-bolt me-3"></i>Расчёт параметров плазмы
+        </h1>
+        <p class="hero-subtitle">
+            Определение характеристик плазмы тлеющего разряда на основе основных физических параметров
+        </p>
     </div>
+</section>
 
-    <div class="mt-5" id="resultSection" style="display:none;">
-        <h4 class="text-center mb-3">Результаты расчёта</h4>
-        <div class="card p-3">
-            <table class="table table-bordered table-hover align-middle">
-                <tbody id="resultsTable"></tbody>
-            </table>
+<!-- Основной контент -->
+<div class="container my-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <!-- Карточка расчета -->
+            <div class="calculation-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-calculator me-2"></i>Параметры плазмы</h3>
+                </div>
+                <div class="card-body p-4">
+                    <form id="plasmaForm" novalidate>
+                        <div class="row g-4">
+                            <!-- Напряжение -->
+                            <div class="col-md-4">
+                                <label class="form-label">
+                                    <i class="fas fa-bolt me-2 text-warning"></i>Напряжение
+                                </label>
+                                <div class="input-group">
+                                    <label for="voltage"></label><input type="number" step="any" id="voltage" class="form-control"
+                                                                        placeholder="1000" required>
+                                    <span class="input-group-text">В</span>
+                                </div>
+                                <div class="parameter-help">
+                                    Ускоряющее напряжение в плазме
+                                </div>
+                                <div class="error-message" id="error-voltage"></div>
+                            </div>
+
+                            <!-- Давление -->
+                            <div class="col-md-4">
+                                <label class="form-label">
+                                    <i class="fas fa-tachometer-alt me-2 text-primary"></i>Давление
+                                </label>
+                                <div class="input-group">
+                                    <label for="pressure"></label><input type="number" step="any" id="pressure" class="form-control"
+                                                                         placeholder="1.0" required>
+                                    <span class="input-group-text">Па</span>
+                                </div>
+                                <div class="parameter-help">
+                                    Давление в плазменной камере
+                                </div>
+                                <div class="error-message" id="error-pressure"></div>
+                            </div>
+
+                            <!-- Температура -->
+                            <div class="col-md-4">
+                                <label class="form-label">
+                                    <i class="fas fa-thermometer-half me-2 text-danger"></i>Температура
+                                </label>
+                                <div class="input-group">
+                                    <label for="temperature"></label><input type="number" step="any" id="temperature" class="form-control"
+                                                                            placeholder="3000" required>
+                                    <span class="input-group-text">K</span>
+                                </div>
+                                <div class="parameter-help">
+                                    Температура электронов в плазме
+                                </div>
+                                <div class="error-message" id="error-temperature"></div>
+                            </div>
+                        </div>
+
+                        <!-- Кнопка расчета -->
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg px-5" id="calculateBtn">
+                                <i class="fas fa-play-circle me-2"></i>
+                                <span>Рассчитать параметры</span>
+                                <div class="loading-spinner spinner-border spinner-border-sm ms-2" role="status">
+                                    <span class="visually-hidden">Загрузка...</span>
+                                </div>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Блок с информацией -->
+            <div class="info-box">
+                <h5><i class="fas fa-info-circle me-2 text-primary"></i>О методе расчета</h5>
+                <p class="mb-3">
+                    Расчет основан на физике тлеющего разряда. Используются фундаментальные уравнения для определения
+                    плотности электронов, их средней скорости и плотности тока в плазме.
+                </p>
+                <div class="formula-box">
+                    <strong>Основные формулы:</strong><br>
+                    nₑ = P / (kₐT) &nbsp;&nbsp; vₑ = √(2eV/mₑ) &nbsp;&nbsp; J = enₑvₑ
+                </div>
+                <div class="mt-2">
+                    <small class="text-muted">
+                        где P - давление, T - температура, V - напряжение, kₐ - постоянная Больцмана,
+                        e - заряд электрона, mₑ - масса электрона
+                    </small>
+                </div>
+            </div>
+
+            <!-- Уведомления -->
+            <div id="alertBox" class="alert alert-custom alert-danger d-none mt-4" role="alert"></div>
+
+            <!-- Результаты -->
+            <div class="result-card mt-4" id="resultSection" style="display:none;">
+                <div class="result-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-chart-bar me-2"></i>Результаты расчёта параметров плазмы
+                    </h4>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Основные параметры -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="result-item">
+                                <i class="fas fa-bolt result-icon"></i>
+                                <div class="result-content">
+                                    <div class="result-label">Напряжение</div>
+                                    <div class="result-value" id="resVoltage">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="result-item">
+                                <i class="fas fa-tachometer-alt result-icon"></i>
+                                <div class="result-content">
+                                    <div class="result-label">Давление</div>
+                                    <div class="result-value" id="resPressure">-</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="result-item">
+                                <i class="fas fa-thermometer-half result-icon"></i>
+                                <div class="result-content">
+                                    <div class="result-label">Температура</div>
+                                    <div class="result-value" id="resTemperature">-</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Расчетные параметры -->
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="stat-card text-center">
+                                <i class="fas fa-atom stat-icon"></i>
+                                <div class="stat-value" id="resElectronDensity">0</div>
+                                <div class="stat-label">Плотность электронов</div>
+                                <div class="stat-unit">м⁻³</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-card text-center">
+                                <i class="fas fa-gauge-high stat-icon"></i>
+                                <div class="stat-value" id="resElectronVelocity">0</div>
+                                <div class="stat-label">Скорость электронов</div>
+                                <div class="stat-unit">м/с</div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="stat-card text-center">
+                                <i class="fas fa-bolt stat-icon"></i>
+                                <div class="stat-value" id="resCurrentDensity">0</div>
+                                <div class="stat-label">Плотность тока</div>
+                                <div class="stat-unit">А/м²</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Дополнительная информация -->
+                    <div class="mt-4 p-3 bg-light rounded-3">
+                        <h6><i class="fas fa-lightbulb me-2"></i>Интерпретация результатов:</h6>
+                        <ul class="mb-0">
+                            <li>Высокая плотность электронов характерна для плотной плазмы</li>
+                            <li>Скорость электронов зависит от ускоряющего напряжения</li>
+                            <li>Плотность тока определяет интенсивность плазменного разряда</li>
+                            <li>Результаты соответствуют модели тлеющего разряда</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
-<script src="js/plasma.js"></script>
+<!-- Футер -->
+<footer>
+    <div class="container text-center">
+        <p class="mb-2">© 2025 PlasmaLab. Все права защищены.</p>
+        <p class="text-light small">Профессиональная платформа для вычислительного моделирования физических процессов</p>
+    </div>
+</footer>
 
+<!-- Модальное окно авторизации -->
+<div class="modal fade auth-modal" id="authModal" tabindex="-1">
+    <div class="modal-dialog modal-md">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <ul class="nav nav-tabs auth-tabs w-100">
+                    <li class="nav-item w-50">
+                        <button class="nav-link active w-100" data-bs-toggle="tab" data-bs-target="#login">
+                            <i class="fas fa-sign-in-alt me-2"></i>Вход
+                        </button>
+                    </li>
+                    <li class="nav-item w-50">
+                        <button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#register">
+                            <i class="fas fa-user-plus me-2"></i>Регистрация
+                        </button>
+                    </li>
+                </ul>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="login">
+                        <form id="loginForm">
+                            <div class="mb-3">
+                                <label class="form-label">Имя пользователя</label>
+                                <label>
+                                    <input type="text" class="form-control" name="username" required>
+                                </label>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Пароль</label>
+                                <label>
+                                    <input type="password" class="form-control" name="password" required>
+                                </label>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 py-2">
+                                <i class="fas fa-sign-in-alt me-2"></i>Войти в систему
+                            </button>
+                        </form>
+                    </div>
+                    <div class="tab-pane fade" id="register">
+                        <form id="registerForm">
+                            <div class="mb-3">
+                                <label class="form-label">Имя пользователя</label>
+                                <label>
+                                    <input type="text" class="form-control" name="username" required>
+                                </label>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Email</label>
+                                <label>
+                                    <input type="email" class="form-control" name="email" required>
+                                </label>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Пароль</label>
+                                <label>
+                                    <input type="password" class="form-control" name="password" required>
+                                </label>
+                            </div>
+                            <button type="submit" class="btn btn-success w-100 py-2">
+                                <i class="fas fa-user-plus me-2"></i>Создать аккаунт
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="/js/auth.js"></script>
+<script src="js/plasma.js"></script>
 </body>
 </html>

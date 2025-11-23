@@ -96,17 +96,17 @@
             <form id="createIonForm" class="row g-3">
                 <div class="col-md-4">
                     <label class="form-label fw-semibold">Название иона</label>
-                    <input type="text" id="ionName" class="form-control" placeholder="Na⁺, Cl⁻, Ca²⁺" required>
+                    <label for="ionName"></label><input type="text" id="ionName" class="form-control" placeholder="Na⁺, Cl⁻, Ca²⁺" required>
                     <div class="form-text">Используйте стандартные обозначения</div>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label fw-semibold">Масса (кг)</label>
-                    <input type="number" id="mass" class="form-control" step="any" placeholder="3.818e-26" required>
+                    <label for="mass"></label><input type="number" id="mass" class="form-control" step="any" placeholder="3.818e-26" required>
                     <div class="form-text">Масса в килограммах</div>
                 </div>
                 <div class="col-md-4">
                     <label class="form-label fw-semibold">Заряд (e)</label>
-                    <input type="number" id="charge" class="form-control" placeholder="1, -1, 2" required>
+                    <label for="charge"></label><input type="number" id="charge" class="form-control" placeholder="1, -1, 2" required>
                     <div class="form-text">Заряд в элементарных зарядах</div>
                 </div>
                 <div class="col-12 text-end">
@@ -127,7 +127,7 @@
             <div class="row g-3 align-items-end">
                 <div class="col-md-8">
                     <label class="form-label fw-semibold">Найти ион по ID</label>
-                    <input type="number" id="searchIonId" class="form-control" placeholder="Введите ID иона">
+                    <label for="searchIonId"></label><input type="number" id="searchIonId" class="form-control" placeholder="Введите ID иона">
                 </div>
                 <div class="col-md-4">
                     <button id="searchIon" class="btn btn-info w-100">
@@ -148,7 +148,7 @@
             <div class="row g-3">
                 <div class="col-md-8">
                     <label class="form-label fw-semibold">Удалить ион по ID</label>
-                    <input type="number" id="deleteIonId" class="form-control" placeholder="Введите ID иона для удаления">
+                    <label for="deleteIonId"></label><input type="number" id="deleteIonId" class="form-control" placeholder="Введите ID иона для удаления">
                 </div>
                 <div class="col-md-4">
                     <button id="deleteIon" class="btn btn-danger w-100" style="margin-top: 2rem;">
@@ -199,11 +199,15 @@
                         <form id="loginForm">
                             <div class="mb-3">
                                 <label class="form-label">Имя пользователя</label>
-                                <input type="text" class="form-control" name="username" required>
+                                <label>
+                                    <input type="text" class="form-control" name="username" required>
+                                </label>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Пароль</label>
-                                <input type="password" class="form-control" name="password" required>
+                                <label>
+                                    <input type="password" class="form-control" name="password" required>
+                                </label>
                             </div>
                             <button type="submit" class="btn btn-primary w-100 py-2">
                                 <i class="fas fa-sign-in-alt me-2"></i>Войти в систему
@@ -214,15 +218,21 @@
                         <form id="registerForm">
                             <div class="mb-3">
                                 <label class="form-label">Имя пользователя</label>
-                                <input type="text" class="form-control" name="username" required>
+                                <label>
+                                    <input type="text" class="form-control" name="username" required>
+                                </label>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Email</label>
-                                <input type="email" class="form-control" name="email" required>
+                                <label>
+                                    <input type="email" class="form-control" name="email" required>
+                                </label>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Пароль</label>
-                                <input type="password" class="form-control" name="password" required>
+                                <label>
+                                    <input type="password" class="form-control" name="password" required>
+                                </label>
                             </div>
                             <button type="submit" class="btn btn-success w-100 py-2">
                                 <i class="fas fa-user-plus me-2"></i>Создать аккаунт
