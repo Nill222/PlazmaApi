@@ -40,48 +40,56 @@ public class DiffusionServiceImpl implements DiffusionService {
     private static final int DEFAULT_NODES = 200;
 
     @Override
-    public DiffusionProfileDto calculateFromConfig(SimulationRequestDto dto, Integer configId, Integer atomListId, double exposureTime, double temp) {
+    public DiffusionProfileDto calculateFromConfig(SimulationRequestDto dto, Integer configId,
+                                                   Integer atomListId, double exposureTime, double temp,
+                                                   double ionEnergy) {
+
         AtomListDto atom = simulationService.getAtomList(atomListId);
-        PlasmaResultDto plasma = plasmaService.calculate(dto);
+        if (atom == null) throw new IllegalArgumentException("Atom not found");
+
         ThermalDto thermalInput = simulationService.getThermalInput(configId, atomListId, exposureTime, temp);
         ThermalResultDto thermal = thermalService.simulateCooling(thermalInput);
 
         List<Double> temperatures = thermal.temperatures();
         double finalT = temperatures.get(temperatures.size() - 1);
 
+        // --- Базовый префактор диффузии ---
         double D0 = atom.diffusionPrefactor() != null ? atom.diffusionPrefactor() : DEFAULT_D0;
         double Q = calculateActivationEnergy(atom);
 
-        // Термально активная диффузия
-        double D_thermal = finalT > 1.0 ? D0 * Math.exp(-Q / (R_J_MOLK * finalT)) : D0;
+        // --- Температурная активация ---
+        double D_thermal = D0 * Math.exp(-Q / (R_J_MOLK * finalT));
 
-        // Коллизии
+        // --- Коллизии ---
         CollisionDto collisionInput = simulationService.getCollisionInput(
-                atomListId, 1e-9, plasma.ionEnergy(),
-                plasma.electronVelocity() > 0 ? Math.atan(plasma.currentDensity() / plasma.electronVelocity()) : 0
+                atomListId, 1e-9, ionEnergy,
+                0.0
         );
         CollisionResult collision = collisionService.simulate(collisionInput);
-        double D_collision = D_thermal * (1.0 + collision.transferredEnergy() * 1e-3);
 
-        // Потенциал атома
+        // Масштабируем влияние энергии коллизий и плазмы
+        double energyScale = atom.mass() != null ? atom.mass() * 1.66e-27 : 55.845 * 1.66e-27; // кг
+        double D_collision = D_thermal * (1.0 + (collision.transferredEnergy() + ionEnergy * 1.602e-19) / energyScale);
+
+        // --- Потенциал атома ---
         PotentialParametersDto potential = potentialService.computePotential(atom.A(), atomListId);
         double D_potential = D_collision * (1.0 + Math.abs(potential.stiffness()) * 1e-20);
 
-        // SLR
+        // --- SLR ---
         double[][] tempProfile = new double[1][temperatures.size()];
-        for(int i=0;i<temperatures.size();i++) tempProfile[0][i] = temperatures.get(i);
+        for (int i = 0; i < temperatures.size(); i++) tempProfile[0][i] = temperatures.get(i);
         double slrFactor = slrService.computeSLR(tempProfile, 1.0).globalSLR();
         double D_slr = D_potential * (1.0 + slrFactor);
 
-        // Резонанс
-        double xi = resonanceService.computeXi(atomListId, null); // можно передавать параметры, если есть
+        // --- Резонанс ---
+        double xi = resonanceService.computeXi(atomListId, null);
         double D_effective = D_slr * xi;
 
-        // Средняя глубина проникновения
+        // --- Средняя глубина проникновения ---
         double meanDepth = Math.sqrt(2 * D_effective * exposureTime);
         if (meanDepth < 1e-12) meanDepth = 1e-12;
 
-        // Профиль проникновения
+        // --- Профиль проникновения ---
         List<Double> depths = new ArrayList<>();
         List<Double> conc = new ArrayList<>();
         double dx = meanDepth * 6.0 / (DEFAULT_NODES - 1);
@@ -91,7 +99,7 @@ public class DiffusionServiceImpl implements DiffusionService {
             conc.add(Math.exp(-x / meanDepth));
         }
 
-        return new DiffusionProfileDto(depths, conc);
+        return new DiffusionProfileDto(depths, conc, D_effective);
     }
 
     private double calculateActivationEnergy(AtomListDto atom) {

@@ -4,6 +4,8 @@ import java.util.List;
 
 public record DiffusionProfileDto(
         List<Double> depths,
-        List<Double> concentration
+        List<Double> concentration,
+        double D0
+
 ) {
 }

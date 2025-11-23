@@ -83,7 +83,7 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
 
         // ===== Диффузия =====
         DiffusionProfileDto diffusion = diffusionService.calculateFromConfig(
-                request, request.ionId(), request.atomId(), request.exposureTime(), request.electronTemperature()
+                request, request.ionId(), request.atomId(), request.exposureTime(), request.electronTemperature(), plasma.ionEnergy()
         );
 
         // ===== Средняя температура =====
@@ -99,7 +99,7 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
                 totalTransferred,
                 avgTransferred,
                 avgTemperature,
-                0.0,                  // можно добавить diffusion.meanDiffusionCoefficient()
+                diffusion.D0(),
                 plasma,
                 perAtomTransferred,
                 diffusion,
