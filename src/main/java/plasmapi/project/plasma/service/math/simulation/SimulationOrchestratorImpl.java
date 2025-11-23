@@ -22,7 +22,6 @@ import plasmapi.project.plasma.service.math.thermal.ThermalService;
 import java.util.ArrayList;
 import java.util.List;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 public class SimulationOrchestratorImpl implements SimulationOrchestratorService {
@@ -47,8 +46,11 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
         PlasmaResultDto plasma = plasmaService.calculate(request);
 
         // ===== Тепловая симуляция =====
-        ThermalDto thermalInput = simulationService.getThermalInput(request,
-                request.configId(), request.ionId(), request.exposureTime()
+        ThermalDto thermalInput = simulationService.getThermalInput(
+                request,
+                request.configId(),
+                request.atomId(),
+                request.exposureTime()
         );
         ThermalResultDto thermalResult = thermalService.simulateCooling(thermalInput);
 
@@ -62,7 +64,7 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
         for (AtomDto latticeAtom : lattice) {
             CollisionDto collisionInput = simulationService.getCollisionInput(
                     request,
-                    request.ionId(),
+                    request.atomId(),
                     1e-9,
                     plasma.ionEnergy(),
                     0.0
@@ -84,7 +86,10 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
 
         // ===== Диффузия =====
         DiffusionProfileDto diffusion = diffusionService.calculateFromConfig(
-                request, request.ionId(), request.atomId(), request.exposureTime()
+                request,
+                request.configId(),
+                request.atomId(),
+                request.exposureTime()
         );
 
         // ===== Средняя температура =====
