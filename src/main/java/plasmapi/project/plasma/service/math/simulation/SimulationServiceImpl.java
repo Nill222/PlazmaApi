@@ -67,7 +67,7 @@ public class SimulationServiceImpl implements SimulationService {
             Integer atomListId,
             double exposureTime
     ) {
-        AtomList atom = atomListRepo.findById(atomListId)
+        AtomList atom = atomListRepo.findById(dto.atomId())
                 .orElseThrow(() -> new IllegalArgumentException("AtomList not found"));
 
         PlasmaConfiguration pc = plasmaConfigRepo.findByConfigId(dto.configId())
