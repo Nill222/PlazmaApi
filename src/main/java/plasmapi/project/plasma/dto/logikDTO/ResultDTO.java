@@ -1,5 +1,6 @@
 package plasmapi.project.plasma.dto.logikDTO;
 
+import plasmapi.project.plasma.dto.logikDTO.atom.AtomListDTO;
 import plasmapi.project.plasma.dto.logikDTO.config.ConfigDTO;
 import plasmapi.project.plasma.dto.logikDTO.ion.IonDTO;
 
@@ -9,10 +10,29 @@ public record ResultDTO(
         Integer id,
         ConfigDTO config,
         IonDTO ion,
-        Double energy,
-        Double potential,
-        Double temperature,
+        AtomListDTO atom,
+        double totalTransferredEnergy,
+        double avgTransferredPerAtom,
+        double avgT,
+        double minT,
+        double maxT,
+        double diffusionCoefficient1,
+        double diffusionCoefficient2,
+        double voltage,
+        double electronTemperature,
+        double ionEnergy,
+        double pressure,
+        double electronDensity,
+        double electronVelocity,
+        double currentDensity,
+        double depths,
+        double concentration,
+        double D0,
+        double totalMomentum,
+        double totalDamage,
+        double totalDisplacement,
         LocalDateTime createdAt
 ) {}
+
 
 

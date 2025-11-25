@@ -102,6 +102,9 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
 
         // ===== Итог =====
         return new SimulationResultDto(
+                request.atomId(),
+                request.configId(),
+                request.ionId(),
                 "Atom-" + atom.atomName(),
                 "Ion-" + request.ionId(),
                 totalTransferred,
@@ -109,7 +112,8 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
                 avgT,    // средняя температура
                 minT,    // минимальная температура
                 maxT,    // максимальная температура
-                diffusion.D0(),
+                diffusion.D1(),
+                diffusion.D2(),
                 plasma,
                 perAtomTransferred,
                 diffusion,

@@ -11,14 +11,10 @@ public record AtomListDto(
         Double DebyeTemperature,
         Integer valence,
         StructureType structure,
-        Double morseDeEv,
-        Double morseA,
-        Double ljSigma,
-        Double ljEpsilonEv,
-        Double bornMayerA,
-        Double cohesiveEnergyEv,
-        Double bornMayerAParam,
+
+        Double cohesiveEnergyEv1,
+        Double cohesiveEnergyEv2,
         Double screeningLength,
-        Double diffusionPrefactor,
-        String notes
+        Double diffusionPrefactor1,
+        Double diffusionPrefactor2
 ) {}

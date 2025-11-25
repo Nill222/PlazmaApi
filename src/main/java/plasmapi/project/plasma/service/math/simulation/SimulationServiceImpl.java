@@ -47,16 +47,12 @@ public class SimulationServiceImpl implements SimulationService {
                 atom.getDebyeTemperature(),
                 atom.getValence(),
                 atom.getStructure(),
-                atom.getMorseDeEv(),
-                atom.getMorseA(),
-                atom.getLjSigma(),
-                atom.getLjEpsilonEv(),
-                atom.getBornMayerA(),
-                atom.getCohesiveEnergyEv(),
-                atom.getBornMayerAParam(),
+
+                atom.getCohesiveEnergyEv1(),
+                atom.getCohesiveEnergyEv2(),
                 atom.getScreeningLength(),
-                atom.getPackingFactor(),
-                atom.getNotes()
+                atom.getPackingFactor1(),
+                atom.getPackingFactor2()
         );
     }
 

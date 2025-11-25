@@ -6,6 +6,9 @@ import plasmapi.project.plasma.dto.mathDto.plasma.PlasmaResultDto;
 import java.util.List;
 
 public record SimulationResultDto(
+        Integer atomId,
+        Integer configId,
+        Integer ionId,
         String atomName,                       // имя материала/атома
         String s,
         double totalTransferredEnergy,         // общая переданная энергия (из Collision)
@@ -13,7 +16,8 @@ public record SimulationResultDto(
         double avgT,    // средняя температура
         double minT,    // минимальная температура
         double maxT,    // максимальная температура
-        double diffusionCoefficient,           // D_effective из диффузии
+        double diffusionCoefficient1,
+        double diffusionCoefficient2,
         PlasmaResultDto plasmaParameters,      // параметры плазмы
         List<Double> perAtomTransferredEnergies, // энергии отдельных коллизий
         DiffusionProfileDto diffusionProfile,  // глубина + концентрация

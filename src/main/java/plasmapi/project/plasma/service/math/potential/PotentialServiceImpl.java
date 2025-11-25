@@ -33,39 +33,40 @@ public class PotentialServiceImpl implements PotentialService {
         double r3 = 2.0 * re0;
         double r4 = 2.5 * re0;
 
-        double De = atom.morseDeEv() != null ? atom.morseDeEv() * EV : 4.3 * EV;
-        double aParam = atom.morseA() != null ? atom.morseA() : 1.0 / (0.1 * aMeters);
-        double A_BM = atom.bornMayerA() != null ? atom.bornMayerA() : 2 * 4.3 * EV;
-        double a_BM = atom.bornMayerAParam() != null ? atom.bornMayerAParam() : 0.3 * aMeters;
-        double sigma = atom.ljSigma() != null ? atom.ljSigma() : re0 / Math.pow(2, 1.0/6.0);
-        double epsilon = atom.ljEpsilonEv() != null ? atom.ljEpsilonEv() * EV : 0.2 * 4.3 * EV;
+        double EV = 1.602176634e-19;
+        double De = atom.cohesiveEnergyEv1() != null ? atom.cohesiveEnergyEv1() * EV : 4.3 * EV;
+        double aParam = 1.0 / (0.1 * aMeters);
+        double A_BM = 2 * De;
+        double a_BM = 0.3 * aMeters;
+        double sigma = re0 / Math.pow(2, 1.0 / 6.0);
+        double epsilon = 0.2 * De;
         double Z = atom.valence() != null ? atom.valence() : 1;
         double screening = atom.screeningLength() != null ? atom.screeningLength() : 0.5 * re0;
 
         double value = 0, stiffness = 0;
 
         if (r < r1) {
-            value = (Z*E_CHARGE*E_CHARGE)/(4*Math.PI*EPS0*r) * Math.exp(-r/screening);
-            stiffness = Math.abs(value)/(r*r);
+            value = (Z * EV * EV) / (4 * Math.PI * 8.8541878128e-12 * r) * Math.exp(-r / screening);
+            stiffness = Math.abs(value) / (r * r);
         } else if (r < r2) {
-            value = A_BM * Math.exp(-r/a_BM);
-            stiffness = value/(a_BM*a_BM);
+            value = A_BM * Math.exp(-r / a_BM);
+            stiffness = value / (a_BM * a_BM);
         } else if (r < r3) {
-            double exp = Math.exp(-aParam*(r-re0));
-            value = De*Math.pow(1-exp,2);
-            stiffness = 2*De*aParam*aParam*exp;
+            double exp = Math.exp(-aParam * (r - re0));
+            value = De * Math.pow(1 - exp, 2);
+            stiffness = 2 * De * aParam * aParam * exp;
         } else if (r < r4) {
-            double exp = Math.exp(-aParam*(r-re0));
-            double morse = De*Math.pow(1-exp,2);
-            double t = (r-r3)/(r4-r3);
-            double H = 1- (3*t*t - 2*t*t*t);
-            double S = 0.1 + 0.9*H;
+            double exp = Math.exp(-aParam * (r - re0));
+            double morse = De * Math.pow(1 - exp, 2);
+            double t = (r - r3) / (r4 - r3);
+            double H = 1 - (3 * t * t - 2 * t * t * t);
+            double S = 0.1 + 0.9 * H;
             value = morse * S;
-            stiffness = 2*De*aParam*aParam*S;
+            stiffness = 2 * De * aParam * aParam * S;
         }
 
-        double pack = LatticePhysics.packingFactor(structure);
-        stiffness *= (1 + 0.2*(pack-0.5));
+        double pack = atom.diffusionPrefactor1() != null ? atom.diffusionPrefactor2() : LatticePhysics.packingFactor(structure);
+        stiffness *= (1 + 0.2 * (pack - 0.5));
 
         return new PotentialParametersDto(value, stiffness, r, sigma, epsilon);
     }
