@@ -20,5 +20,6 @@ public record SimulationRequestDto(
         double electronTemperature,
         double chamberWidth,
         double chamberDepth,
-        double exposureTime
+        double exposureTime,
+        double angle
 ) {}

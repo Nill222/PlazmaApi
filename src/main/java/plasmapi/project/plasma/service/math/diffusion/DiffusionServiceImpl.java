@@ -2,6 +2,7 @@ package plasmapi.project.plasma.service.math.diffusion;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import plasmapi.project.plasma.controller.handler.exception.NotFoundException;
 import plasmapi.project.plasma.dto.mathDto.atom.AtomListDto;
 import plasmapi.project.plasma.dto.mathDto.collision.CollisionDto;
 import plasmapi.project.plasma.dto.mathDto.collision.CollisionResult;
@@ -11,7 +12,6 @@ import plasmapi.project.plasma.dto.mathDto.potential.PotentialParametersDto;
 import plasmapi.project.plasma.dto.mathDto.simulation.SimulationRequestDto;
 import plasmapi.project.plasma.dto.mathDto.thermal.ThermalDto;
 import plasmapi.project.plasma.dto.mathDto.thermal.ThermalResultDto;
-import plasmapi.project.plasma.model.res.Config;
 import plasmapi.project.plasma.service.math.collision.CollisionService;
 import plasmapi.project.plasma.service.math.plazma.PlasmaService;
 import plasmapi.project.plasma.service.math.potential.PotentialService;
@@ -35,64 +35,100 @@ public class DiffusionServiceImpl implements DiffusionService {
     private final SLRService slrService;
     private final ResonanceService resonanceService;
 
-    private static final double DEFAULT_D0 = 1e-18; // м^2/с
-    private static final double R_J_MOLK = 8.314462618; // Дж/(моль·К)
+    private static final double DEFAULT_D0 = 1e-18; // м²/с
+    private static final double R = 8.314462618;   // Дж/(моль·К)
     private static final int DEFAULT_NODES = 200;
 
+
     @Override
-    public DiffusionProfileDto calculateFromConfig(SimulationRequestDto dto, Integer configId,
-                                                   Integer atomListId, double exposureTime, double temp,
-                                                   double ionEnergy) {
+    public DiffusionProfileDto calculateFromConfig(
+            SimulationRequestDto dto,
+            Integer configId,
+            Integer atomListId,
+            double exposureTime,
+            double temp,
+            double ignoredIonEnergy // НЕ ИСПОЛЬЗУЕТСЯ
+    ) {
 
+        // --- 1. Атомный список ---
         AtomListDto atom = simulationService.getAtomList(atomListId);
-        if (atom == null) throw new IllegalArgumentException("Atom not found");
+        if (atom == null) throw new NotFoundException("Atom not found");
 
-        ThermalDto thermalInput = simulationService.getThermalInput(configId, atomListId, exposureTime, temp);
+        // --- 2. Расчёт охлаждения ---
+        ThermalDto thermalInput = simulationService.getThermalInput(
+                configId, atomListId, exposureTime, temp
+        );
         ThermalResultDto thermal = thermalService.simulateCooling(thermalInput);
-
         List<Double> temperatures = thermal.temperatures();
         double finalT = temperatures.get(temperatures.size() - 1);
 
-        // --- Базовый префактор диффузии ---
+        // --- 3. Получаем параметры плазмы ---
+        PlasmaResultDto plasma = plasmaService.calculate(dto);
+        double ionEnergy = plasma.ionEnergy(); // Дж, уже корректно учитывает заряд Z
+
+        // --- 4. Базовый коэффициент диффузии ---
         double D0 = atom.diffusionPrefactor() != null ? atom.diffusionPrefactor() : DEFAULT_D0;
-        double Q = calculateActivationEnergy(atom);
+        double Q = activationEnergy(atom); // Дж/моль
 
-        // --- Температурная активация ---
-        double D_thermal = D0 * Math.exp(-Q / (R_J_MOLK * finalT));
+        // Arrhenius
+        double D_thermal = D0 * Math.exp(-Q / (R * finalT));
 
-        // --- Коллизии ---
+
+        // --- 5. Коллизии ---
         CollisionDto collisionInput = simulationService.getCollisionInput(
-                atomListId, 1e-9, ionEnergy,
+                atomListId,        // атом
+                1e-9,              // расстояние
+                ionEnergy,         // энергия ионов
                 0.0
         );
         CollisionResult collision = collisionService.simulate(collisionInput);
 
-        // Масштабируем влияние энергии коллизий и плазмы
-        double energyScale = atom.mass() != null ? atom.mass() * 1.66e-27 : 55.845 * 1.66e-27; // кг
-        double D_collision = D_thermal * (1.0 + (collision.transferredEnergy() + ionEnergy * 1.602e-19) / energyScale);
+        double kB = 1.380649e-23;
+        double energyScale = kB * finalT;             // характерная тепловая энергия
+        double E_total = collision.transferredEnergy() + ionEnergy;
 
-        // --- Потенциал атома ---
-        PotentialParametersDto potential = potentialService.computePotential(atom.A(), atomListId);
-        double D_potential = D_collision * (1.0 + Math.abs(potential.stiffness()) * 1e-20);
+        // мягкая экспоненциальная активация
+        double D_collision = D_thermal * Math.exp(E_total / (10 * energyScale));
 
-        // --- SLR ---
+
+        // --- 6. Потенциал атома ---
+        PotentialParametersDto potential = potentialService.computePotential(
+                atom.A(),
+                atomListId
+        );
+
+        // Жёсткость уменьшает диффузию
+        double D_potential = D_collision * Math.exp(-potential.stiffness() * 1e-3);
+
+
+        // --- 7. SLR ---
         double[][] tempProfile = new double[1][temperatures.size()];
         for (int i = 0; i < temperatures.size(); i++) tempProfile[0][i] = temperatures.get(i);
+
         double slrFactor = slrService.computeSLR(tempProfile, 1.0).globalSLR();
-        double D_slr = D_potential * (1.0 + slrFactor);
 
-        // --- Резонанс ---
+        // SLR слегка увеличивает диффузию
+        double D_slr = D_potential * (1.0 + 0.1 * slrFactor);
+
+
+        // --- 8. Резонанс ---
         double xi = resonanceService.computeXi(atomListId, null);
-        double D_effective = D_slr * xi;
 
-        // --- Средняя глубина проникновения ---
+        // безопасное логарифмическое масштабирование
+        double D_effective = D_slr * Math.max(1.0, Math.log1p(xi));
+
+
+        // --- 9. Глубина проникновения ---
         double meanDepth = Math.sqrt(2 * D_effective * exposureTime);
         if (meanDepth < 1e-12) meanDepth = 1e-12;
 
-        // --- Профиль проникновения ---
+
+        // --- 10. Профиль концентрации ---
         List<Double> depths = new ArrayList<>();
         List<Double> conc = new ArrayList<>();
+
         double dx = meanDepth * 6.0 / (DEFAULT_NODES - 1);
+
         for (int i = 0; i < DEFAULT_NODES; i++) {
             double x = i * dx;
             depths.add(x);
@@ -102,19 +138,31 @@ public class DiffusionServiceImpl implements DiffusionService {
         return new DiffusionProfileDto(depths, conc, D_effective);
     }
 
-    private double calculateActivationEnergy(AtomListDto atom) {
+
+    // --------------------
+    // Вспомогательная функция
+    // --------------------
+    private double activationEnergy(AtomListDto atom) {
+
+        // Если есть энергия когезии
         if (atom.cohesiveEnergyEv() != null) {
             double Q = atom.cohesiveEnergyEv() * 1.602176634e-19 * 6.02214076e23;
             return 0.4 * Q;
         }
+
+        // Morse De
         if (atom.morseDeEv() != null) {
             double Q = atom.morseDeEv() * 1.602176634e-19 * 6.02214076e23;
             return 0.5 * Q;
         }
+
+        // Энергия из температуры Дебая
         if (atom.DebyeTemperature() != null) {
-            final double kB = 1.380649e-23;
+            double kB = 1.380649e-23;
             return kB * atom.DebyeTemperature() * 5 * 6.02214076e23;
         }
+
+        // fallback
         return 1e5;
     }
 }

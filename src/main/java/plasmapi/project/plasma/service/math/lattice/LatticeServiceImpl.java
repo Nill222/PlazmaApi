@@ -23,7 +23,7 @@ public class LatticeServiceImpl implements LatticeService {
         AtomListDto atom = simulationService.getAtomList(atomListId);
         if (atom == null) throw new IllegalArgumentException("AtomList not found");
 
-        double a = atom.A() != null ? atom.A() * 1e-10 : 2.86e-10; // fallback
+        double a = atom.A() != null ? atom.A() * 1e-10 : 2.86e-10;
         StructureType structure = atom.structure() != null ? atom.structure() : StructureType.BCC;
 
         LatticeStrategy strategy = new CrystalLatticeStrategy(structure);

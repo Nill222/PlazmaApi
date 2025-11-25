@@ -36,47 +36,75 @@ public class ThermalServiceImpl implements ThermalService {
         double dt = dto.dt() != null ? dto.dt() : 0.01;
         double thickness = dto.thickness() != null ? dto.thickness() : 1e-6;
 
-        // Разбиваем толщину на узлы
         double dx = thickness / DEFAULT_NODES;
-        double[][] localTemp = new double[DEFAULT_NODES][1]; // одномерная модель слоя
 
-        // Инициализация
+        double[][] localTemp = new double[DEFAULT_NODES][1];
         for (int i = 0; i < DEFAULT_NODES; i++) {
             localTemp[i][0] = T0;
         }
 
         int steps = (int) Math.ceil(tMax / dt);
-        List<Double> tempsOverTime = new ArrayList<>();
+        List<Double> tempsOverTime = new ArrayList<>(steps + 1);
         tempsOverTime.add(T0);
 
         for (int step = 1; step <= steps; step++) {
-            // Рассчитываем локальные влияния
-            double[][] dT = new double[DEFAULT_NODES][1];
-            for (int i = 0; i < DEFAULT_NODES; i++) {
-                // Потенциал атома
-                // пример: расстояние между атомами
-                double stiffness = potentialService.computePotential(dx, dto.atom().getId()).stiffness();
 
-                // Простое приближение: чем выше жёсткость, тем меньше локальное изменение температуры
-                double deltaT = dto.powerInput() != null ? dto.powerInput() * dt / stiffness : 0.0;
+            double[][] dT = new double[DEFAULT_NODES][1];
+
+            for (int i = 0; i < DEFAULT_NODES; i++) {
+
+                double stiffness =
+                        potentialService.computePotential(dx, dto.atom().getId()).stiffness();
+
+                double deltaT = 0;
+
+                // Добавляем нагрев, если powerInput указан
+                if (dto.powerInput() != null) {
+                    deltaT = dto.powerInput() * dt / Math.max(stiffness, 1e-20);
+                }
+
+                // Ограничение скачков (чтобы не улетало)
+                if (deltaT > 5) deltaT = 5;
+                if (deltaT < -5) deltaT = -5;
+
                 dT[i][0] = deltaT;
             }
 
-            // Применяем локальную структурную релаксацию (SLR)
-            var slrResult = slrService.computeSLR(dT, 1.0); // slrParam=1.0, можно параметризовать
+            var slrResult = slrService.computeSLR(dT, 1.0);
 
-            // Обновляем локальные температуры
             for (int i = 0; i < DEFAULT_NODES; i++) {
                 localTemp[i][0] += slrResult.localSLR()[i][0];
+
+                // Физические ограничения (температура не может уйти в минус)
+                if (localTemp[i][0] < 1) localTemp[i][0] = 1;
             }
 
-            // Средняя температура по слою
-            double avgTemp = 0.0;
-            for (int i = 0; i < DEFAULT_NODES; i++) avgTemp += localTemp[i][0];
+            // Средняя температура по всем узлам
+            double avgTemp = 0;
+            for (int i = 0; i < DEFAULT_NODES; i++) {
+                avgTemp += localTemp[i][0];
+            }
             avgTemp /= DEFAULT_NODES;
+
             tempsOverTime.add(avgTemp);
         }
 
-        return new ThermalResultDto(tempsOverTime);
+        // Статистика
+        double min = Double.MAX_VALUE;
+        double max = -Double.MAX_VALUE;
+        double sum = 0;
+        for (double T : tempsOverTime) {
+            if (T < min) min = T;
+            if (T > max) max = T;
+            sum += T;
+        }
+        double avg = sum / tempsOverTime.size();
+
+        return new ThermalResultDto(
+                tempsOverTime,
+                min,
+                avg,
+                max
+        );
     }
 }

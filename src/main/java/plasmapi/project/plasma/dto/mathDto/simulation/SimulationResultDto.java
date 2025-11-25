@@ -10,10 +10,15 @@ public record SimulationResultDto(
         String s,
         double totalTransferredEnergy,         // общая переданная энергия (из Collision)
         double avgTransferredPerAtom,          // средняя энергия на атом
-        double estimatedTemperature,           // итоговая температура (из Thermal)
+        double avgT,    // средняя температура
+        double minT,    // минимальная температура
+        double maxT,    // максимальная температура
         double diffusionCoefficient,           // D_effective из диффузии
         PlasmaResultDto plasmaParameters,      // параметры плазмы
         List<Double> perAtomTransferredEnergies, // энергии отдельных коллизий
         DiffusionProfileDto diffusionProfile,  // глубина + концентрация
-        List<Double> coolingProfile            // ThermalResultDto.temperatures()
+        List<Double> coolingProfile,            // ThermalResultDto.temperatures()
+        double totalMomentum,
+        double totalDamage,
+        double totalDisplacement
 ) {}

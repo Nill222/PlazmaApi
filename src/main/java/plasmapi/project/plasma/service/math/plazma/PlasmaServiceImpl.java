@@ -9,7 +9,6 @@ import plasmapi.project.plasma.dto.mathDto.simulation.SimulationRequestDto;
 import plasmapi.project.plasma.model.res.Ion;
 import plasmapi.project.plasma.repository.IonRepository;
 
-
 @Service
 @RequiredArgsConstructor
 public class PlasmaServiceImpl implements PlasmaService {
@@ -56,3 +55,4 @@ public class PlasmaServiceImpl implements PlasmaService {
         );
     }
 }
+
