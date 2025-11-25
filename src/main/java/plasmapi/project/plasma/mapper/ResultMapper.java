@@ -17,7 +17,7 @@ import plasmapi.project.plasma.service.logik.IonService;
 
 @Component
 @RequiredArgsConstructor
-public class ResultMapper {
+public class ResultMapper{
 
     private final ConfigService configService;
     private final IonService ionService;

@@ -27,7 +27,7 @@ public record ResultDTO(
         double currentDensity,
         double depths,
         double concentration,
-        double D0,
+        double dThermal,
         double totalMomentum,
         double totalDamage,
         double totalDisplacement,

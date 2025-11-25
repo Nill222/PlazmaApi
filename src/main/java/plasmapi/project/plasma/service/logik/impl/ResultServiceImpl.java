@@ -10,6 +10,7 @@ import plasmapi.project.plasma.model.res.Result;
 import plasmapi.project.plasma.repository.ResultRepository;
 import plasmapi.project.plasma.service.logik.ResultService;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -20,11 +21,18 @@ public class ResultServiceImpl implements ResultService  {
     private final ResultMapper resultMapper;
 
 
+
+
     @Override
     @Transactional
     public Optional<ResultDTO> create(SimulationResultDto dto) {
         Result entity = resultMapper.toEntity(dto);
         entity = resultRepository.save(entity);
         return Optional.of(resultMapper.toDTO(entity));
+    }
+
+    @Override
+    public List<Result> findAll() {
+        return resultRepository.findAll();
     }
 }

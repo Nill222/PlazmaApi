@@ -9,4 +9,5 @@ import java.util.Optional;
 
 public interface ResultService {
     Optional<ResultDTO> create(SimulationResultDto dto);
+    List<Result> findAll();
 }
