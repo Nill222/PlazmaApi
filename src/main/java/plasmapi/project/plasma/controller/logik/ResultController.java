@@ -17,7 +17,7 @@ public class ResultController {
 
     private final ResultService resultService;
 
-    @GetMapping("/config/{configId}")
+    @GetMapping("/config")
     public ResponseEntity<ApiResponse<List<Result>>> getAll() {
         List<Result> dtos = resultService.findAll();
         return ResponseEntity.ok(new ApiResponse<>(dtos, "Результаты для конфига получены", HttpStatus.OK.value()));
