@@ -136,7 +136,3 @@ C(x) \sim \exp\left(-\frac{x}{\sqrt{2 D_\text{effective} t_\text{exp}}}\right)
 6. Диффузия с учётом всех эффектов (`DiffusionProfileDto`)
 7. Средние значения энергии, моментума, повреждений, температуры
 8. Сбор всех данных в `SimulationResultDto`
-
-**Схема потока данных:**
-
-

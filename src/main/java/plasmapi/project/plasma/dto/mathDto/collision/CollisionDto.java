@@ -13,6 +13,7 @@ public record CollisionDto(
         Double xi,                      // резонансный множитель ξ
         Double surfaceBindingEnergy,    // энергия связи на поверхности (Дж)
         StructureType structure,        // тип кристаллической структуры (FCC, BCC, HCP)
-        AtomList atom                   // атомные параметры для выбора потенциала
+        AtomList atom,                   // атомные параметры для выбора потенциала
+        Double ionFlux
 ) {
 }

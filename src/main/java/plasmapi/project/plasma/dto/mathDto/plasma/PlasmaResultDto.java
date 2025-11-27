@@ -7,5 +7,6 @@ public record PlasmaResultDto(
         double ionEnergy,
         double voltage,
         double pressure,
-        double electronTemp
+        double electronTemp,
+        double ionFlux
 ) {}

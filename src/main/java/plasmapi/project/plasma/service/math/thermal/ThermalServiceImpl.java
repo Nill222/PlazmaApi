@@ -70,7 +70,7 @@ public class ThermalServiceImpl implements ThermalService {
                 dT[i][0] = deltaT;
             }
 
-            var slrResult = slrService.computeSLR(dT, 1.0);
+            var slrResult = slrService.computeSLR(dT, 1.0, 0.0, 0.0);
 
             for (int i = 0; i < DEFAULT_NODES; i++) {
                 localTemp[i][0] += slrResult.localSLR()[i][0];

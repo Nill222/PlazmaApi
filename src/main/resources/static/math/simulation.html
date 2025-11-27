@@ -176,15 +176,15 @@
                                 </div>
                                 <div class="col-md-4">
                                     <label class="form-label">
-                                        <i class="fas fa-clock me-2 text-info"></i>Время экспозиции
+                                        <i class="fas fa-angle-right me-2 text-info"></i>Угол падения
                                     </label>
                                     <div class="input-group">
-                                        <input id="exposureTime" type="number" step="any" class="form-control" value="600" required min="300" max="7200">
-                                        <span class="input-group-text">с</span>
+                                        <input id="angle" type="number" step="any" class="form-control" value="45" required min="0" max="90">
+                                        <span class="input-group-text">°</span>
                                     </div>
-                                    <div class="error-message" id="error-exposureTime"></div>
+                                    <div class="error-message" id="error-angle"></div>
                                     <div class="parameter-help">
-                                        Диапазон: 300 - 7200 с (5 мин - 2 часа)
+                                        Диапазон: 0 - 90 градусов
                                     </div>
                                 </div>
                             </div>
@@ -223,6 +223,21 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="row g-4 mt-2">
+                                <div class="col-md-6">
+                                    <label class="form-label">
+                                        <i class="fas fa-clock me-2 text-info"></i>Время экспозиции
+                                    </label>
+                                    <div class="input-group">
+                                        <input id="exposureTime" type="number" step="any" class="form-control" value="600" required min="300" max="7200">
+                                        <span class="input-group-text">с</span>
+                                    </div>
+                                    <div class="error-message" id="error-exposureTime"></div>
+                                    <div class="parameter-help">
+                                        Диапазон: 300 - 7200 с (5 мин - 2 часа)
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Прогресс-бар -->
@@ -231,7 +246,7 @@
                                  role="progressbar" style="width: 0%"></div>
                         </div>
 
-                        <!-- Кнопка запуска -->
+
                         <div class="text-center mt-4">
                             <button type="submit" class="btn btn-primary btn-lg px-5" id="runSimulationBtn">
                                 <i class="fas fa-play-circle me-2"></i>
@@ -239,6 +254,13 @@
                                 <div class="loading-spinner spinner-border spinner-border-sm ms-2" role="status">
                                     <span class="visually-hidden">Загрузка...</span>
                                 </div>
+                            </button>
+                        </div>
+
+                        <div class="text-center mt-3">
+                            <button type="button" class="btn btn-success btn-lg px-5" id="confirmSimulationBtn" style="display: none;">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <span>Подтвердить результаты</span>
                             </button>
                         </div>
                     </form>
@@ -309,7 +331,7 @@
                             <div class="stat-card text-center">
                                 <i class="fas fa-thermometer-full stat-icon"></i>
                                 <div class="stat-value" id="resTemperature">0</div>
-                                <div class="stat-label">Температура</div>
+                                <div class="stat-label">Средняя температура</div>
                                 <div class="stat-unit">K</div>
                             </div>
                         </div>
@@ -321,6 +343,11 @@
                                 <div class="stat-unit">м²/с</div>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Дополнительные результаты -->
+                    <div class="row mb-4" id="additionalResults">
+                        <!-- Будет заполнено JavaScript -->
                     </div>
 
                     <!-- Параметры плазмы -->
@@ -394,14 +421,15 @@
                         </div>
                     </div>
 
+
                     <!-- Профиль охлаждения -->
                     <div class="row">
                         <div class="col-12">
-                            <h5 class="mb-3"><i class="fas fa-snowflake me-2 text-info"></i>Профиль охлаждения</h5>
+                            <h5 class="mb-3"><i class="fas fa-snowflake me-2 text-info"></i>Температурный профиль</h5>
                             <div class="cooling-profile-container">
                                 <div id="coolingProfileChart" style="height: 200px; background: #f8f9fa; border-radius: 8px; display: flex; align-items: end; padding: 10px; gap: 2px; margin-bottom: 15px;"></div>
                                 <div class="row">
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
                                         <div class="stat-card text-center">
                                             <i class="fas fa-thermometer-empty stat-icon"></i>
                                             <div class="stat-value" id="resMinTemp">0</div>
@@ -409,7 +437,15 @@
                                             <div class="stat-unit">K</div>
                                         </div>
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-4">
+                                        <div class="stat-card text-center">
+                                            <i class="fas fa-thermometer-half stat-icon"></i>
+                                            <div class="stat-value" id="resAvgTemp">0</div>
+                                            <div class="stat-label">Средняя температура</div>
+                                            <div class="stat-unit">K</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
                                         <div class="stat-card text-center">
                                             <i class="fas fa-thermometer-full stat-icon"></i>
                                             <div class="stat-value" id="resMaxTemp">0</div>
@@ -420,19 +456,6 @@
                                 </div>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Дополнительная информация -->
-                    <div class="mt-4 p-3 bg-light rounded-3">
-                        <h6><i class="fas fa-lightbulb me-2"></i>Интерпретация результатов:</h6>
-                        <ul class="mb-0">
-                            <li>Общая переданная энергия показывает суммарное воздействие плазмы на материал</li>
-                            <li>Средняя энергия на атом характеризует интенсивность локального нагрева</li>
-                            <li>Температура отражает тепловое состояние системы после симуляции</li>
-                            <li>Коэффициент диффузии определяет скорость перемещения частиц в материале</li>
-                            <li>Профиль диффузии показывает распределение концентрации по глубине</li>
-                            <li>Профиль охлаждения отображает изменение температуры во времени</li>
-                        </ul>
                     </div>
                 </div>
             </div>

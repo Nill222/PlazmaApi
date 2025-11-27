@@ -37,72 +37,72 @@ public class Result {
         // ------------------ Energy ---------------------
 
         @Column(name = "total_transferred_energy", nullable = false)
-        private double totalTransferredEnergy;
+        private Double totalTransferredEnergy;
 
         @Column(name = "avg_transferred_per_atom", nullable = false)
-        private double avgTransferredPerAtom;
+        private Double avgTransferredPerAtom;
 
         // ------------------ Temperature ----------------
 
         @Column(name = "avg_t", nullable = false)
-        private double avgT;
+        private Double avgT;
 
         @Column(name = "min_t", nullable = false)
-        private double minT;
+        private Double minT;
 
         @Column(name = "max_t", nullable = false)
-        private double maxT;
+        private Double maxT;
 
         // ------------------ Diffusion ------------------
 
         @Column(name = "diffusion_coefficient_1")
-        private double diffusionCoefficient1;
+        private Double diffusionCoefficient1;
 
         @Column(name = "diffusion_coefficient_2")
-        private double diffusionCoefficient2;
+        private Double diffusionCoefficient2;
 
         // ------------------ Plasma Parameters ----------
 
         @Column(name = "voltage")
-        private double voltage;
+        private Double voltage;
 
         @Column(name = "electron_temperature")
-        private double electronTemperature;
+        private Double electronTemperature;
 
         @Column(name = "ion_energy")
-        private double ionEnergy;
+        private Double ionEnergy;
 
         @Column(name = "pressure")
-        private double pressure;
+        private Double pressure;
 
         @Column(name = "electron_density")
-        private double electronDensity;
+        private Double electronDensity;
 
         @Column(name = "electron_velocity")
-        private double electronVelocity;
+        private Double electronVelocity;
 
         @Column(name = "current_density")
-        private double currentDensity;
+        private Double currentDensity;
 
         // ------------------ Additional Physics ---------
 
         @Column(name = "depths")
-        private double depths;
+        private Double depths;
 
         @Column(name = "concentration")
-        private double concentration;
+        private Double concentration;
 
         @Column(name = "d_thermal")
-        private double dThermal;
+        private Double dThermal;
 
         @Column(name = "total_momentum")
-        private double totalMomentum;
+        private Double totalMomentum;
 
         @Column(name = "total_damage")
-        private double totalDamage;
+        private Double totalDamage;
 
         @Column(name = "total_displacement")
-        private double totalDisplacement;
+        private Double totalDisplacement;
 
         @Column(name = "created_at")
         private LocalDateTime createdAt = LocalDateTime.now();

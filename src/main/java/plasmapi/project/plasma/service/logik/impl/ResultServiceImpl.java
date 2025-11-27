@@ -32,7 +32,10 @@ public class ResultServiceImpl implements ResultService  {
     }
 
     @Override
-    public List<Result> findAll() {
-        return resultRepository.findAll();
+    public List<ResultDTO> findAll() {
+        return resultRepository.findAll()
+                .stream()
+                .map(resultMapper::toDTO)
+                .toList();
     }
 }

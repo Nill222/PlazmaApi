@@ -92,7 +92,7 @@ public class SimulationServiceImpl implements SimulationService {
     }
 
     @Override
-    public CollisionDto getCollisionInput(Integer atomListId, double distance, double ionEnergy, double angle) {
+    public CollisionDto getCollisionInput(Integer atomListId, double distance, double ionEnergy, double angle, double ionFlux) {
         AtomList atom = atomListRepo.findById(atomListId)
                 .orElseThrow(() -> new IllegalArgumentException("AtomList not found"));
 
@@ -114,7 +114,9 @@ public class SimulationServiceImpl implements SimulationService {
                 1.0,
                 surfaceBindingEnergy,
                 atom.getStructure(),
-                atom
+                atom,
+                ionFlux
+
         );
     }
 

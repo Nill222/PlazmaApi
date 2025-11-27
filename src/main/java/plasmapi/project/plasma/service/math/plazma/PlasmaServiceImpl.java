@@ -23,13 +23,14 @@ public class PlasmaServiceImpl implements PlasmaService {
         if (request == null) throw new IllegalArgumentException("SimulationRequestDto required");
 
 
-
+        Ion ion = ionRepository.findById(request.ionId())
+                .orElseThrow(() -> new NotFoundException("Ион не найден"));
         // Параметры плазмы берём из запроса
         double voltage = request.voltage();
         double current = request.current();
         double pressure = request.pressure();
         double electronTemp = request.electronTemperature();
-
+        int Z = ion.getCharge();
         // Electron density (идеальный газ)
         double electronDensity = pressure / (1.380649e-23 * electronTemp);
 
@@ -38,9 +39,9 @@ public class PlasmaServiceImpl implements PlasmaService {
 
         // Current density
         double currentDensity = current / (request.chamberWidth() * request.chamberDepth());
-        Ion ion = ionRepository.findById(request.ionId())
-                .orElseThrow(() -> new NotFoundException("Ион не найден"));
-        int Z = ion.getCharge();
+        double ionFlux = currentDensity /(Z * E_CHARGE);
+
+
         // Эффективная энергия ионов
         double ionEnergyEffective = voltage * E_CHARGE * Z;
 
@@ -51,7 +52,8 @@ public class PlasmaServiceImpl implements PlasmaService {
                 ionEnergyEffective,
                 voltage,
                 pressure,
-                electronTemp
+                electronTemp,
+                ionFlux
         );
     }
 }

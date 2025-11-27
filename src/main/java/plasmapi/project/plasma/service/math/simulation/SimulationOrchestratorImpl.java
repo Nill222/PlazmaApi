@@ -75,7 +75,8 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
                     request.atomId(),
                     1e-9,                     // расстояние
                     plasma.ionEnergy(),       // E иона из плазмы
-                    request.angle()                       // угол или доп. параметр
+                    request.angle(),                       // угол или доп. параметр
+                    plasma.ionFlux()
             );
 
             CollisionResult col = collisionService.simulate(colInput);

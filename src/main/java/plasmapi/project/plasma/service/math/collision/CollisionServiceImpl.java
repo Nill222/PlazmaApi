@@ -28,7 +28,6 @@ public class CollisionServiceImpl implements CollisionService {
         AtomListDto atom = simulationService.getAtomList(dto.atom().getId());
         if (atom == null) throw new IllegalArgumentException("AtomList required");
 
-        // Потенциал атома
         PotentialParametersDto pot = potentialService.computePotential(dto.distance(), dto.atom().getId());
 
         double theta = Math.toRadians(dto.angle());
@@ -40,11 +39,12 @@ public class CollisionServiceImpl implements CollisionService {
         if (transferred < 0) transferred = 0;
 
         // ------------------------------
-        // Применяем SLR к локальной энергии удара
-        double[][] localEnergy = new double[1][1]; // одномерная модель
+        // Применяем новый SLR с θ и fluence
+        double[][] localEnergy = new double[1][1];
         localEnergy[0][0] = transferred;
-        var slrResult = slrService.computeSLR(localEnergy, 1.0); // slrParam=1.0
-//        transferred = slrResult.globalSLR(); // усреднённая энергия после SLR
+        double fluence = dto.ionFlux() != null ? dto.ionFlux() : 1.0;
+        var slrResult = slrService.computeSLR(localEnergy, 1.0, theta, fluence);
+        transferred = slrResult.globalSLR(); // глобальная энергия после SLR
         // ------------------------------
 
         double mu = dto.mIon() * dto.mAtom() / (dto.mIon() + dto.mAtom());
