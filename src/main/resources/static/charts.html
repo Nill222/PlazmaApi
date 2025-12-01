@@ -72,6 +72,8 @@
     <div class="row">
         <div class="col-lg-10 mx-auto">
 
+
+
             <!-- График 1: Зависимость энергии от параметров плазмы -->
             <div class="calculation-card mb-4">
                 <div class="card-header">
@@ -86,7 +88,7 @@
                             <select id="plasmaChartType" class="form-select">
                                 <option value="electronDensity-pressure">Плотность электронов от давления</option>
                                 <option value="electronVelocity-voltage">Скорость электронов от напряжения</option>
-                                <option value="currentDensity-current">Плотность тока от тока</option>
+                                <option value="currentDensity-voltage">Плотность тока от напряжения</option>
                             </select>
                         </div>
                         <div class="col-md-6">
@@ -114,39 +116,69 @@
             <!-- График 2: Зависимость температуры от атома -->
             <div class="calculation-card">
                 <div class="card-header">
-                    <h3><i class="fas fa-thermometer-half me-2"></i>Зависимость температуры от атома</h3>
+                    <h3 class="mb-0">
+                        <i class="fas fa-thermometer-half me-2"></i>
+                        Зависимость температуры от атома
+                    </h3>
                 </div>
+
                 <div class="card-body p-4">
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <label class="form-label">
-                                <i class="fas fa-atom me-2 text-primary"></i>Выберите атом
+
+                    <!-- Строка селекторов -->
+                    <div class="row g-4 mb-4">
+
+                        <!-- Выбор атома -->
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-atom me-2 text-primary"></i>
+                                Выберите атом
                             </label>
-                            <select id="atomSelector" class="form-select">
-                                <option value="">Выберите атом...</option>
-                                <!-- Будет заполнено JavaScript -->
+                            <select id="atomSelector" class="form-select shadow-sm">
+                                <option value="all">Все атомы</option>
+                                <!-- Остальные атомы будут добавлены через JavaScript -->
                             </select>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">
-                                <i class="fas fa-chart-bar me-2 text-primary"></i>Тип температуры
+
+                        <!-- Тип температуры -->
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-chart-line me-2 text-primary"></i>
+                                Тип температуры
                             </label>
-                            <select id="temperatureType" class="form-select">
+                            <select id="temperatureType" class="form-select shadow-sm">
                                 <option value="avgT">Средняя температура</option>
                                 <option value="minT">Минимальная температура</option>
                                 <option value="maxT">Максимальная температура</option>
                             </select>
                         </div>
+
+                        <!-- Коэффициент диффузии -->
+                        <div class="col-md-4 diffusion-selector">
+                            <label class="form-label fw-semibold">
+                                <i class="fas fa-exchange-alt me-2 text-primary"></i>
+                                Коэффициент диффузии
+                            </label>
+                            <select id="diffSelector" class="form-select shadow-sm">
+                                <option value="1">D₁</option>
+                                <option value="2">D₂</option>
+                            </select>
+                        </div>
+
                     </div>
 
+                    <!-- График -->
                     <div class="chart-container">
                         <canvas id="temperatureChart"></canvas>
                     </div>
 
+                    <!-- Подпись -->
                     <div class="mt-3 text-muted small">
                         <i class="fas fa-info-circle me-2"></i>
-                        <span id="temperatureChartInfo">График показывает распределение температуры для выбранного атома</span>
+                        <span id="temperatureChartInfo">
+                График показывает распределение температуры для выбранного атома и коэффициента диффузии
+            </span>
                     </div>
+
                 </div>
             </div>
 
@@ -178,7 +210,6 @@
     </div>
 </footer>
 
-<!-- Модальное окно авторизации (такое же как в simulation.html) -->
 <div class="modal fade auth-modal" id="authModal" tabindex="-1">
     <div class="modal-dialog modal-md">
         <div class="modal-content">
