@@ -267,6 +267,11 @@ function preparePlasmaChartData(chartType, results) {
                 x = result.voltage;
                 y = result.currentDensity;
                 break;
+
+            case 'ionEnergyEffective-voltage':
+                x = result.voltage;
+                y = result.ionEnergy;
+                break;
         }
 
         // Добавляем только если значения валидны
@@ -309,19 +314,22 @@ function renderPlasmaChart(chartData, chartType) {
     const titleMap = {
         'electronDensity-pressure': 'Зависимость плотности электронов от давления',
         'electronVelocity-voltage': 'Зависимость скорости электронов от напряжения',
-        'currentDensity-voltage': 'Зависимость плотности тока от тока'
+        'currentDensity-voltage': 'Зависимость плотности тока от напряжения',
+        'ionEnergyEffective-voltage': 'Зависимость энергии иона от напряжения'
     };
 
     const xTitleMap = {
         'electronDensity-pressure': 'Давление (Па)',
         'electronVelocity-voltage': 'Напряжение (В)',
-        'currentDensity-voltage': 'Напряжение (В)'
+        'currentDensity-voltage': 'Напряжение (В)',
+        'ionEnergyEffective-voltage': 'Напряжение (В)'
     };
 
     const yTitleMap = {
         'electronDensity-pressure': 'Плотность электронов (м⁻³)',
         'electronVelocity-voltage': 'Скорость электронов (м/с)',
-        'currentDensity-voltage': 'Плотность тока (А/м²)'
+        'currentDensity-voltage': 'Плотность тока (А/м²)',
+        'ionEnergyEffective-voltage': 'Энергия иона (Дж)'
     };
 
     document.getElementById('plasmaChartInfo').textContent = titleMap[chartType];
