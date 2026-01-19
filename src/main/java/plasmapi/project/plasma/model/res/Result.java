@@ -75,9 +75,6 @@ public class Result {
         @Column(name = "pressure")
         private Double pressure;
 
-        @Column(name = "current")
-        private Double current;
-
         @Column(name = "electron_density")
         private Double electronDensity;
 

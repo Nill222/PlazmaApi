@@ -59,7 +59,7 @@ public class ResultMapper{
         r.setTotalMomentum(dto.totalMomentum());
         r.setTotalDamage(dto.totalDamage());
         r.setTotalDisplacement(dto.totalDisplacement());
-        r.setCurrent(dto.current());
+
         // createdAt установится через @PrePersist
         return r;
     }
@@ -107,8 +107,7 @@ public class ResultMapper{
                 r.getTotalMomentum(),
                 r.getTotalDamage(),
                 r.getTotalDisplacement(),
-                r.getCreatedAt(),
-                r.getCurrent()
+                r.getCreatedAt()
         );
     }
         private UserDTO mapUser(User user) {

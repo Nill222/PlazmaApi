@@ -1,6 +1,5 @@
 package plasmapi.project.plasma.dto.mathDto.collision;
 
-import plasmapi.project.plasma.dto.mathDto.simulation.SimulationRequestDto;
 import plasmapi.project.plasma.model.atom.AtomList;
 import plasmapi.project.plasma.model.atom.StructureType;
 
@@ -14,6 +13,7 @@ public record CollisionDto(
         Double xi,                      // резонансный множитель ξ
         Double surfaceBindingEnergy,    // энергия связи на поверхности (Дж)
         StructureType structure,        // тип кристаллической структуры (FCC, BCC, HCP)
-        SimulationRequestDto simulationRequest                 // атомные параметры для выбора потенциала
+        AtomList atom,                   // атомные параметры для выбора потенциала
+        Double ionFlux
 ) {
 }

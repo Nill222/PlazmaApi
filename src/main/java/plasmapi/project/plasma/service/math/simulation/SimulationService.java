@@ -13,7 +13,7 @@ public interface SimulationService {
 
     AtomListDto getAtomList(Integer atomListId);
 
-    ThermalDto getThermalInput(SimulationRequestDto dto, Integer configId, Integer atomListId, double exposureTime);
+    ThermalDto getThermalInput(Integer configId, Integer atomListId, double exposureTime, double electronTemp);
 
-    CollisionDto getCollisionInput(SimulationRequestDto dto, Integer atomListId, double distance, double ionEnergy, double angle);
+    CollisionDto getCollisionInput(Integer atomListId, double distance, double ionEnergy, double angle, double ionFlues);
 }

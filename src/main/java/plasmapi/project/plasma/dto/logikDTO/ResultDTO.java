@@ -31,8 +31,7 @@ public record ResultDTO(
         double totalMomentum,
         double totalDamage,
         double totalDisplacement,
-        LocalDateTime createdAt,
-        double current
+        LocalDateTime createdAt
 ) {}
 
 

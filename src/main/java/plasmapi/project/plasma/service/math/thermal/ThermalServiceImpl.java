@@ -8,7 +8,6 @@ import plasmapi.project.plasma.service.math.potential.PotentialService;
 import plasmapi.project.plasma.service.math.slr.SLRService;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -26,64 +25,86 @@ public class ThermalServiceImpl implements ThermalService {
     private final PotentialService potentialService;
     private final SLRService slrService;
 
-    private static final int NODES = 100; // количество узлов 1D решётки
+    private static final int DEFAULT_NODES = 100;
 
     @Override
     public ThermalResultDto simulateCooling(ThermalDto dto) {
         if (dto == null) throw new IllegalArgumentException("ThermalDto required");
 
-        double T0 = dto.initialTemperature();
-        double tMax = dto.tMax();
-        double dt = dto.dt();
+        double T0 = dto.T0() != null ? dto.T0() : 300.0;
+        double tMax = dto.tMax() != null ? dto.tMax() : 1.0;
+        double dt = dto.dt() != null ? dto.dt() : 0.01;
+        double thickness = dto.thickness() != null ? dto.thickness() : 1e-6;
 
-        double thickness = dto.thickness();
-        double dx = thickness / NODES;
+        double dx = thickness / DEFAULT_NODES;
 
-        // локальная температура по слою
-        double[] temp = new double[NODES];
-        Arrays.fill(temp, T0);
-
-        int steps = (int) Math.ceil(tMax / dt);
-
-        List<Double> avgTemps = new ArrayList<>();
-        avgTemps.add(T0);
-
-        // энергия ионов → тепло
-        double heatPower = dto.ionEnergy() / tMax;
-
-        for (int step = 0; step < steps; step++) {
-
-            double[] delta = new double[NODES];
-
-            for (int i = 0; i < NODES; i++) {
-
-                var potential = potentialService.computePotential(dx, i);
-                double stiffness = Math.max(potential.stiffness(), 1e-12);
-
-                double dT = (heatPower * dt) / (stiffness * dto.thermalConductivity());
-                delta[i] = dT;
-            }
-
-            // === преобразуем 1D delta → 2D delta2d для SLR ===
-            double[][] delta2d = new double[NODES][1];
-            for (int i = 0; i < NODES; i++) {
-                delta2d[i][0] = delta[i];
-            }
-
-            // === вызываем SLR строго по сигнатуре computeSLR(double[][], double) ===
-            var slr = slrService.computeSLR(delta2d, 1.0);
-
-            // === применяем локальное изменение ===
-            for (int i = 0; i < NODES; i++) {
-                temp[i] += slr.localSLR()[i][0];
-            }
-
-            // средняя температура слоя
-            double avg = 0.0;
-            for (double v : temp) avg += v;
-            avgTemps.add(avg / NODES);
+        double[][] localTemp = new double[DEFAULT_NODES][1];
+        for (int i = 0; i < DEFAULT_NODES; i++) {
+            localTemp[i][0] = T0;
         }
 
-        return new ThermalResultDto(avgTemps);
+        int steps = (int) Math.ceil(tMax / dt);
+        List<Double> tempsOverTime = new ArrayList<>(steps + 1);
+        tempsOverTime.add(T0);
+
+        for (int step = 1; step <= steps; step++) {
+
+            double[][] dT = new double[DEFAULT_NODES][1];
+
+            for (int i = 0; i < DEFAULT_NODES; i++) {
+
+                double stiffness =
+                        potentialService.computePotential(dx, dto.atom().getId()).stiffness();
+
+                double deltaT = 0;
+
+                // Добавляем нагрев, если powerInput указан
+                if (dto.powerInput() != null) {
+                    deltaT = dto.powerInput() * dt / Math.max(stiffness, 1e-20);
+                }
+
+                // Ограничение скачков (чтобы не улетало)
+                if (deltaT > 5) deltaT = 5;
+                if (deltaT < -5) deltaT = -5;
+
+                dT[i][0] = deltaT;
+            }
+
+            var slrResult = slrService.computeSLR(dT, 1.0, 0.0, 0.0);
+
+            for (int i = 0; i < DEFAULT_NODES; i++) {
+                localTemp[i][0] += slrResult.localSLR()[i][0];
+
+                // Физические ограничения (температура не может уйти в минус)
+                if (localTemp[i][0] < 1) localTemp[i][0] = 1;
+            }
+
+            // Средняя температура по всем узлам
+            double avgTemp = 0;
+            for (int i = 0; i < DEFAULT_NODES; i++) {
+                avgTemp += localTemp[i][0];
+            }
+            avgTemp /= DEFAULT_NODES;
+
+            tempsOverTime.add(avgTemp);
+        }
+
+        // Статистика
+        double min = Double.MAX_VALUE;
+        double max = -Double.MAX_VALUE;
+        double sum = 0;
+        for (double T : tempsOverTime) {
+            if (T < min) min = T;
+            if (T > max) max = T;
+            sum += T;
+        }
+        double avg = sum / tempsOverTime.size();
+
+        return new ThermalResultDto(
+                tempsOverTime,
+                min,
+                avg,
+                max
+        );
     }
 }

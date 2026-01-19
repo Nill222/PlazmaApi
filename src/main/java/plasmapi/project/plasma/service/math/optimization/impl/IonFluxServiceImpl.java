@@ -23,3 +23,4 @@ public class IonFluxServiceImpl implements IonFluxService {
         return Math.max(0.0, vLoc);
     }
 }
+

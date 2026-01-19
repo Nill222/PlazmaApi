@@ -1,4 +1,4 @@
-//package plasmapi.project.plasma.mapper;
+package plasmapi.project.plasma.mapper;//package plasmapi.project.plasma.mapper;
 //
 //import lombok.RequiredArgsConstructor;
 //import org.springframework.stereotype.Component;
