@@ -6,5 +6,5 @@ import plasmapi.project.plasma.dto.mathDto.simulation.SimulationRequestDto;
 
 public interface DiffusionService {
 
-    DiffusionProfileDto calculateFromConfig(SimulationRequestDto dto, Integer configId, Integer atomListId, double exposureTime);
+    DiffusionProfileDto calculateFromConfig(SimulationRequestDto dto, Integer configId, Integer atomListId, double exposureTime, double exposureRate, double ionEnergy);
 }

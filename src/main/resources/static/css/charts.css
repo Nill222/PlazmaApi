@@ -1,0 +1,37 @@
+/* Стили для графиков */
+.chart-container {
+    position: relative;
+    height: 400px;
+    width: 100%;
+    margin: 20px 0;
+}
+
+/* Адаптивные стили для мобильных устройств */
+@media (max-width: 768px) {
+    .chart-container {
+        height: 300px;
+    }
+}
+
+/* Дополнительные стили для карточек с графиками */
+.calculation-card .card-body {
+    padding: 2rem !important;
+}
+
+/* Стили для выпадающих списков */
+.form-select {
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.diffusion-selector, #temperatureType {
+    transition: all 0.3s ease;
+}

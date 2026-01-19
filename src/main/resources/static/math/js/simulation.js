@@ -1,29 +1,16 @@
-// simulation.js - Полная симуляция плазмы для PlasmaLab
+// simulation.js - Полная симуляция плазмы для PlasmaLab (без графиков)
 
 let calculationInProgress = false;
+let currentSimulationResult = null;
 
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
     console.log("Simulation page initialized");
     setupEventListeners();
     initializeAuth();
-    setupProgressIndicator();
+    loadHistoricalResults();
 });
 
-function setupProgressIndicator() {
-    const progressHTML = `
-        <div class="progress mt-3" id="calculationProgress" style="display: none; height: 20px;">
-            <div class="progress-bar progress-bar-striped progress-bar-animated" 
-                 role="progressbar" style="width: 0%"></div>
-        </div>
-    `;
-    const cardBody = document.querySelector('.calculation-card .card-body');
-    if (cardBody && !document.getElementById('calculationProgress')) {
-        cardBody.insertAdjacentHTML('beforeend', progressHTML);
-    }
-}
-
-// Инициализация авторизации
 function initializeAuth() {
     const token = getToken();
     const userMenu = document.querySelector('.user-menu');
@@ -33,16 +20,32 @@ function initializeAuth() {
         if (userMenu) userMenu.style.display = 'flex';
         if (authButtons) authButtons.style.display = 'none';
         document.body.classList.add('logged-in');
-
-        const alertBox = document.getElementById("alertBox");
-        if (alertBox) {
-            alertBox.classList.add("d-none");
-        }
+        loadUserData();
     } else {
         if (userMenu) userMenu.style.display = 'none';
         if (authButtons) authButtons.style.display = 'flex';
         document.body.classList.remove('logged-in');
         showAuthWarning();
+    }
+}
+
+async function loadUserData() {
+    try {
+        const token = getToken();
+        const response = await fetch("/auth/me", {
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.data) {
+                document.getElementById("usernameDisplay").textContent = data.data.username;
+            }
+        }
+    } catch (err) {
+        console.log("Не удалось загрузить данные пользователя:", err);
     }
 }
 
@@ -52,20 +55,41 @@ function setupEventListeners() {
         simulationForm.addEventListener("submit", handleFormSubmit);
     }
 
-    // Валидация в реальном времени - проверка запятых
+    const confirmBtn = document.getElementById("confirmSimulationBtn");
+    if (confirmBtn) {
+        confirmBtn.addEventListener("click", handleConfirmResults);
+    }
+
+    // Валидация в реальном времени
     document.querySelectorAll('.form-control[type="number"]').forEach(input => {
         input.addEventListener('input', function() {
-            // Заменяем запятые на точки
             if (this.value.includes(',')) {
                 this.value = this.value.replace(',', '.');
             }
             clearFieldError(this.id);
         });
-
-        input.addEventListener('change', function() {
-            clearFieldError(this.id);
-        });
     });
+}
+
+async function loadHistoricalResults() {
+    const token = getToken();
+    if (!token) return;
+
+    try {
+        const response = await fetch("/results/config", {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${token}`
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            console.log(`Загружено ${data.data?.length || 0} исторических результатов`);
+        }
+    } catch (err) {
+        console.log("Не удалось загрузить исторические результаты:", err);
+    }
 }
 
 function clearFieldError(fieldId) {
@@ -94,18 +118,25 @@ function showAuthWarning() {
     }
 }
 
-function showInfo(message) {
+function showError(message) {
     const alertBox = document.getElementById("alertBox");
     if (alertBox) {
-        alertBox.className = "alert alert-custom alert-info";
+        alertBox.className = "alert alert-custom alert-danger";
         alertBox.innerHTML = `
-            <i class="fas fa-info-circle me-2"></i>${message}
+            <i class="fas fa-exclamation-triangle me-2"></i>${message}
         `;
         alertBox.classList.remove("d-none");
+    }
+}
 
-        setTimeout(() => {
-            alertBox.classList.add("d-none");
-        }, 5000);
+function showSuccess(message) {
+    const alertBox = document.getElementById("alertBox");
+    if (alertBox) {
+        alertBox.className = "alert alert-custom alert-success";
+        alertBox.innerHTML = `
+            <i class="fas fa-check-circle me-2"></i>${message}
+        `;
+        alertBox.classList.remove("d-none");
     }
 }
 
@@ -134,11 +165,16 @@ async function handleFormSubmit(e) {
     const spinner = runBtn.querySelector(".loading-spinner");
     const buttonText = runBtn.querySelector("span");
     const progressBar = document.getElementById('calculationProgress');
+    const confirmBtn = document.getElementById("confirmSimulationBtn");
 
     calculationInProgress = true;
     buttonText.textContent = "Выполнение симуляции...";
     spinner.style.display = "inline-block";
     runBtn.disabled = true;
+
+    if (confirmBtn) {
+        confirmBtn.style.display = 'none';
+    }
 
     if (progressBar) {
         progressBar.style.display = 'block';
@@ -146,16 +182,13 @@ async function handleFormSubmit(e) {
     }
 
     try {
-        // Получение значений формы
         const formData = getFormData();
 
-        // Валидация данных
         if (!validateFormData(formData)) {
             resetCalculationState(runBtn, buttonText, spinner, progressBar);
             return;
         }
 
-        // Подготовка запроса
         const request = buildSimulationRequest(formData);
         console.log("Отправка запроса на /api/simulation/run:", request);
 
@@ -168,7 +201,7 @@ async function handleFormSubmit(e) {
             body: JSON.stringify(request)
         });
 
-        await handleApiResponse(response);
+        await handleApiResponse(response, formData);
 
     } catch (err) {
         console.error("Ошибка при выполнении запроса:", err);
@@ -189,14 +222,14 @@ function getFormData() {
         electronTemperature: parseFloat(document.getElementById("electronTemperature").value),
         chamberWidth: parseFloat(document.getElementById("chamberWidth").value),
         chamberDepth: parseFloat(document.getElementById("chamberDepth").value),
-        exposureTime: parseFloat(document.getElementById("exposureTime").value)
+        exposureTime: parseFloat(document.getElementById("exposureTime").value),
+        angle: parseFloat(document.getElementById("angle").value)
     };
 }
 
 function validateFormData(data) {
     let isValid = true;
 
-    // Проверка ID
     const idFields = ['configId', 'ionId', 'atomId'];
     idFields.forEach(field => {
         if (!data[field] || isNaN(data[field]) || data[field] <= 0) {
@@ -205,7 +238,6 @@ function validateFormData(data) {
         }
     });
 
-    // Проверка диапазонов
     const ranges = {
         voltage: { min: 200, max: 3500, unit: 'В' },
         current: { min: 0.01, max: 0.3, unit: 'А' },
@@ -213,7 +245,8 @@ function validateFormData(data) {
         electronTemperature: { min: 0, max: 5000, unit: 'K' },
         exposureTime: { min: 300, max: 7200, unit: 'с' },
         chamberWidth: { min: 0.01, max: 1.0, unit: 'м' },
-        chamberDepth: { min: 0.01, max: 0.5, unit: 'м' }
+        chamberDepth: { min: 0.01, max: 0.5, unit: 'м' },
+        angle: { min: 0, max: 90, unit: '°' }
     };
 
     Object.keys(ranges).forEach(field => {
@@ -238,11 +271,12 @@ function buildSimulationRequest(formData) {
         electronTemperature: formData.electronTemperature,
         chamberWidth: formData.chamberWidth,
         chamberDepth: formData.chamberDepth,
-        exposureTime: formData.exposureTime
+        exposureTime: formData.exposureTime,
+        angle: formData.angle
     };
 }
 
-async function handleApiResponse(response) {
+async function handleApiResponse(response, formData) {
     console.log("Статус ответа:", response.status);
 
     if (response.status === 401) {
@@ -254,12 +288,6 @@ async function handleApiResponse(response) {
 
     const data = await response.json();
     console.log("Полный ответ от сервера:", data);
-
-    const alertBox = document.getElementById("alertBox");
-    if (alertBox) {
-        alertBox.className = "alert alert-custom d-none";
-        alertBox.innerText = "";
-    }
 
     if (!response.ok) {
         console.error("Ошибка от сервера:", data);
@@ -275,25 +303,24 @@ async function handleApiResponse(response) {
         } else {
             const errorMessage = data.message || `HTTP error! status: ${response.status}`;
             showError(errorMessage);
-            console.error("Ошибка симуляции:", errorMessage);
         }
 
         document.getElementById("resultSection").style.display = "none";
         return;
     }
 
-    // Успешная симуляция
     const result = data.data;
-    const progressBar = document.getElementById('calculationProgress');
-
-    if (progressBar) {
-        progressBar.querySelector('.progress-bar').style.width = '100%';
-    }
 
     if (result) {
+        currentSimulationResult = result;
         updateResults(result);
         document.getElementById("resultSection").style.display = "block";
         document.getElementById("resultSection").scrollIntoView({behavior: "smooth"});
+
+        const confirmBtn = document.getElementById("confirmSimulationBtn");
+        if (confirmBtn) {
+            confirmBtn.style.display = 'block';
+        }
 
         showToast("✅ Полная симуляция успешно завершена!");
     } else {
@@ -301,54 +328,185 @@ async function handleApiResponse(response) {
     }
 }
 
-function updateResults(result) {
-    // Базовые результаты - исправленная версия для текущей структуры DTO
-    document.getElementById("resAtom").textContent = result.atomName || "Неизвестно";
+async function handleConfirmResults() {
+    if (!currentSimulationResult) {
+        showError("Нет результатов для подтверждения");
+        return;
+    }
 
-    // Проблема: в текущем DTO после atomName идет String s, затем totalTransferredEnergy
-    // Если бэкенд возвращает данные в неправильном порядке, нужно проверить структуру
-    console.log("Полная структура результата:", result);
+    const token = getToken();
+    if (!token) {
+        showAuthWarning();
+        return;
+    }
 
-    // Временное решение - проверяем все возможные варианты имен полей
-    const totalEnergy = result.totalTransferredEnergy !== undefined ? result.totalTransferredEnergy :
-        result.totalEnergy !== undefined ? result.totalEnergy : 0;
+    const confirmBtn = document.getElementById("confirmSimulationBtn");
+    const originalText = confirmBtn.querySelector("span").textContent;
 
-    const avgEnergy = result.avgTransferredPerAtom !== undefined ? result.avgTransferredPerAtom :
-        result.avgEnergy !== undefined ? result.avgEnergy :
-            result.averageEnergy !== undefined ? result.averageEnergy : 0;
+    try {
+        confirmBtn.disabled = true;
+        confirmBtn.querySelector("span").textContent = "Сохранение...";
 
-    document.getElementById("resTotalEnergy").textContent = formatScientific(totalEnergy) + " Дж";
-    document.getElementById("resAvgEnergy").textContent = formatScientific(avgEnergy);
-    document.getElementById("resTemperature").textContent = result.estimatedTemperature !== undefined ? result.estimatedTemperature.toFixed(2) : "0";
-    document.getElementById("resDiffusion").textContent = result.diffusionCoefficient !== undefined ? formatScientific(result.diffusionCoefficient) : "0";
+        const simulationResultDto = {
+            atomId: currentSimulationResult.atomId,
+            configId: currentSimulationResult.configId,
+            ionId: currentSimulationResult.ionId,
+            atomName: currentSimulationResult.atomName,
+            s: currentSimulationResult.s || "",
+            totalTransferredEnergy: currentSimulationResult.totalTransferredEnergy || 0,
+            avgTransferredPerAtom: currentSimulationResult.avgTransferredPerAtom || 0,
+            avgT: currentSimulationResult.avgT || 0,
+            minT: currentSimulationResult.minT || 0,
+            maxT: currentSimulationResult.maxT || 0,
+            diffusionCoefficient1: currentSimulationResult.diffusionCoefficient1 || 0,
+            diffusionCoefficient2: currentSimulationResult.diffusionCoefficient2 || 0,
+            plasmaParameters: currentSimulationResult.plasmaParameters || {},
+            perAtomTransferredEnergies: currentSimulationResult.perAtomTransferredEnergies || [],
+            diffusionProfile: currentSimulationResult.diffusionProfile || {},
+            coolingProfile: currentSimulationResult.coolingProfile || [],
+            totalMomentum: currentSimulationResult.totalMomentum || 0,
+            totalDamage: currentSimulationResult.totalDamage || 0,
+            totalDisplacement: currentSimulationResult.totalDisplacement || 0,
+            current: currentSimulationResult.current || 0
+        };
 
-    // Остальные функции остаются без изменений
-    updatePlasmaParameters(result.plasmaParameters);
-    updateCollisionEnergies(result.perAtomTransferredEnergies);
-    updateDiffusionProfile(result.diffusionProfile);
-    updateCoolingProfile(result.coolingProfile);
+        console.log("Отправка SimulationResultDto на сохранение:", simulationResultDto);
+
+        const response = await fetch("/api/simulation/create", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify(simulationResultDto)
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log("Ответ от сервера при сохранении:", data);
+
+        if (data.success || data.status === 200) {
+            showSuccess("✅ Результаты симуляции успешно сохранены в базу данных!");
+            showToast("Результаты сохранены в таблице Result");
+
+            // Скрываем кнопку после успешного сохранения
+            confirmBtn.style.display = 'none';
+
+            // Обновляем исторические результаты
+            loadHistoricalResults();
+        } else {
+            throw new Error(data.message || "Ошибка при сохранении");
+        }
+
+    } catch (err) {
+        console.error("Ошибка при сохранении результатов:", err);
+        showError("Ошибка при сохранении результатов: " + err.message);
+    } finally {
+        confirmBtn.disabled = false;
+        confirmBtn.querySelector("span").textContent = originalText;
+    }
 }
+
+function updateResults(result) {
+    console.log("📊 Полная структура результата:", result);
+
+    // Основные результаты из SimulationResultDto
+    document.getElementById("resAtom").textContent = result.atomName || "Неизвестно";
+    document.getElementById("resTotalEnergy").textContent = formatScientific(result.totalTransferredEnergy) + " Дж";
+    document.getElementById("resAvgEnergy").textContent = formatScientific(result.avgTransferredPerAtom);
+    document.getElementById("resTemperature").textContent = result.avgT !== undefined ? result.avgT.toFixed(2) + " K" : "0 K";
+
+    // Коэффициенты диффузии
+    document.getElementById("resDiffusion").textContent = formatScientific(result.diffusionCoefficient1) + " + " + formatScientific(result.diffusionCoefficient2);
+
+    // Температурные значения
+    document.getElementById("resMinTemp").textContent = result.minT !== undefined ? result.minT.toFixed(2) + " K" : "0 K";
+    document.getElementById("resMaxTemp").textContent = result.maxT !== undefined ? result.maxT.toFixed(2) + " K" : "0 K";
+    document.getElementById("resAvgTemp").textContent = result.avgT !== undefined ? result.avgT.toFixed(2) + " K" : "0 K";
+
+    // Статистика столкновений
+    const collisionsCount = result.perAtomTransferredEnergies ? result.perAtomTransferredEnergies.length : 0;
+    const maxCollisionEnergy = result.perAtomTransferredEnergies ?
+        Math.max(...result.perAtomTransferredEnergies) : 0;
+
+    document.getElementById("resCollisionsCount").textContent = collisionsCount;
+    document.getElementById("resMaxCollisionEnergy").textContent = formatScientific(maxCollisionEnergy);
+
+    // Остальные компоненты
+    displayAdditionalResults(result);
+    updatePlasmaParameters(result.plasmaParameters);
+
+    // Обновляем числовые значения для диффузии
+    document.getElementById("resMaxDepth").textContent = formatScientific(result.diffusionProfile?.depth || 0);
+    document.getElementById("resMaxConcentration").textContent = formatScientific(result.diffusionProfile?.D_effective || 0);
+    document.getElementById("resAvgConcentration").textContent = formatScientific(result.diffusionProfile?.D_thermal || 0);
+}
+
+function displayAdditionalResults(result) {
+    const container = document.getElementById("additionalResults");
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="col-12">
+            <h5 class="mb-3"><i class="fas fa-chart-line me-2 text-success"></i>Дополнительные результаты</h5>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="stat-card text-center">
+                        <i class="fas fa-gauge-high stat-icon"></i>
+                        <div class="stat-value">${formatScientific(result.totalMomentum || 0)}</div>
+                        <div class="stat-label">Общий импульс</div>
+                        <div class="stat-unit">кг·м/с</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card text-center">
+                        <i class="fas fa-hammer stat-icon"></i>
+                        <div class="stat-value">${formatScientific(result.totalDamage || 0)}</div>
+                        <div class="stat-label">Общее повреждение</div>
+                        <div class="stat-unit">Дж</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card text-center">
+                        <i class="fas fa-arrows-up-down stat-icon"></i>
+                        <div class="stat-value">${formatScientific(result.totalDisplacement || 0)}</div>
+                        <div class="stat-label">Общее смещение</div>
+                        <div class="stat-unit">м</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
 function updatePlasmaParameters(plasmaParams) {
     const container = document.getElementById("plasmaParams");
     if (!plasmaParams || !container) return;
 
     container.innerHTML = '';
 
+    // Обновляем параметры согласно PlasmaResultDto структуре
     const params = [
         { key: 'electronDensity', label: 'Плотность электронов', unit: 'м⁻³', icon: 'fas fa-atom' },
-        { key: 'electronVelocity', label: 'Скорость электронов', unit: 'м/с', icon: 'fas fa-gauge-high' },
-        { key: 'currentDensity', label: 'Плотность тока', unit: 'А/м²', icon: 'fas fa-bolt' },
-        { key: 'ionEnergy', label: 'Энергия ионов', unit: 'Дж', icon: 'fas fa-bolt' },
-        { key: 'voltage', label: 'Напряжение', unit: 'В', icon: 'fas fa-bolt' },
-        { key: 'pressure', label: 'Давление', unit: 'Па', icon: 'fas fa-tachometer-alt' },
-        { key: 'electronTemp', label: 'Температура электронов', unit: 'K', icon: 'fas fa-thermometer-half' }
+        { key: 'ionDensity', label: 'Плотность ионов', unit: 'м⁻³', icon: 'fas fa-bolt' },
+        { key: 'electronTemperature', label: 'Температура электронов', unit: 'K', icon: 'fas fa-thermometer-half' },
+        { key: 'ionTemperature', label: 'Температура ионов', unit: 'K', icon: 'fas fa-thermometer-half' },
+        { key: 'plasmaPotential', label: 'Потенциал плазмы', unit: 'В', icon: 'fas fa-bolt' },
+        { key: 'debyeLength', label: 'Длина Дебая', unit: 'м', icon: 'fas fa-ruler' },
+        { key: 'plasmaFrequency', label: 'Плазменная частота', unit: 'Гц', icon: 'fas fa-wave-square' }
     ];
+
+    let hasData = false;
 
     params.forEach(param => {
         if (plasmaParams[param.key] !== undefined && plasmaParams[param.key] !== null) {
             const value = formatScientific(plasmaParams[param.key]);
             container.innerHTML += `
-                <div class="col-md-4">
+                <div class="col-md-6 col-lg-4">
                     <div class="stat-card text-center">
                         <i class="${param.icon} stat-icon"></i>
                         <div class="stat-value">${value}</div>
@@ -357,11 +515,11 @@ function updatePlasmaParameters(plasmaParams) {
                     </div>
                 </div>
             `;
+            hasData = true;
         }
     });
 
-    // Если нет параметров плазмы, показываем сообщение
-    if (container.innerHTML === '') {
+    if (!hasData) {
         container.innerHTML = `
             <div class="col-12">
                 <div class="alert alert-info text-center">
@@ -370,183 +528,6 @@ function updatePlasmaParameters(plasmaParams) {
                 </div>
             </div>
         `;
-    }
-}
-
-function updateCollisionEnergies(energies) {
-    const container = document.getElementById("collisionEnergiesChart");
-    const countElement = document.getElementById("resCollisionsCount");
-    const maxEnergyElement = document.getElementById("resMaxCollisionEnergy");
-
-    if (!energies || !Array.isArray(energies) || energies.length === 0) {
-        countElement.textContent = "0";
-        maxEnergyElement.textContent = "0";
-        if (container) {
-            container.innerHTML = '<div class="text-center text-muted" style="width: 100%; padding-top: 80px;">Нет данных о столкновениях</div>';
-        }
-        return;
-    }
-
-    // Обновляем статистику
-    countElement.textContent = energies.length;
-    const maxEnergy = Math.max(...energies);
-    maxEnergyElement.textContent = formatScientific(maxEnergy);
-
-    // Создаем простую визуализацию
-    if (container) {
-        container.innerHTML = '';
-        const maxVal = Math.max(...energies);
-        const limitedEnergies = energies.slice(0, 50); // Ограничиваем для визуализации
-
-        limitedEnergies.forEach((energy, index) => {
-            const height = maxVal > 0 ? (energy / maxVal) * 180 : 0;
-            const bar = document.createElement('div');
-            bar.style.height = `${height}px`;
-            bar.style.flex = '1';
-            bar.style.backgroundColor = `hsl(${index * 3}, 70%, 50%)`;
-            bar.style.borderRadius = '2px 2px 0 0';
-            bar.style.minWidth = '4px';
-            bar.title = `Столкновение ${index + 1}: ${formatScientific(energy)} Дж`;
-            container.appendChild(bar);
-        });
-
-        if (energies.length > 50) {
-            const info = document.createElement('div');
-            info.style.position = 'absolute';
-            info.style.bottom = '5px';
-            info.style.right = '10px';
-            info.style.fontSize = '12px';
-            info.style.color = '#666';
-            info.textContent = `Показано 50 из ${energies.length}`;
-            container.style.position = 'relative';
-            container.appendChild(info);
-        }
-    }
-}
-
-function updateDiffusionProfile(diffusionProfile) {
-    const container = document.getElementById("diffusionProfileChart");
-    const maxDepthElement = document.getElementById("resMaxDepth");
-    const maxConcentrationElement = document.getElementById("resMaxConcentration");
-    const avgConcentrationElement = document.getElementById("resAvgConcentration");
-
-    if (!diffusionProfile) {
-        maxDepthElement.textContent = "0";
-        maxConcentrationElement.textContent = "0";
-        avgConcentrationElement.textContent = "0";
-        if (container) {
-            container.innerHTML = '<div class="text-center text-muted" style="width: 100%; padding-top: 80px;">Нет данных о диффузии</div>';
-        }
-        return;
-    }
-
-    // Извлекаем данные из DiffusionProfileDto
-    const depths = diffusionProfile.depths || [];
-    const concentrations = diffusionProfile.concentration || []; // Обратите внимание: concentration (без s)
-
-    if (depths.length > 0 && concentrations.length > 0 && depths.length === concentrations.length) {
-        const maxDepth = Math.max(...depths);
-        const maxConcentration = Math.max(...concentrations);
-        const avgConcentration = concentrations.reduce((a, b) => a + b, 0) / concentrations.length;
-
-        maxDepthElement.textContent = formatScientific(maxDepth);
-        maxConcentrationElement.textContent = formatScientific(maxConcentration);
-        avgConcentrationElement.textContent = formatScientific(avgConcentration);
-
-        // Создаем визуализацию профиля диффузии
-        if (container) {
-            container.innerHTML = '';
-            const maxConc = Math.max(...concentrations);
-            const limitedData = depths.map((depth, index) => ({
-                depth,
-                concentration: concentrations[index]
-            })).slice(0, 50);
-
-            limitedData.forEach((data, index) => {
-                const height = maxConc > 0 ? (data.concentration / maxConc) * 180 : 0;
-                const bar = document.createElement('div');
-                bar.style.height = `${height}px`;
-                bar.style.flex = '1';
-                bar.style.backgroundColor = `hsl(220, 70%, ${50 + (index / limitedData.length) * 20}%)`;
-                bar.style.borderRadius = '2px 2px 0 0';
-                bar.style.minWidth = '4px';
-                bar.title = `Глубина: ${formatScientific(data.depth)} м, Концентрация: ${formatScientific(data.concentration)}`;
-                container.appendChild(bar);
-            });
-
-            if (depths.length > 50) {
-                const info = document.createElement('div');
-                info.style.position = 'absolute';
-                info.style.bottom = '5px';
-                info.style.right = '10px';
-                info.style.fontSize = '12px';
-                info.style.color = '#666';
-                info.textContent = `Показано 50 из ${depths.length}`;
-                container.style.position = 'relative';
-                container.appendChild(info);
-            }
-        }
-    } else {
-        maxDepthElement.textContent = "0";
-        maxConcentrationElement.textContent = "0";
-        avgConcentrationElement.textContent = "0";
-        if (container) {
-            container.innerHTML = '<div class="text-center text-muted" style="width: 100%; padding-top: 80px;">Некорректные данные диффузии</div>';
-        }
-    }
-}
-
-function updateCoolingProfile(coolingProfile) {
-    const container = document.getElementById("coolingProfileChart");
-    const minTempElement = document.getElementById("resMinTemp");
-    const maxTempElement = document.getElementById("resMaxTemp");
-
-    if (!coolingProfile || !Array.isArray(coolingProfile) || coolingProfile.length === 0) {
-        minTempElement.textContent = "0";
-        maxTempElement.textContent = "0";
-        if (container) {
-            container.innerHTML = '<div class="text-center text-muted" style="width: 100%; padding-top: 80px;">Нет данных об охлаждении</div>';
-        }
-        return;
-    }
-
-    const minTemp = Math.min(...coolingProfile);
-    const maxTemp = Math.max(...coolingProfile);
-
-    minTempElement.textContent = minTemp.toFixed(2);
-    maxTempElement.textContent = maxTemp.toFixed(2);
-
-    // Создаем визуализацию профиля охлаждения
-    if (container) {
-        container.innerHTML = '';
-        const tempRange = maxTemp - minTemp;
-        const limitedProfile = coolingProfile.slice(0, 50);
-
-        limitedProfile.forEach((temp, index) => {
-            const height = tempRange > 0 ? ((temp - minTemp) / tempRange) * 180 : 90;
-            const bar = document.createElement('div');
-            bar.style.height = `${height}px`;
-            bar.style.flex = '1';
-            // От синего (холодно) к красному (горячо)
-            const hue = 240 - (index / limitedProfile.length) * 120;
-            bar.style.backgroundColor = `hsl(${hue}, 70%, 50%)`;
-            bar.style.borderRadius = '2px 2px 0 0';
-            bar.style.minWidth = '4px';
-            bar.title = `Время ${index + 1}: ${temp.toFixed(2)} K`;
-            container.appendChild(bar);
-        });
-
-        if (coolingProfile.length > 50) {
-            const info = document.createElement('div');
-            info.style.position = 'absolute';
-            info.style.bottom = '5px';
-            info.style.right = '10px';
-            info.style.fontSize = '12px';
-            info.style.color = '#666';
-            info.textContent = `Показано 50 из ${coolingProfile.length}`;
-            container.style.position = 'relative';
-            container.appendChild(info);
-        }
     }
 }
 
@@ -565,7 +546,7 @@ function resetCalculationState(button, buttonText, spinner, progressBar) {
 
 // Вспомогательные функции
 function formatScientific(number) {
-    if (!number || isNaN(number)) return '0';
+    if (number === undefined || number === null || isNaN(number)) return '0';
     if (Math.abs(number) < 0.001 || Math.abs(number) > 1000) {
         return Number(number).toExponential(3);
     }
@@ -584,46 +565,31 @@ function showFieldError(fieldId, message) {
     }
 }
 
-function showError(message) {
-    const alertBox = document.getElementById("alertBox");
-    if (alertBox) {
-        alertBox.className = "alert alert-custom alert-danger";
-        alertBox.innerHTML = `
-            <i class="fas fa-exclamation-triangle me-2"></i>${message}
-        `;
-        alertBox.classList.remove("d-none");
-    }
-}
-
 function showToast(message) {
-    if (typeof showMessage === 'function') {
-        showMessage(message, 'success');
-    } else {
-        const toast = document.createElement("div");
-        toast.className = "toast align-items-center text-white bg-success border-0 position-fixed bottom-0 end-0 m-3";
-        toast.setAttribute("role", "alert");
-        toast.setAttribute("aria-live", "assertive");
-        toast.setAttribute("aria-atomic", "true");
+    const toast = document.createElement("div");
+    toast.className = "toast align-items-center text-white bg-success border-0 position-fixed bottom-0 end-0 m-3";
+    toast.setAttribute("role", "alert");
+    toast.setAttribute("aria-live", "assertive");
+    toast.setAttribute("aria-atomic", "true");
 
-        toast.innerHTML = `
-            <div class="d-flex">
-                <div class="toast-body">
-                    <i class="fas fa-check-circle me-2"></i>${message}
-                </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+    toast.innerHTML = `
+        <div class="d-flex">
+            <div class="toast-body">
+                <i class="fas fa-check-circle me-2"></i>${message}
             </div>
-        `;
+            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+    `;
 
-        document.body.appendChild(toast);
-        const toastInstance = new bootstrap.Toast(toast, {delay: 5000});
-        toastInstance.show();
+    document.body.appendChild(toast);
+    const toastInstance = new bootstrap.Toast(toast, {delay: 5000});
+    toastInstance.show();
 
-        toast.addEventListener('hidden.bs.toast', () => {
-            if (toast.parentNode) {
-                toast.parentNode.removeChild(toast);
-            }
-        });
-    }
+    toast.addEventListener('hidden.bs.toast', () => {
+        if (toast.parentNode) {
+            toast.parentNode.removeChild(toast);
+        }
+    });
 }
 
 // Глобальные функции
@@ -642,6 +608,11 @@ window.showAuthModal = function(tab = 'login') {
     }
 
     authModal.show();
+};
+
+window.logout = function() {
+    localStorage.removeItem('authToken');
+    window.location.reload();
 };
 
 // Callback для успешной авторизации
