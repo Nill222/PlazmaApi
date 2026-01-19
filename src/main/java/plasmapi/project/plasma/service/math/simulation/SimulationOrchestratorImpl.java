@@ -121,7 +121,8 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
                 Tlist,
                 totalMomentum,
                 totalDamage,
-                totalDisplacement
+                totalDisplacement,
+                request.current()
         );
     }
 }

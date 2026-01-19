@@ -3,7 +3,6 @@ package plasmapi.project.plasma.service.math.plazma;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import plasmapi.project.plasma.controller.handler.exception.NotFoundException;
-import plasmapi.project.plasma.dto.mathDto.atom.AtomListDto;
 import plasmapi.project.plasma.dto.mathDto.plasma.PlasmaResultDto;
 import plasmapi.project.plasma.dto.mathDto.simulation.SimulationRequestDto;
 import plasmapi.project.plasma.model.res.Ion;
@@ -27,7 +26,7 @@ public class PlasmaServiceImpl implements PlasmaService {
                 .orElseThrow(() -> new NotFoundException("Ион не найден"));
         // Параметры плазмы берём из запроса
         double voltage = request.voltage();
-        double current = request.current();
+        double current = request.current(); // считать
         double pressure = request.pressure();
         double electronTemp = request.electronTemperature();
         int Z = ion.getCharge();
@@ -36,11 +35,11 @@ public class PlasmaServiceImpl implements PlasmaService {
 
         // Electron velocity
         double electronVelocity = Math.sqrt(2.0 * E_CHARGE * voltage / ME);
-
+        //current вектор умова поинтинга!!!
         // Current density
         double currentDensity = current / (request.chamberWidth() * request.chamberDepth());
         double ionFlux = currentDensity /(Z * E_CHARGE);
-
+        // ток расчёт кол ва ионов разница напряжений
 
         // Эффективная энергия ионов
         double ionEnergyEffective = voltage * E_CHARGE * Z;
@@ -57,4 +56,3 @@ public class PlasmaServiceImpl implements PlasmaService {
         );
     }
 }
-
