@@ -1,48 +1,33 @@
 // array.js - Управление атомами для PlasmaLab
 const API_BASE = "/atoms";
-
-// Глобальные переменные
 let currentAtoms = [];
 
 document.addEventListener("DOMContentLoaded", () => {
     initializePage();
 });
 
-// Инициализация страницы
 function initializePage() {
     console.log("🔄 Инициализация страницы атомов...");
-
-    // Проверяем авторизацию
     checkAuthAndUpdateUI();
-
-    // Загружаем атомы при загрузке страницы
-    loadAtoms();
-
-    // Назначаем обработчики событий
     setupEventListeners();
+    loadAtoms(); // Автоматическая загрузка при открытии
 }
 
-// Проверка авторизации и обновление UI
 function checkAuthAndUpdateUI() {
     const token = getToken();
-    console.log("🔐 Токен в localStorage:", token ? "есть" : "нет");
 
     if (token) {
-        // Показываем защищенные операции
         document.querySelectorAll('.protected-operation').forEach(el => {
             el.style.display = 'block';
         });
-        // Показываем меню пользователя
         const userMenu = document.querySelector('.user-menu');
         const authButtons = document.querySelector('.auth-buttons');
         if (userMenu) userMenu.style.display = 'flex';
         if (authButtons) authButtons.style.display = 'none';
     } else {
-        // Скрываем защищенные операции
         document.querySelectorAll('.protected-operation').forEach(el => {
             el.style.display = 'none';
         });
-        // Показываем кнопки авторизации
         const userMenu = document.querySelector('.user-menu');
         const authButtons = document.querySelector('.auth-buttons');
         if (userMenu) userMenu.style.display = 'none';
@@ -50,7 +35,6 @@ function checkAuthAndUpdateUI() {
     }
 }
 
-// Назначение обработчиков событий
 function setupEventListeners() {
     const loadAtomsBtn = document.getElementById("loadAtoms");
     const createForm = document.getElementById("createAtomForm");
@@ -68,7 +52,6 @@ function setupEventListeners() {
         searchBtn.addEventListener("click", handleSearchAtom);
     }
 
-    // Обработчик для поиска по Enter
     const searchInput = document.getElementById("searchSymbol");
     if (searchInput) {
         searchInput.addEventListener("keypress", (e) => {
@@ -79,28 +62,15 @@ function setupEventListeners() {
     }
 }
 
-// Загрузка всех атомов
 async function loadAtoms() {
     const atomTableContainer = document.getElementById("atomTableContainer");
     const loadAtomsBtn = document.getElementById("loadAtoms");
     const atomCount = document.getElementById("atomCount");
 
     try {
-        // Показываем индикатор загрузки
         if (loadAtomsBtn) {
-            loadAtomsBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Загрузка...';
+            loadAtomsBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Загрузка...';
             loadAtomsBtn.disabled = true;
-        }
-
-        if (atomTableContainer) {
-            atomTableContainer.innerHTML = `
-                <div class="text-center py-4">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Загрузка...</span>
-                    </div>
-                    <p class="mt-2 text-muted">Загрузка данных...</p>
-                </div>
-            `;
         }
 
         const response = await fetch(API_BASE);
@@ -120,22 +90,21 @@ async function loadAtoms() {
         console.error('Ошибка загрузки атомов:', error);
         if (atomTableContainer) {
             atomTableContainer.innerHTML = `
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
+                <div class="alert alert-error">
+                    <i class="fas fa-exclamation-triangle"></i>
                     Ошибка загрузки: ${error.message}
                 </div>
             `;
         }
-        showMessage('❌ Ошибка загрузки атомов', 'error');
+        showMessage("❌ Ошибка загрузки атомов", "error");
     } finally {
         if (loadAtomsBtn) {
-            loadAtomsBtn.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Обновить список';
+            loadAtomsBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Обновить список';
             loadAtomsBtn.disabled = false;
         }
     }
 }
 
-// Создание нового атома
 async function handleCreateAtom(e) {
     e.preventDefault();
 
@@ -150,7 +119,7 @@ async function handleCreateAtom(e) {
     const originalText = submitBtn.innerHTML;
 
     try {
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Создание...';
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Создание...';
         submitBtn.disabled = true;
 
         const atomData = {
@@ -161,20 +130,9 @@ async function handleCreateAtom(e) {
             debyeTemperature: parseFloat(document.getElementById("debyeTemperature").value),
             valence: parseInt(document.getElementById("valence").value),
             structure: document.getElementById("structure").value,
-            // Новые поля - можно сделать опциональными
-            morseDeEv: null,
-            morseA: null,
-            ljSigma: null,
-            ljEpsilonEv: null,
-            bornMayerA: null,
-            bornMayerAParam: null,
-            cohesiveEnergyEv: null,
-            screeningLength: null,
-            packingFactor: null,
             notes: "Создан через веб-интерфейс"
         };
 
-        // Валидация данных
         if (!validateAtomData(atomData)) {
             return;
         }
@@ -189,9 +147,7 @@ async function handleCreateAtom(e) {
         if (result.ok) {
             showMessage("✅ " + (result.body?.message || "Атом успешно создан"), 'success');
             form.reset();
-            // Сбрасываем селект к начальному состоянию
             document.getElementById("structure").selectedIndex = 0;
-            // Обновляем таблицу
             loadAtoms();
         } else {
             const errorMsg = result.body?.message || 'Неизвестная ошибка';
@@ -206,7 +162,6 @@ async function handleCreateAtom(e) {
     }
 }
 
-// Поиск атома
 async function handleSearchAtom() {
     const searchInput = document.getElementById("searchSymbol");
     const searchResult = document.getElementById("searchResult");
@@ -222,7 +177,7 @@ async function handleSearchAtom() {
 
     try {
         if (searchBtn) {
-            searchBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Поиск...';
+            searchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Поиск...';
             searchBtn.disabled = true;
         }
 
@@ -231,11 +186,11 @@ async function handleSearchAtom() {
 
         if (result.ok && result.body && result.body.data) {
             renderSearchResult(result.body.data, symbol);
-            showMessage(`🔍 Найдено ${result.body.data.length} атомов по запросу "${symbol}"`, 'success');
+            showMessage(`🔍 Найдено ${result.body.data.length} атомов`, 'success');
         } else {
             searchResult.innerHTML = `
                 <div class="text-center text-muted py-4">
-                    <i class="fas fa-search fa-2x mb-2"></i>
+                    <i class="fas fa-search fa-2x"></i>
                     <p>${result.body?.message || 'Атомы не найдены'}</p>
                 </div>
             `;
@@ -244,20 +199,19 @@ async function handleSearchAtom() {
     } catch (error) {
         console.error('Ошибка поиска атома:', error);
         searchResult.innerHTML = `
-            <div class="alert alert-danger">
-                <i class="fas fa-exclamation-triangle me-2"></i>
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-triangle"></i>
                 Ошибка поиска: ${error.message}
             </div>
         `;
     } finally {
         if (searchBtn) {
-            searchBtn.innerHTML = '<i class="fas fa-search me-2"></i>Найти';
+            searchBtn.innerHTML = '<i class="fas fa-search"></i> Найти';
             searchBtn.disabled = false;
         }
     }
 }
 
-// Валидация данных атома
 function validateAtomData(atomData) {
     if (!atomData.atomName || atomData.atomName.length > 20) {
         showMessage('Символ атома обязателен и не должен превышать 20 символов', 'error');
@@ -286,7 +240,6 @@ function validateAtomData(atomData) {
     return true;
 }
 
-// Рендер таблицы атомов
 function renderAtomTable(atoms) {
     const atomTableContainer = document.getElementById("atomTableContainer");
     if (!atomTableContainer) return;
@@ -294,7 +247,7 @@ function renderAtomTable(atoms) {
     if (!atoms || atoms.length === 0) {
         atomTableContainer.innerHTML = `
             <div class="text-center text-muted py-5">
-                <i class="fas fa-inbox fa-3x mb-3"></i>
+                <i class="fas fa-inbox fa-2x"></i>
                 <p>Нет данных для отображения</p>
             </div>
         `;
@@ -302,19 +255,19 @@ function renderAtomTable(atoms) {
     }
 
     let html = `
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-primary">
+        <div class="table-container">
+            <table class="table">
+                <thead>
                     <tr>
                         <th>ID</th>
                         <th>Символ</th>
                         <th>Полное название</th>
                         <th>Масса (кг)</th>
-                        <th>Парам. решетки a (Å)</th>
+                        <th>Парам. a (Å)</th>
                         <th>Темп. Дебая (K)</th>
                         <th>Валентность</th>
                         <th>Структура</th>
-                        <th width="120" class="text-center">Действия</th>
+                        <th>Действия</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -323,23 +276,21 @@ function renderAtomTable(atoms) {
     atoms.forEach(atom => {
         html += `
             <tr>
-                <td><span class="badge bg-secondary">${atom.id}</span></td>
+                <td><span class="badge badge-secondary">${atom.id}</span></td>
                 <td><strong class="text-primary">${atom.atomName}</strong></td>
                 <td>${atom.fullName}</td>
-                <td>${formatScientific(atom.mass)}</td> 
+                <td>${formatScientific(atom.mass)}</td>
                 <td>${atom.a}</td>
                 <td>${atom.debyeTemperature}</td>
-                <td><span class="badge bg-info">${atom.valence}</span></td>
-                <td><span class="badge bg-light text-dark border">${formatStructure(atom.structure)}</span></td>
-                <td class="text-center">
-                    <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-danger btn-action" 
-                                onclick="deleteAtom(${atom.id}, '${atom.atomName}')" 
-                                title="Удалить атом"
-                                ${!getToken() ? 'disabled' : ''}>
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
+                <td><span class="badge badge-info">${atom.valence}</span></td>
+                <td><span class="badge badge-primary">${formatStructure(atom.structure)}</span></td>
+                <td>
+                    <button class="btn btn-danger btn-sm" 
+                            onclick="deleteAtom(${atom.id}, '${atom.atomName}')" 
+                            title="Удалить атом"
+                            ${!getToken() ? 'disabled' : ''}>
+                        <i class="fas fa-trash"></i>
+                    </button>
                 </td>
             </tr>`;
     });
@@ -348,7 +299,6 @@ function renderAtomTable(atoms) {
     atomTableContainer.innerHTML = html;
 }
 
-// Рендер результатов поиска
 function renderSearchResult(atoms, searchTerm) {
     const searchResult = document.getElementById("searchResult");
     if (!searchResult) return;
@@ -356,7 +306,7 @@ function renderSearchResult(atoms, searchTerm) {
     if (!atoms || atoms.length === 0) {
         searchResult.innerHTML = `
             <div class="text-center text-muted py-4">
-                <i class="fas fa-search fa-2x mb-2"></i>
+                <i class="fas fa-search fa-2x"></i>
                 <p>Атомы с символом "${searchTerm}" не найдены</p>
             </div>
         `;
@@ -364,9 +314,9 @@ function renderSearchResult(atoms, searchTerm) {
     }
 
     let html = `
-        <div class="table-responsive">
-            <table class="table table-sm table-hover">
-                <thead class="table-info">
+        <div class="table-container">
+            <table class="table">
+                <thead>
                     <tr>
                         <th>ID</th>
                         <th>Символ</th>
@@ -382,15 +332,15 @@ function renderSearchResult(atoms, searchTerm) {
         const isExactMatch = atom.atomName.toLowerCase() === searchTerm.toLowerCase();
         html += `
             <tr>
-                <td><span class="badge bg-secondary">${atom.id}</span></td>
+                <td><span class="badge badge-secondary">${atom.id}</span></td>
                 <td>
                     <strong class="${isExactMatch ? 'text-success' : 'text-primary'}">
                         ${atom.atomName}
                     </strong>
                 </td>
                 <td>${atom.fullName}</td>
-                <td>${formatScientific(atom.mass)}</td> 
-                <td><span class="badge bg-light text-dark border">${formatStructure(atom.structure)}</span></td>
+                <td>${formatScientific(atom.mass)}</td>
+                <td><span class="badge badge-primary">${formatStructure(atom.structure)}</span></td>
             </tr>`;
     });
 
@@ -398,18 +348,16 @@ function renderSearchResult(atoms, searchTerm) {
     searchResult.innerHTML = html;
 }
 
-// Функция для преобразования enum структуры в читаемый формат
 function formatStructure(structure) {
     const structureMap = {
-        'SC': 'Simple Cubic',
-        'BCC': 'Body-centered cubic',
-        'FCC': 'Face-centered cubic',
-        'HCP': 'Hexagonal close-packed'
+        'SC': 'SC',
+        'BCC': 'BCC',
+        'FCC': 'FCC',
+        'HCP': 'HCP'
     };
     return structureMap[structure] || structure;
 }
 
-// Удаление атома
 window.deleteAtom = async function(atomId, atomName) {
     if (!getToken()) {
         showMessage('Для удаления атомов необходимо войти в систему', 'error');
@@ -417,7 +365,7 @@ window.deleteAtom = async function(atomId, atomName) {
         return;
     }
 
-    if (!confirm(`Вы уверены, что хотите удалить атом "${atomName}" (ID: ${atomId})?`)) {
+    if (!confirm(`Удалить атом "${atomName}" (ID: ${atomId})?`)) {
         return;
     }
 
@@ -429,11 +377,10 @@ window.deleteAtom = async function(atomId, atomName) {
         const result = await parseApiResponse(response);
 
         if (result.ok) {
-            showMessage(`✅ Атом "${atomName}" успешно удален`, 'success');
-            // Обновляем таблицу
+            showMessage(`✅ Атом "${atomName}" удален`, 'success');
             loadAtoms();
         } else {
-            showMessage(`❌ ${result.body?.message || 'Ошибка при удалении атома'}`, 'error');
+            showMessage(`❌ ${result.body?.message || 'Ошибка при удалении'}`, 'error');
         }
     } catch (error) {
         console.error('Ошибка удаления атома:', error);
@@ -441,9 +388,6 @@ window.deleteAtom = async function(atomId, atomName) {
     }
 };
 
-// Вспомогательные функции
-
-// Форматирование научной нотации
 function formatScientific(number) {
     if (!number || isNaN(number)) return '0';
     if (Math.abs(number) < 0.001 || Math.abs(number) > 1000) {
@@ -452,7 +396,6 @@ function formatScientific(number) {
     return Number(number).toPrecision(6);
 }
 
-// Auth fetch с токеном
 async function authFetch(url, options = {}) {
     const token = getToken();
     if (!token) {
@@ -487,7 +430,6 @@ async function authFetch(url, options = {}) {
     return response;
 }
 
-// Парсинг ответа API (совместимость с вашим auth.js)
 async function parseApiResponse(response) {
     const text = await response.text();
     try {
@@ -498,25 +440,23 @@ async function parseApiResponse(response) {
     }
 }
 
-// Показ модального окна авторизации
 function showAuthModal(tab = 'login') {
-    const authModal = new bootstrap.Modal(document.getElementById('authModal'));
+    document.getElementById('authOverlay').style.display = 'flex';
 
     if (tab === 'register') {
-        const registerTab = document.querySelector('[data-bs-target="#register"]');
-        if (registerTab) {
-            const tabInstance = new bootstrap.Tab(registerTab);
-            tabInstance.show();
+        document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+
+        const registerTab = document.querySelector('.auth-tab[data-tab="register"]');
+        const registerForm = document.querySelector('.auth-form[data-form="register"]');
+
+        if (registerTab && registerForm) {
+            registerTab.classList.add('active');
+            registerForm.classList.add('active');
         }
     }
-
-    authModal.show();
 }
 
-// Реэкспорт функций из auth.js для глобального доступа
 window.getToken = getToken;
 window.clearToken = clearToken;
 window.showAuthModal = showAuthModal;
-
-// Инициализация при загрузке
-console.log("✅ array.js загружен и готов к работе");

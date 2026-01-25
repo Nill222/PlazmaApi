@@ -3,245 +3,281 @@
 <head>
     <meta charset="UTF-8">
     <title>Управление атомами - PlasmaLab</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/array-input.css">
 </head>
+
 <body>
-<!-- Навигация -->
-<nav class="navbar navbar-expand-lg navbar-dark">
-    <div class="container">
-        <a class="navbar-brand" href="index.html">
-            <i class="fas fa-atom me-2"></i>PlasmaLab
-        </a>
 
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <div class="navbar-nav me-auto">
-                <a class="nav-btn" href="index.html">Главная</a>
-                <a class="nav-btn active" href="array.html">Атомы</a>
-                <a class="nav-btn" href="chain.html">Ионы</a>
-                <a class="nav-btn" href="methods.html">Методы</a>
-                <a class="nav-btn" href="charts.html">Графики</a>
-            </div>
-
-            <div class="navbar-nav">
-                <div class="auth-buttons">
-                    <button class="btn btn-outline-light me-2" onclick="showAuthModal()">
-                        <i class="fas fa-sign-in-alt me-2"></i>Войти
-                    </button>
-                    <button class="btn btn-light" onclick="showAuthModal('register')">
-                        <i class="fas fa-user-plus me-2"></i>Регистрация
-                    </button>
+<!-- AUTH MODAL (добавьте этот код если его нет на странице) -->
+<div class="auth-overlay" id="authOverlay" style="display: none;">
+    <div class="auth-modal">
+        <div class="auth-header">
+            <button class="auth-tab active" data-tab="login">Вход</button>
+            <button class="auth-tab" data-tab="register">Регистрация</button>
+            <button class="auth-close" onclick="hideAuthModal()">×</button>
+        </div>
+        <div class="auth-body">
+            <!-- LOGIN -->
+            <form id="loginForm" class="auth-form active" data-form="login">
+                <div class="auth-field">
+                    <label>Имя пользователя</label>
+                    <input type="text" name="username" required>
                 </div>
-                <div class="user-menu">
-                        <span class="user-info">
-                            <i class="fas fa-user me-2"></i>
-                            <span id="usernameDisplay"></span>
-                        </span>
-                    <button class="btn btn-outline-light" onclick="logout()">
-                        <i class="fas fa-sign-out-alt me-2"></i>Выйти
-                    </button>
+                <div class="auth-field">
+                    <label>Пароль</label>
+                    <input type="password" name="password" required>
                 </div>
-            </div>
-        </div>
-    </div>
-</nav>
-
-<!-- Основной контент -->
-<div class="container my-5">
-    <!-- Заголовок -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <h1 class="display-5 fw-bold text-primary">
-                <i class="fas fa-atom me-3"></i>Управление атомами
-            </h1>
-            <p class="lead text-muted">База данных химических элементов и их свойств</p>
-        </div>
-    </div>
-
-    <!-- Карточка со списком атомов -->
-    <div class="card">
-        <div class="card-header">
-            <h2><i class="fas fa-list me-2"></i>Список атомов</h2>
-        </div>
-        <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <button id="loadAtoms" class="btn btn-primary">
-                    <i class="fas fa-sync-alt me-2"></i>Загрузить все атомы
+                <div id="login_msg" class="auth-message"></div>
+                <button type="submit" class="btn btn-primary full">
+                    Войти
                 </button>
-                <div class="text-muted small">
-                    <i class="fas fa-info-circle me-1"></i>
-                    Всего атомов: <span id="atomCount">0</span>
-                </div>
-            </div>
-            <div id="atomTableContainer" class="table-responsive">
-                <div class="text-center text-muted py-5">
-                    <i class="fas fa-database fa-3x mb-3"></i>
-                    <p>Нажмите "Загрузить все атомы" для отображения данных</p>
-                </div>
-            </div>
-        </div>
-    </div>
+            </form>
 
-    <!-- Создание нового атома (только для авторизованных) -->
-    <div class="card protected-operation">
-        <div class="card-header bg-success">
-            <h2><i class="fas fa-plus-circle me-2"></i>Создать новый атом</h2>
-        </div>
-        <div class="card-body">
-            <form id="createAtomForm" class="row g-3">
-                <div class="col-md-4">
-                    <label for="atomName" class="form-label fw-semibold">Символ элемента</label>
-                    <input type="text" id="atomName" class="form-control" placeholder="He" maxlength="20" required>
-                    <div class="form-text">Например: He, Fe, Au (макс. 20 символов)</div>
+            <!-- REGISTER -->
+            <form id="registerForm" class="auth-form" data-form="register">
+                <div class="auth-field">
+                    <label>Имя пользователя</label>
+                    <input type="text" name="username" required>
                 </div>
-                <div class="col-md-4">
-                    <label for="fullName" class="form-label fw-semibold">Полное название</label>
-                    <input type="text" id="fullName" class="form-control" placeholder="Гелий" maxlength="50" required>
-                    <div class="form-text">Макс. 50 символов</div>
+                <div class="auth-field">
+                    <label>Email</label>
+                    <input type="email" name="email" required>
                 </div>
-                <div class="col-md-4">
-                    <label for="mass" class="form-label fw-semibold">Масса (кг)</label>
-                    <input type="number" id="mass" class="form-control" step="any" placeholder="6.646e-27" min="0" required>
-                    <div class="form-text">Например: 6.646e-27 для гелия</div>
+                <div class="auth-field">
+                    <label>Пароль</label>
+                    <input type="password" name="password" required>
                 </div>
-                <div class="col-md-4">
-                    <label for="a" class="form-label fw-semibold">Параметр решетки a (Å)</label>
-                    <input type="number" id="a" class="form-control" step="any" placeholder="4.05" min="0" required>
-                    <div class="form-text">Например: 4.05 для алюминия</div>
-                </div>
-                <div class="col-md-4">
-                    <label for="debyeTemperature" class="form-label fw-semibold">Температура Дебая (K)</label>
-                    <input type="number" id="debyeTemperature" class="form-control" step="any" placeholder="100" min="0" required>
-                    <div class="form-text">Например: 428 для алюминия</div>
-                </div>
-                <div class="col-md-4">
-                    <label for="valence" class="form-label fw-semibold">Валентность</label>
-                    <input type="number" id="valence" class="form-control" placeholder="2" min="0" required>
-                    <div class="form-text">Например: 2 для гелия</div>
-                </div>
-                <div class="col-md-6">
-                    <label for="structure" class="form-label fw-semibold">Кристаллическая структура</label>
-                    <select id="structure" name="structure" class="form-select" required>
-                        <option value="" disabled selected>Выберите структуру</option>
-                        <option value="SC">Simple Cubic (Простая кубическая)</option>
-                        <option value="BCC">Body-centered cubic (Объемно-центрированная кубическая)</option>
-                        <option value="FCC">Face-centered cubic (Гранецентрированная кубическая)</option>
-                        <option value="HCP">Hexagonal close-packed (Гексагональная плотноупакованная)</option>
-                    </select>
-                </div>
-                <div class="col-12">
-                    <div class="alert alert-info">
-                        <i class="fas fa-info-circle me-2"></i>
-                        <strong>Примечание:</strong> Параметры потенциалов (Morse, Lennard-Jones, Born-Mayer) будут установлены в значения по умолчанию. Их можно изменить позже через API.
-                    </div>
-                </div>
-                <div class="col-12 text-end">
-                    <button type="submit" class="btn btn-success btn-lg">
-                        <i class="fas fa-save me-2"></i>Создать атом
-                    </button>
-                </div>
+                <div id="signup_msg" class="auth-message"></div>
+                <button type="submit" class="btn btn-primary full">
+                    Создать аккаунт
+                </button>
             </form>
         </div>
     </div>
-
-    <!-- Поиск атома -->
-    <div class="card">
-        <div class="card-header bg-info">
-            <h2><i class="fas fa-search me-2"></i>Поиск атома</h2>
-        </div>
-        <div class="card-body">
-            <div class="row g-3 align-items-end">
-                <div class="col-md-8">
-                    <label for="searchSymbol" class="form-label fw-semibold">Найти атом по символу</label>
-                    <input type="text" id="searchSymbol" class="form-control" placeholder="Введите символ элемента, например: He, Fe, Au" maxlength="20">
-                </div>
-                <div class="col-md-4">
-                    <button id="searchAtom" class="btn btn-info w-100">
-                        <i class="fas fa-search me-2"></i>Найти
-                    </button>
-                </div>
-            </div>
-            <div id="searchResult" class="mt-4"></div>
-        </div>
-    </div>
 </div>
 
-<!-- Футер -->
-<footer>
-    <div class="container text-center">
-        <p class="mb-2">© 2025 PlasmaLab. Все права защищены.</p>
-        <p class="text-light small">Профессиональная платформа для вычислительного моделирования</p>
+<!-- HEADER -->
+<header class="header">
+    <div class="container header-inner">
+        <a href="index.html" class="logo">
+            <i class="fas fa-atom"></i>
+            <span>PlasmaLab</span>
+        </a>
+
+        <nav class="nav">
+            <a class="nav-link" href="index.html">Главная</a>
+            <a class="nav-link active" href="array.html">Атомы</a>
+            <a class="nav-link" href="chain.html">Ионы</a>
+            <a class="nav-link" href="methods.html">Методы</a>
+            <a class="nav-link" href="charts.html">Графики</a>
+        </nav>
+
+        <div class="auth">
+            <!-- ГОСТЬ -->
+            <div class="auth-buttons">
+                <button class="btn btn-primary" onclick="showAuthModal()">Войти</button>
+            </div>
+
+            <!-- АВТОРИЗОВАН -->
+            <div class="user-menu" style="display:none;">
+                <span class="user-name" id="usernameDisplay"></span>
+                <button class="btn btn-secondary" onclick="logout()">Выйти</button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- CONTENT -->
+<main class="content">
+    <div class="container">
+        <!-- Заголовок -->
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="fas fa-atom"></i> Управление атомами
+            </h1>
+            <p class="page-subtitle">База данных химических элементов и их свойств</p>
+        </div>
+
+        <!-- Список атомов -->
+        <div class="card">
+            <div class="card-header">
+                <h2><i class="fas fa-list"></i> Список атомов</h2>
+            </div>
+            <div class="card-body">
+                <div class="flex-between mb-4">
+                    <button id="loadAtoms" class="btn btn-primary">
+                        <i class="fas fa-sync-alt"></i> Обновить список
+                    </button>
+                    <div class="text-muted">
+                        <i class="fas fa-info-circle"></i>
+                        Всего атомов: <span id="atomCount">0</span>
+                    </div>
+                </div>
+
+                <div id="atomTableContainer" class="table-container">
+                    <!-- Таблица будет загружена через JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Создание нового атома -->
+        <div class="card protected-operation">
+            <div class="card-header">
+                <h2><i class="fas fa-plus-circle"></i> Создать новый атом</h2>
+            </div>
+            <div class="card-body">
+                <form id="createAtomForm" class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Символ элемента</label>
+                        <input type="text" id="atomName" class="form-input" placeholder="He" maxlength="20" required>
+                        <div class="form-help">Например: He, Fe, Au (макс. 20 символов)</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Полное название</label>
+                        <input type="text" id="fullName" class="form-input" placeholder="Гелий" maxlength="50" required>
+                        <div class="form-help">Макс. 50 символов</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Масса (кг)</label>
+                        <input type="number" id="mass" class="form-input" step="any" placeholder="6.646e-27" min="0" required>
+                        <div class="form-help">Например: 6.646e-27 для гелия</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Параметр решетки a (Å)</label>
+                        <input type="number" id="a" class="form-input" step="any" placeholder="4.05" min="0" required>
+                        <div class="form-help">Например: 4.05 для алюминия</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Температура Дебая (K)</label>
+                        <input type="number" id="debyeTemperature" class="form-input" step="any" placeholder="100" min="0" required>
+                        <div class="form-help">Например: 428 для алюминия</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Валентность</label>
+                        <input type="number" id="valence" class="form-input" placeholder="2" min="0" required>
+                        <div class="form-help">Например: 2 для гелия</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Кристаллическая структура</label>
+                        <select id="structure" class="form-select" required>
+                            <option value="" disabled selected>Выберите структуру</option>
+                            <option value="SC">Simple Cubic (Простая кубическая)</option>
+                            <option value="BCC">Body-centered cubic (Объемно-центрированная кубическая)</option>
+                            <option value="FCC">Face-centered cubic (Гранецентрированная кубическая)</option>
+                            <option value="HCP">Hexagonal close-packed (Гексагональная плотноупакованная)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Примечание:</strong> Параметры потенциалов будут установлены в значения по умолчанию.
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> Создать атом
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Поиск атома -->
+        <div class="card">
+            <div class="card-header">
+                <h2><i class="fas fa-search"></i> Поиск атома</h2>
+            </div>
+            <div class="card-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Найти атом по символу</label>
+                        <input type="text" id="searchSymbol" class="form-input"
+                               placeholder="Введите символ элемента, например: He, Fe, Au" maxlength="20">
+                    </div>
+
+                    <div class="form-group">
+                        <button id="searchAtom" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Найти
+                        </button>
+                    </div>
+                </div>
+
+                <div id="searchResult" class="mt-4"></div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- FOOTER -->
+<footer class="footer">
+    <div class="container footer-inner">
+        <span>© 2025 PlasmaLab</span>
+        <span>Research & Simulation Platform</span>
     </div>
 </footer>
 
-<!-- Модальное окно авторизации -->
-<div class="modal fade auth-modal" id="authModal" tabindex="-1">
-    <div class="modal-dialog modal-md">
-        <div class="modal-content">
-            <div class="modal-header border-0">
-                <ul class="nav nav-tabs auth-tabs w-100">
-                    <li class="nav-item w-50">
-                        <button class="nav-link active w-100" data-bs-toggle="tab" data-bs-target="#login">
-                            <i class="fas fa-sign-in-alt me-2"></i>Вход
-                        </button>
-                    </li>
-                    <li class="nav-item w-50">
-                        <button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#register">
-                            <i class="fas fa-user-plus me-2"></i>Регистрация
-                        </button>
-                    </li>
-                </ul>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="tab-content">
-                    <div class="tab-pane fade show active" id="login">
-                        <form id="loginForm">
-                            <div class="mb-3">
-                                <label class="form-label">Имя пользователя</label>
-                                <input type="text" class="form-control" name="username" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Пароль</label>
-                                <input type="password" class="form-control" name="password" required>
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100 py-2">
-                                <i class="fas fa-sign-in-alt me-2"></i>Войти в систему
-                            </button>
-                        </form>
-                    </div>
-                    <div class="tab-pane fade" id="register">
-                        <form id="registerForm">
-                            <div class="mb-3">
-                                <label class="form-label">Имя пользователя</label>
-                                <input type="text" class="form-control" name="username" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Email</label>
-                                <input type="email" class="form-control" name="email" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Пароль</label>
-                                <input type="password" class="form-control" name="password" required>
-                            </div>
-                            <button type="submit" class="btn btn-success w-100 py-2">
-                                <i class="fas fa-user-plus me-2"></i>Создать аккаунт
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<!-- SCRIPTS -->
 <script src="js/auth.js"></script>
 <script src="js/array.js"></script>
+
+<script>
+    // Добавляем недостающие функции для модального окна
+    function showAuthModal() {
+        document.getElementById('authOverlay').style.display = 'flex';
+    }
+
+    function hideAuthModal() {
+        document.getElementById('authOverlay').style.display = 'none';
+    }
+
+    // Инициализация авторизации
+    if (typeof updateAuthUI === 'function') {
+        updateAuthUI();
+    }
+
+    // Переключение вкладок модального окна
+    document.querySelectorAll('.auth-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+
+            tab.classList.add('active');
+            document.querySelector(`.auth-form[data-form="${tab.dataset.tab}"]`).classList.add('active');
+        });
+    });
+
+    // Закрытие модального окна при клике вне его
+    document.getElementById('authOverlay').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('authOverlay')) {
+            hideAuthModal();
+        }
+    });
+
+    // Закрытие по ESC
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && document.getElementById('authOverlay').style.display === 'flex') {
+            hideAuthModal();
+        }
+    });
+</script>
+
 </body>
 </html>

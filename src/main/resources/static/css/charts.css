@@ -1,37 +1,238 @@
-/* Стили для графиков */
-.chart-container {
-    position: relative;
-    height: 400px;
-    width: 100%;
-    margin: 20px 0;
+/* charts.css - Стили для страницы графиков */
+
+.content {
+    padding: 3rem 0;
 }
 
-/* Адаптивные стили для мобильных устройств */
+.page-header {
+    margin-bottom: 3rem;
+    text-align: center;
+}
+
+.page-title {
+    font-size: 2.8rem;
+    font-weight: 800;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 1rem;
+}
+
+.page-subtitle {
+    color: var(--text-muted);
+    font-size: 1.2rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* CHARTS CONTAINER */
+.charts-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+/* CHART SECTION */
+.chart-section {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.chart-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(17, 22, 42, 0.8);
+}
+
+.chart-header h3 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+}
+
+/* CHART CONTROLS */
+.chart-controls {
+    padding: 1.5rem;
+    background: rgba(11, 15, 26, 0.3);
+    border-bottom: 1px solid var(--border);
+}
+
+.controls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    align-items: end;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.control-label {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.control-label i {
+    color: var(--primary);
+}
+
+.control-select {
+    background: rgba(11, 15, 26, 0.6);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 0.8rem 1rem;
+    color: var(--text-main);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.control-select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(94, 234, 212, 0.1);
+}
+
+/* CHART CANVAS */
+.chart-canvas-container {
+    padding: 1.5rem;
+    position: relative;
+    min-height: 400px;
+}
+
+.chart-canvas {
+    width: 100% !important;
+    height: 400px !important;
+}
+
+/* CHART INFO */
+.chart-info {
+    padding: 1rem 1.5rem;
+    background: rgba(11, 15, 26, 0.3);
+    border-top: 1px solid var(--border);
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.chart-info i {
+    color: var(--info);
+}
+
+/* INFO BOX */
+.info-box {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    margin-top: 2rem;
+}
+
+.info-box h5 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.info-box p {
+    color: var(--text-muted);
+    line-height: 1.7;
+    margin-bottom: 1.5rem;
+}
+
+.formula-box {
+    background: rgba(11, 15, 26, 0.6);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 1.5rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--text-light);
+}
+
+.formula-box strong {
+    color: var(--primary);
+    display: block;
+    margin-bottom: 0.5rem;
+}
+
+/* RESPONSIVE */
 @media (max-width: 768px) {
-    .chart-container {
-        height: 300px;
+    .page-title {
+        font-size: 2rem;
+    }
+
+    .controls-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .chart-canvas-container {
+        padding: 1rem;
+        min-height: 300px;
+    }
+
+    .chart-canvas {
+        height: 300px !important;
+    }
+
+    .info-box {
+        padding: 1.5rem;
     }
 }
 
-/* Дополнительные стили для карточек с графиками */
-.calculation-card .card-body {
-    padding: 2rem !important;
+@media (max-width: 480px) {
+    .page-title {
+        font-size: 1.8rem;
+    }
+
+    .chart-header h3 {
+        font-size: 1.2rem;
+    }
+
+    .chart-canvas {
+        height: 250px !important;
+    }
+}
+.chart-empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .5rem;
+    color: var(--text-muted);
+    font-size: .95rem;
+    text-align: center;
+    background: linear-gradient(
+            180deg,
+            rgba(11,15,26,0.85),
+            rgba(11,15,26,0.95)
+    );
+    border-radius: 12px;
 }
 
-/* Стили для выпадающих списков */
-.form-select {
-    border: 2px solid #e9ecef;
-    border-radius: 8px;
-    padding: 0.75rem 1rem;
-    font-size: 1rem;
-    transition: all 0.3s ease;
-}
-
-.form-select:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-}
-
-.diffusion-selector, #temperatureType {
-    transition: all 0.3s ease;
+.chart-canvas-container {
+    position: relative;
+    min-height: 320px;
 }

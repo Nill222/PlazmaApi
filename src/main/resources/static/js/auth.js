@@ -50,9 +50,11 @@ function saveToken(token) {
     localStorage.setItem(TOKEN_KEY, token);
     console.log("Auth token saved, len:", token.length || 0);
 }
+
 function clearToken() {
     localStorage.removeItem(TOKEN_KEY);
 }
+
 function getToken() {
     return localStorage.getItem(TOKEN_KEY);
 }
@@ -66,6 +68,40 @@ async function parseApiResponse(response) {
     } catch (e) {
         // не JSON — вернуть raw text
         return { ok: response.ok, status: response.status, body: text };
+    }
+}
+
+/** Простая функция обновления UI без запроса к /auth/me */
+function updateAuthUI() {
+    const token = getToken();
+    const authButtons = document.querySelector('.auth-buttons');
+    const userMenu = document.querySelector('.user-menu');
+    const usernameEl = document.getElementById('usernameDisplay');
+
+    if (token) {
+        // Показываем меню пользователя
+        if (authButtons) authButtons.style.display = 'none';
+        if (userMenu) userMenu.style.display = 'flex';
+        if (usernameEl) {
+            // Получаем имя пользователя из localStorage
+            const savedUsername = localStorage.getItem('lastUsername');
+            if (savedUsername) {
+                usernameEl.textContent = savedUsername;
+            } else {
+                usernameEl.textContent = 'User';
+            }
+        }
+
+        // Добавляем класс для стилей если нужно
+        document.body.classList.add('logged-in');
+    } else {
+        // Показываем кнопки входа
+        if (authButtons) authButtons.style.display = 'flex';
+        if (userMenu) userMenu.style.display = 'none';
+        if (usernameEl) usernameEl.textContent = '';
+
+        // Убираем класс
+        document.body.classList.remove('logged-in');
     }
 }
 
@@ -119,23 +155,25 @@ async function signin() {
         }
 
         saveToken(token);
+        // Сохраняем имя пользователя для отображения
+        localStorage.setItem('lastUsername', username);
+
         showMessage("✔ Успешный вход", "success", uiTarget ? uiTarget.id : null);
 
-        // Попытка валидации /auth/me если есть функция initializeAuth
-        if (typeof initializeAuth === "function") {
-            try {
-                await initializeAuth();
-            } catch (e) { console.warn("initializeAuth failed:", e); }
+        // Закрываем модальное окно
+        const authOverlay = document.getElementById('authOverlay');
+        if (authOverlay) {
+            authOverlay.style.display = 'none';
         }
 
-        // перенаправим если есть
-        setTimeout(() => {
-            if (window.location.pathname.endsWith("/auth.html") || window.location.pathname.endsWith("/login.html") || window.location.pathname.endsWith("/signin.html")) {
-                window.location.href = "/index.html";
-            } else {
-                location.reload();
-            }
-        }, 700);
+        // Сбрасываем форму
+        const loginForm = document.getElementById('loginForm');
+        if (loginForm) {
+            loginForm.reset();
+        }
+
+        // Обновляем UI авторизации
+        updateAuthUI();
 
         return true;
     } catch (err) {
@@ -183,17 +221,39 @@ async function signup() {
             return false;
         }
 
-        // Успех — показать сообщение
-        showMessage("✔ Регистрация успешна. Пожалуйста, войдите.", "success", uiTarget ? uiTarget.id : null);
+        // Успех — показываем сообщение
+        const successMsg = b?.message || "Регистрация успешна";
+        showMessage("✔ " + successMsg + ". Пожалуйста, войдите.", "success", uiTarget ? uiTarget.id : null);
 
-        // переключаем вкладку на логин если на странице есть табы (try)
-        try {
-            // старая страница: tabs are simple — trigger click on login tab if exists
-            const loginTabBtn = document.querySelector(".tab[onclick*='switchTab']") || document.querySelector('[data-bs-target="#login"]') || document.querySelector('[data-bs-toggle="tab"][href="#signinTab"]');
-            if (loginTabBtn) {
-                if (typeof loginTabBtn.click === "function") loginTabBtn.click();
+        // Закрываем модальное окно
+        const authOverlay = document.getElementById('authOverlay');
+        if (authOverlay) {
+            authOverlay.style.display = 'none';
+        }
+
+        // Сбрасываем форму
+        const registerForm = document.getElementById('registerForm');
+        if (registerForm) {
+            registerForm.reset();
+        }
+
+        // Переключаем на вкладку логина
+        setTimeout(() => {
+            if (authOverlay) {
+                authOverlay.style.display = 'flex';
+                // Активируем вкладку логина
+                const loginTab = document.querySelector('.auth-tab[data-tab="login"]');
+                const loginForm = document.querySelector('.auth-form[data-form="login"]');
+
+                if (loginTab && loginForm) {
+                    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+
+                    loginTab.classList.add('active');
+                    loginForm.classList.add('active');
+                }
             }
-        } catch (e) { /* ignore */ }
+        }, 1500);
 
         return true;
     } catch (err) {
@@ -203,12 +263,31 @@ async function signup() {
     }
 }
 
-/** Поддержка старого вызова onclick */
-window.signin = signin;
-window.signup = signup;
+/** Logout */
+function logout() {
+    console.log("🚪 Logging out...");
 
-/** Авто-привязка форм (если используются формы, а не onclick) */
+    // Очищаем токен
+    clearToken();
+
+    // Очищаем имя пользователя
+    localStorage.removeItem('lastUsername');
+
+    // Показываем сообщение
+    showMessage("✔ Вы успешно вышли из системы", "success");
+
+    // Обновляем UI
+    updateAuthUI();
+
+    // Обновляем страницу через секунду
+    setTimeout(() => {
+        location.reload();
+    }, 1000);
+}
+
+/** Авто-привязка форм и инициализация */
 document.addEventListener("DOMContentLoaded", () => {
+    // Привязка форм
     const loginForm = document.getElementById("loginForm");
     if (loginForm) {
         loginForm.addEventListener("submit", (e) => {
@@ -225,38 +304,14 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    /** Logout */
-    function logout() {
-        console.log("🚪 Logging out...");
-
-        // Очищаем токен
-        localStorage.removeItem('authToken');
-
-        // Показываем сообщение
-        showMessage("✔ Вы успешно вышли из системы", "success");
-
-        // Обновляем UI
-        const authButtons = document.querySelector('.auth-buttons');
-        const userMenu = document.querySelector('.user-menu');
-        const protectedOperations = document.querySelectorAll('.protected-operation');
-
-        if (authButtons) authButtons.style.display = 'flex';
-        if (userMenu) userMenu.style.display = 'none';
-        if (protectedOperations) {
-            protectedOperations.forEach(el => {
-                el.style.display = 'none';
-            });
-        }
-
-        // Убираем класс с body
-        document.body.classList.remove('logged-in');
-
-        // Обновляем страницу через секунду
-        setTimeout(() => {
-            location.reload();
-        }, 1000);
-    }
-
-// Добавляем в глобальную область видимости
-    window.logout = logout;
+    // Инициализация UI при загрузке страницы
+    updateAuthUI();
 });
+
+/** Поддержка старого вызова onclick */
+window.signin = signin;
+window.signup = signup;
+window.logout = logout;
+window.getToken = getToken;
+window.clearToken = clearToken;
+window.updateAuthUI = updateAuthUI;

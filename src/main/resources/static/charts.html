@@ -3,280 +3,294 @@
 <head>
     <meta charset="UTF-8">
     <title>Графики результатов - PlasmaLab</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="math/css/simulation.css">
-    <link rel="stylesheet" href="css/charts.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+
+    <!-- Charts.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/charts.css">
 </head>
+
 <body>
-<!-- Навигация -->
-<nav class="navbar navbar-expand-lg navbar-dark">
-    <div class="container">
-        <a class="navbar-brand" href="/index.html">
-            <i class="fas fa-atom me-2"></i>PlasmaLab
+
+<!-- AUTH MODAL -->
+<div class="auth-overlay" id="authOverlay" style="display: none;">
+    <div class="auth-modal">
+        <div class="auth-header">
+            <button class="auth-tab active" data-tab="login">Вход</button>
+            <button class="auth-tab" data-tab="register">Регистрация</button>
+            <button class="auth-close" onclick="hideAuthModal()">×</button>
+        </div>
+        <div class="auth-body">
+            <!-- LOGIN -->
+            <form id="loginForm" class="auth-form active" data-form="login">
+                <div class="auth-field">
+                    <label>Имя пользователя</label>
+                    <input type="text" name="username" required>
+                </div>
+                <div class="auth-field">
+                    <label>Пароль</label>
+                    <input type="password" name="password" required>
+                </div>
+                <div id="login_msg" class="auth-message"></div>
+                <button type="submit" class="btn btn-primary full">
+                    Войти
+                </button>
+            </form>
+
+            <!-- REGISTER -->
+            <form id="registerForm" class="auth-form" data-form="register">
+                <div class="auth-field">
+                    <label>Имя пользователя</label>
+                    <input type="text" name="username" required>
+                </div>
+                <div class="auth-field">
+                    <label>Email</label>
+                    <input type="email" name="email" required>
+                </div>
+                <div class="auth-field">
+                    <label>Пароль</label>
+                    <input type="password" name="password" required>
+                </div>
+                <div id="signup_msg" class="auth-message"></div>
+                <button type="submit" class="btn btn-primary full">
+                    Создать аккаунт
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- HEADER -->
+<header class="header">
+    <div class="container header-inner">
+        <a href="index.html" class="logo">
+            <i class="fas fa-atom"></i>
+            <span>PlasmaLab</span>
         </a>
 
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+        <nav class="nav">
+            <a class="nav-link" href="index.html">Главная</a>
+            <a class="nav-link" href="array.html">Атомы</a>
+            <a class="nav-link" href="chain.html">Ионы</a>
+            <a class="nav-link" href="methods.html">Методы</a>
+            <a class="nav-link active" href="charts.html">Графики</a>
+        </nav>
 
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <div class="navbar-nav me-auto">
-                <a class="nav-btn" href="math/collision.html">Столкновения</a>
-                <a class="nav-btn" href="math/diffusion.html">Диффузия</a>
-                <a class="nav-btn" href="math/lattice.html">Решётки</a>
-                <a class="nav-btn" href="math/plasma.html">Плазма</a>
-                <a class="nav-btn" href="math/simulation.html">Полная симуляция</a>
-                <a class="nav-btn active" href="charts.html">Графики</a>
+        <div class="auth">
+            <!-- ГОСТЬ -->
+            <div class="auth-buttons">
+                <button class="btn btn-primary" onclick="showAuthModal()">Войти</button>
             </div>
 
-            <!-- Кнопки авторизации -->
-            <div class="navbar-nav">
-                <div class="auth-buttons">
-                    <button class="btn btn-outline-light me-2" onclick="showAuthModal()">
-                        <i class="fas fa-sign-in-alt me-2"></i>Войти
-                    </button>
-                    <button class="btn btn-light" onclick="showAuthModal('register')">
-                        <i class="fas fa-user-plus me-2"></i>Регистрация
-                    </button>
-                </div>
-                <div class="user-menu">
-                    <span class="user-info">
-                        <i class="fas fa-user me-2"></i>
-                        <span id="usernameDisplay"></span>
-                    </span>
-                    <button class="btn btn-outline-light" onclick="logout()">
-                        <i class="fas fa-sign-out-alt me-2"></i>Выйти
-                    </button>
-                </div>
+            <!-- АВТОРИЗОВАН -->
+            <div class="user-menu" style="display:none;">
+                <span class="user-name" id="usernameDisplay"></span>
+                <button class="btn btn-secondary" onclick="logout()">Выйти</button>
             </div>
         </div>
     </div>
-</nav>
+</header>
 
-<!-- Герой секция -->
-<section class="hero-section">
-    <div class="container text-center">
-        <h1 class="hero-title">
-            <i class="fas fa-chart-line me-3"></i>Графики результатов
-        </h1>
-        <p class="hero-subtitle">
-            Визуализация зависимостей параметров плазмы и температуры
-        </p>
-    </div>
-</section>
+<!-- CONTENT -->
+<main class="content">
+    <div class="container">
+        <!-- Заголовок -->
+        <div class="page-header">
+            <h1 class="page-title">
+                <i class="fas fa-chart-line"></i> Графики результатов
+            </h1>
+            <p class="page-subtitle">
+                Визуализация зависимостей параметров плазмы и температуры
+            </p>
+        </div>
 
-<!-- Основной контент -->
-<div class="container my-4">
-    <div class="row">
-        <div class="col-lg-10 mx-auto">
-
-
-
+        <!-- Контейнер графиков -->
+        <div class="charts-container">
             <!-- График 1: Зависимость энергии от параметров плазмы -->
-            <div class="calculation-card mb-4">
-                <div class="card-header">
-                    <h3><i class="fas fa-bolt me-2"></i>Зависимость энергии от параметров плазмы</h3>
+            <div class="chart-section">
+                <div class="chart-header">
+                    <h3><i class="fas fa-bolt"></i> Зависимость энергии от параметров плазмы</h3>
                 </div>
-                <div class="card-body p-4">
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <label class="form-label">
-                                <i class="fas fa-chart-line me-2 text-primary"></i>Тип графика
+
+                <div class="chart-controls">
+                    <div class="controls-grid">
+                        <div class="control-group">
+                            <label class="control-label">
+                                <i class="fas fa-chart-line"></i> Тип графика
                             </label>
-                            <select id="plasmaChartType" class="form-select">
+                            <select id="plasmaChartType" class="control-select">
                                 <option value="electronDensity-pressure">Плотность электронов от давления</option>
                                 <option value="electronVelocity-voltage">Скорость электронов от напряжения</option>
                                 <option value="currentDensity-voltage">Плотность тока от напряжения</option>
                                 <option value="ionEnergyEffective-voltage">Энергия ионов от напряжения</option>
                             </select>
                         </div>
-                        <div class="col-md-6">
-                            <label class="form-label">
-                                <i class="fas fa-filter me-2 text-primary"></i>Фильтр по атомам
+
+                        <div class="control-group">
+                            <label class="control-label">
+                                <i class="fas fa-filter"></i> Фильтр по атомам
                             </label>
-                            <select id="atomFilter1" class="form-select">
+                            <select id="atomFilter1" class="control-select">
                                 <option value="all">Все атомы</option>
                                 <!-- Будет заполнено JavaScript -->
                             </select>
                         </div>
                     </div>
+                </div>
 
-                    <div class="chart-container">
-                        <canvas id="plasmaChart"></canvas>
+                <div class="chart-canvas-container">
+                    <canvas id="plasmaChart" class="chart-canvas"></canvas>
+                    <div class="chart-empty" id="plasmaEmpty" hidden>
+                        <i class="fas fa-info-circle"></i>
+                        Нет данных для выбранных параметров
                     </div>
+                </div>
 
-                    <div class="mt-3 text-muted small">
-                        <i class="fas fa-info-circle me-2"></i>
-                        <span id="plasmaChartInfo">График показывает зависимость выбранного параметра плазмы</span>
-                    </div>
+
+                <div class="chart-info">
+                    <i class="fas fa-info-circle"></i>
+                    <span id="plasmaChartInfo">График показывает зависимость выбранного параметра плазмы</span>
                 </div>
             </div>
 
             <!-- График 2: Зависимость температуры от атома -->
-            <div class="calculation-card">
-                <div class="card-header">
-                    <h3 class="mb-0">
-                        <i class="fas fa-thermometer-half me-2"></i>
-                        Зависимость температуры от атома
-                    </h3>
+            <div class="chart-section">
+                <div class="chart-header">
+                    <h3><i class="fas fa-thermometer-half"></i> Зависимость температуры от атома</h3>
                 </div>
 
-                <div class="card-body p-4">
-
-                    <!-- Строка селекторов -->
-                    <div class="row g-4 mb-4">
-
-                        <!-- Выбор атома -->
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">
-                                <i class="fas fa-atom me-2 text-primary"></i>
-                                Выберите атом
+                <div class="chart-controls">
+                    <div class="controls-grid">
+                        <div class="control-group">
+                            <label class="control-label">
+                                <i class="fas fa-atom"></i> Выберите атом
                             </label>
-                            <select id="atomSelector" class="form-select shadow-sm">
+                            <select id="atomSelector" class="control-select">
                                 <option value="all">Все атомы</option>
                                 <!-- Остальные атомы будут добавлены через JavaScript -->
                             </select>
                         </div>
 
-                        <!-- Тип температуры -->
-                        <div class="col-md-4">
-                            <label class="form-label fw-semibold">
-                                <i class="fas fa-chart-line me-2 text-primary"></i>
-                                Тип температуры
+                        <div class="control-group">
+                            <label class="control-label">
+                                <i class="fas fa-chart-line"></i> Тип температуры
                             </label>
-                            <select id="temperatureType" class="form-select shadow-sm">
+                            <select id="temperatureType" class="control-select">
                                 <option value="avgT">Средняя температура</option>
                                 <option value="minT">Минимальная температура</option>
                                 <option value="maxT">Максимальная температура</option>
                             </select>
                         </div>
 
-                        <!-- Коэффициент диффузии -->
-                        <div class="col-md-4 diffusion-selector">
-                            <label class="form-label fw-semibold">
-                                <i class="fas fa-exchange-alt me-2 text-primary"></i>
-                                Коэффициент диффузии
+                        <div class="control-group">
+                            <label class="control-label">
+                                <i class="fas fa-exchange-alt"></i> Коэффициент диффузии
                             </label>
-                            <select id="diffSelector" class="form-select shadow-sm">
+                            <select id="diffSelector" class="control-select">
                                 <option value="1">D₁</option>
                                 <option value="2">D₂</option>
                             </select>
                         </div>
-
                     </div>
+                </div>
 
-                    <!-- График -->
-                    <div class="chart-container">
-                        <canvas id="temperatureChart"></canvas>
+                <div class="chart-canvas-container">
+                    <canvas id="temperatureChart" class="chart-canvas"></canvas>
+                    <div class="chart-empty" id="temperatureEmpty" hidden>
+                        <i class="fas fa-info-circle"></i>
+                        Нет данных для выбранных параметров
                     </div>
+                </div>
 
-                    <!-- Подпись -->
-                    <div class="mt-3 text-muted small">
-                        <i class="fas fa-info-circle me-2"></i>
-                        <span id="temperatureChartInfo">
-                График показывает распределение температуры для выбранного атома и коэффициента диффузии
-            </span>
-                    </div>
 
+                <div class="chart-info">
+                    <i class="fas fa-info-circle"></i>
+                    <span id="temperatureChartInfo">
+                        График показывает распределение температуры для выбранного атома и коэффициента диффузии
+                    </span>
                 </div>
             </div>
+        </div>
 
-
-
-            <!-- Информационный блок -->
-            <div class="info-box mt-4">
-                <h5><i class="fas fa-info-circle me-2 text-primary"></i>О графиках</h5>
-                <p class="mb-3">
-                    Графики позволяют визуализировать зависимости между различными параметрами плазмы и температурными характеристиками атомов.
-                    Используйте фильтры для анализа конкретных данных и выявления закономерностей.
-                </p>
-                <div class="formula-box">
-                    <strong>Доступные зависимости:</strong><br>
-                    • Плотность электронов = f(Давление)<br>
-                    • Скорость электронов = f(Напряжение)<br>
-                    • Плотность тока = f(Ток)<br>
-                    • Температура = f(Атом)
-                </div>
+        <!-- Информационный блок -->
+        <div class="info-box">
+            <h5><i class="fas fa-info-circle"></i> О графиках</h5>
+            <p>
+                Графики позволяют визуализировать зависимости между различными параметрами плазмы и температурными характеристиками атомов.
+                Используйте фильтры для анализа конкретных данных и выявления закономерностей.
+            </p>
+            <div class="formula-box">
+                <strong>Доступные зависимости:</strong><br>
+                • Плотность электронов = f(Давление)<br>
+                • Скорость электронов = f(Напряжение)<br>
+                • Плотность тока = f(Ток)<br>
+                • Температура = f(Атом)
             </div>
-
         </div>
     </div>
-</div>
+</main>
 
-
-
-<!-- Футер -->
-<footer>
-    <div class="container text-center">
-        <p class="mb-2">© 2025 PlasmaLab. Все права защищены.</p>
-        <p class="text-light small">Профессиональная платформа для вычислительного моделирования физических процессов</p>
+<!-- FOOTER -->
+<footer class="footer">
+    <div class="container footer-inner">
+        <span>© 2025 PlasmaLab</span>
+        <span>Research & Simulation Platform</span>
     </div>
 </footer>
 
-<div class="modal fade auth-modal" id="authModal" tabindex="-1">
-    <div class="modal-dialog modal-md">
-        <div class="modal-content">
-            <div class="modal-header border-0">
-                <ul class="nav nav-tabs auth-tabs w-100">
-                    <li class="nav-item w-50">
-                        <button class="nav-link active w-100" data-bs-toggle="tab" data-bs-target="#login">
-                            <i class="fas fa-sign-in-alt me-2"></i>Вход
-                        </button>
-                    </li>
-                    <li class="nav-item w-50">
-                        <button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#register">
-                            <i class="fas fa-user-plus me-2"></i>Регистрация
-                        </button>
-                    </li>
-                </ul>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="tab-content">
-                    <div class="tab-pane fade show active" id="login">
-                        <form id="loginForm">
-                            <div class="mb-3">
-                                <label class="form-label">Имя пользователя</label>
-                                <input type="text" class="form-control" name="username" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Пароль</label>
-                                <input type="password" class="form-control" name="password" required>
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100 py-2">
-                                <i class="fas fa-sign-in-alt me-2"></i>Войти в систему
-                            </button>
-                        </form>
-                    </div>
-                    <div class="tab-pane fade" id="register">
-                        <form id="registerForm">
-                            <div class="mb-3">
-                                <label class="form-label">Имя пользователя</label>
-                                <input type="text" class="form-control" name="username" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Email</label>
-                                <input type="email" class="form-control" name="email" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Пароль</label>
-                                <input type="password" class="form-control" name="password" required>
-                            </div>
-                            <button type="submit" class="btn btn-success w-100 py-2">
-                                <i class="fas fa-user-plus me-2"></i>Создать аккаунт
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/js/auth.js"></script>
+<!-- SCRIPTS -->
+<script src="js/auth.js"></script>
 <script src="js/charts.js"></script>
+
+<script>
+    // Добавляем недостающие функции для модального окна
+    function showAuthModal() {
+        document.getElementById('authOverlay').style.display = 'flex';
+    }
+
+    function hideAuthModal() {
+        document.getElementById('authOverlay').style.display = 'none';
+    }
+
+    // Инициализация авторизации
+    if (typeof updateAuthUI === 'function') {
+        updateAuthUI();
+    }
+
+    // Переключение вкладок модального окна
+    document.querySelectorAll('.auth-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+
+            tab.classList.add('active');
+            document.querySelector(`.auth-form[data-form="${tab.dataset.tab}"]`).classList.add('active');
+        });
+    });
+
+    // Закрытие модального окна при клике вне его
+    document.getElementById('authOverlay').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('authOverlay')) {
+            hideAuthModal();
+        }
+    });
+
+    // Закрытие по ESC
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && document.getElementById('authOverlay').style.display === 'flex') {
+            hideAuthModal();
+        }
+    });
+</script>
+
 </body>
 </html>

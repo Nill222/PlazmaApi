@@ -2,611 +2,119 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Методы моделирования - PlasmaLab</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root {
-            --primary: #2c5aa0;
-            --primary-dark: #1e3d72;
-            --accent: #00a896;
-            --light: #f8f9fa;
-            --dark: #212529;
-            --success: #28a745;
-            --info: #17a2b8;
-            --warning: #ffc107;
-        }
+    <title>Методы моделирования — PlasmaLab</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        body {
-            font-family: 'Roboto', sans-serif;
-            background: #f8fafc;
-        }
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
 
-        .navbar {
-            background: var(--primary);
-            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
-        }
-
-        .navbar-brand {
-            font-weight: 700;
-            font-size: 1.5rem;
-        }
-
-        .nav-btn {
-            color: white !important;
-            padding: 0.5rem 1rem;
-            margin: 0 0.2rem;
-            border-radius: 6px;
-            transition: all 0.3s ease;
-            text-decoration: none;
-        }
-
-        .nav-btn:hover, .nav-btn.active {
-            background: rgba(255,255,255,0.2);
-            transform: translateY(-2px);
-        }
-
-        .hero-section {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-            padding: 4rem 0;
-            margin-bottom: 3rem;
-            border-radius: 0 0 30px 30px;
-        }
-
-        .hero-title {
-            font-weight: 700;
-            font-size: 3rem;
-            margin-bottom: 1rem;
-        }
-
-        .hero-subtitle {
-            font-size: 1.3rem;
-            opacity: 0.9;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .card {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
-            margin-bottom: 2rem;
-            transition: all 0.3s ease;
-            height: 100%;
-        }
-
-        .card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-        }
-
-        .card-header {
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-            border-radius: 15px 15px 0 0 !important;
-            padding: 1.5rem;
-            border: none;
-        }
-
-        .card-header h3 {
-            margin: 0;
-            font-weight: 600;
-            font-size: 1.4rem;
-        }
-
-        .method-icon {
-            font-size: 3rem;
-            color: var(--primary);
-            margin-bottom: 1rem;
-        }
-
-        .method-badge {
-            background-color: rgba(44, 90, 160, 0.1);
-            color: var(--primary);
-            padding: 0.4rem 1rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 500;
-            margin: 0.2rem;
-            display: inline-block;
-        }
-
-        .btn-method {
-            background: var(--primary);
-            border: none;
-            color: white;
-            padding: 0.75rem 2rem;
-            border-radius: 10px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .btn-method:hover {
-            background: var(--primary-dark);
-            transform: translateY(-2px);
-            color: white;
-        }
-
-        .auth-buttons {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .user-menu {
-            display: none;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        body.logged-in .user-menu {
-            display: flex !important;
-        }
-
-        body.logged-in .auth-buttons {
-            display: none !important;
-        }
-
-        .user-info {
-            background: rgba(255,255,255,0.2);
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-weight: 500;
-        }
-
-        .feature-icon {
-            width: 70px;
-            height: 70px;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            border-radius: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 1.5rem;
-            color: white;
-            font-size: 1.8rem;
-        }
-
-        footer {
-            background: var(--primary);
-            color: white;
-            padding: 2rem 0;
-            margin-top: 4rem;
-        }
-
-        .method-requirements {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 1rem;
-            margin-top: 1rem;
-        }
-
-        .requirement-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 0.5rem;
-            font-size: 0.9rem;
-        }
-
-        .requirement-item i {
-            color: var(--success);
-            margin-right: 0.5rem;
-        }
-
-        @media (max-width: 768px) {
-            .hero-title {
-                font-size: 2rem;
-            }
-
-            .auth-buttons {
-                flex-direction: column;
-                width: 100%;
-            }
-
-            .auth-buttons .btn {
-                width: 100%;
-                margin: 0.2rem 0;
-            }
-
-            .user-menu {
-                flex-direction: column;
-                gap: 0.5rem;
-                width: 100%;
-                text-align: center;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/methods.css">
 </head>
+
 <body>
-<!-- Навигация -->
-<nav class="navbar navbar-expand-lg navbar-dark">
-    <div class="container">
-        <a class="navbar-brand" href="index.html">
-            <i class="fas fa-atom me-2"></i>PlasmaLab
+
+<header class="header">
+    <div class="container header-inner">
+        <a href="index.html" class="logo">
+            <i class="fas fa-atom"></i>
+            <span>PlasmaLab</span>
         </a>
 
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+        <nav class="nav">
+            <a class="nav-link" href="index.html">Главная</a>
+            <a class="nav-link" href="array.html">Атомы</a>
+            <a class="nav-link" href="chain.html">Ионы</a>
+            <a class="nav-link active" href="methods.html">Методы</a>
+            <a class="nav-link" href="charts.html">Графики</a>
+        </nav>
 
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <div class="navbar-nav me-auto">
-                <a class="nav-btn" href="index.html">Главная</a>
-                <a class="nav-btn" href="array.html">Атомы</a>
-                <a class="nav-btn" href="chain.html">Ионы</a>
-                <a class="nav-btn active" href="methods.html">Методы</a>
-                <a class="nav-btn" href="charts.html">Графики</a>
+        <div class="auth">
+            <div class="auth-buttons">
+                <button class="btn btn-primary" onclick="showAuthModal()">Войти</button>
             </div>
 
-            <div class="navbar-nav">
-                <div class="auth-buttons">
-                    <button class="btn btn-outline-light me-2" onclick="showAuthModal()">
-                        <i class="fas fa-sign-in-alt me-2"></i>Войти
-                    </button>
-                    <button class="btn btn-light" onclick="showAuthModal('register')">
-                        <i class="fas fa-user-plus me-2"></i>Регистрация
-                    </button>
-                </div>
-                <div class="user-menu">
-                        <span class="user-info">
-                            <i class="fas fa-user me-2"></i>
-                            <span id="usernameDisplay"></span>
-                        </span>
-                    <button class="btn btn-outline-light" onclick="logout()">
-                        <i class="fas fa-sign-out-alt me-2"></i>Выйти
-                    </button>
-                </div>
+            <div class="user-menu" style="display:none;">
+                <span class="user-name" id="usernameDisplay"></span>
+                <button class="btn btn-secondary" onclick="logout()">Выйти</button>
             </div>
         </div>
     </div>
-</nav>
+</header>
 
-<!-- Герой секция -->
-<section class="hero-section text-center">
+<section class="hero hero--methods">
     <div class="container">
-        <h1 class="hero-title">Методы вычислительного моделирования</h1>
-        <p class="hero-subtitle">
-            Профессиональная платформа для исследования и применения современных методов моделирования физических процессов
+        <h1>Методы моделирования</h1>
+        <p>
+            Набор вычислительных инструментов для численного
+            исследования плазменных процессов.
         </p>
-        <div class="mt-4">
-            <a href="#methods" class="btn btn-light btn-lg me-3">
-                <i class="fas fa-play-circle me-2"></i>Начать моделирование
-            </a>
-            <a href="#features" class="btn btn-outline-light btn-lg">
-                <i class="fas fa-star me-2"></i>Преимущества
-            </a>
-        </div>
     </div>
 </section>
 
-<!-- Основной контент -->
-<div class="container my-5">
-    <!-- Заголовок -->
-    <div class="row mb-5">
-        <div class="col-12 text-center">
-            <h2 class="display-6 fw-bold text-primary mb-3">Доступные методы моделирования</h2>
-            <p class="lead text-muted">Выберите метод для изучения и применения в ваших исследованиях</p>
-        </div>
-    </div>
+<main class="content">
+    <div class="container">
 
-    <!-- Методы моделирования -->
-    <div id="methods" class="row g-4">
-        <!-- Collision Method -->
-        <div class="col-md-6 col-lg-4">
-            <div class="card">
-                <div class="card-header">
-                    <h3><i class="fas fa-bullseye me-2"></i>Collision Method</h3>
-                </div>
-                <div class="card-body text-center">
-                    <div class="method-icon">
-                        <i class="fas fa-bullseye"></i>
-                    </div>
-                    <h4 class="h5 mb-3">Моделирование столкновений</h4>
-                    <p class="card-text mb-3">
-                        Алгоритмы для точного моделирования столкновений частиц в различных средах
-                        с учетом законов сохранения энергии и импульса.
-                    </p>
-                    <div class="mb-3">
-                        <span class="method-badge">Физика</span>
-                        <span class="method-badge">Динамика</span>
-                        <span class="method-badge">Столкновения</span>
-                    </div>
-                    <div class="method-requirements">
-                        <div class="requirement-item">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Требуется авторизация</span>
-                        </div>
-                        <div class="requirement-item">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Данные атомов/ионов</span>
-                        </div>
-                    </div>
-                    <a href="math/collision.html" class="btn-method mt-3">
-                        <i class="fas fa-play-circle me-2"></i>Запустить моделирование
-                    </a>
-                </div>
-            </div>
-        </div>
+        <section class="methods">
+            <h2 class="section-title">Доступные методы</h2>
 
-        <!-- Lattice Method -->
-        <div class="col-md-6 col-lg-4">
-            <div class="card">
-                <div class="card-header">
-                    <h3><i class="fas fa-th me-2"></i>Lattice Method</h3>
-                </div>
-                <div class="card-body text-center">
-                    <div class="method-icon">
-                        <i class="fas fa-th"></i>
-                    </div>
-                    <h4 class="h5 mb-3">Решеточные методы</h4>
-                    <p class="card-text mb-3">
-                        Моделирование на основе решеток с ячейками и локальными взаимодействиями
-                        для анализа сложных кристаллических структур.
-                    </p>
-                    <div class="mb-3">
-                        <span class="method-badge">Структуры</span>
-                        <span class="method-badge">Сетки</span>
-                        <span class="method-badge">Кристаллы</span>
-                    </div>
-                    <div class="method-requirements">
-                        <div class="requirement-item">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Требуется авторизация</span>
-                        </div>
-                        <div class="requirement-item">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Параметры решетки</span>
-                        </div>
-                    </div>
-                    <a href="math/lattice.html" class="btn-method mt-3">
-                        <i class="fas fa-play-circle me-2"></i>Запустить моделирование
-                    </a>
-                </div>
-            </div>
-        </div>
+            <div class="methods-grid">
 
-        <!-- Diffusion Method -->
-        <div class="col-md-6 col-lg-4">
-            <div class="card">
-                <div class="card-header">
-                    <h3><i class="fas fa-arrows-alt-h me-2"></i>Diffusion Method</h3>
-                </div>
-                <div class="card-body text-center">
-                    <div class="method-icon">
-                        <i class="fas fa-arrows-alt-h"></i>
-                    </div>
-                    <h4 class="h5 mb-3">Моделирование диффузии</h4>
-                    <p class="card-text mb-3">
-                        Исследование процессов теплопроводности и переноса вещества в различных
-                        средах и температурных условиях.
-                    </p>
-                    <div class="mb-3">
-                        <span class="method-badge">Тепло</span>
-                        <span class="method-badge">Вещество</span>
-                        <span class="method-badge">Перенос</span>
-                    </div>
-                    <div class="method-requirements">
-                        <div class="requirement-item">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Требуется авторизация</span>
-                        </div>
-                        <div class="requirement-item">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Температурные данные</span>
-                        </div>
-                    </div>
-                    <a href="math/diffusion.html" class="btn-method mt-3">
-                        <i class="fas fa-play-circle me-2"></i>Запустить моделирование
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Plasma Model -->
-        <div class="col-md-6 col-lg-4">
-            <div class="card">
-                <div class="card-header">
-                    <h3><i class="fas fa-bolt me-2"></i>Plasma Model</h3>
-                </div>
-                <div class="card-body text-center">
-                    <div class="method-icon">
-                        <i class="fas fa-bolt"></i>
-                    </div>
-                    <h4 class="h5 mb-3">Моделирование плазмы</h4>
-                    <p class="card-text mb-3">
-                        Анализ плазменных процессов и динамики заряженных частиц
-                        в электромагнитных полях различной конфигурации.
-                    </p>
-                    <div class="mb-3">
-                        <span class="method-badge">Плазма</span>
-                        <span class="method-badge">Заряды</span>
-                        <span class="method-badge">Поля</span>
-                    </div>
-                    <div class="method-requirements">
-                        <div class="requirement-item">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Требуется авторизация</span>
-                        </div>
-                        <div class="requirement-item">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Данные ионов</span>
-                        </div>
-                    </div>
-                    <a href="math/plasma.html" class="btn-method mt-3">
-                        <i class="fas fa-play-circle me-2"></i>Запустить моделирование
-                    </a>
-                </div>
-            </div>
-        </div>
-
-        <!-- Simulation Runner -->
-        <div class="col-md-6 col-lg-4">
-            <div class="card">
-                <div class="card-header">
-                    <h3><i class="fas fa-play-circle me-2"></i>Simulation Runner</h3>
-                </div>
-                <div class="card-body text-center">
+                <article class="method-card">
                     <div class="method-icon">
                         <i class="fas fa-play-circle"></i>
                     </div>
-                    <h4 class="h5 mb-3">Запуск симуляций</h4>
-                    <p class="card-text mb-3">
-                        Инструмент для управления, запуска и контроля вычислительных
-                        экспериментов и симуляций с визуализацией результатов.
+
+                    <h3>Simulation Runner</h3>
+
+                    <p>
+                        Запуск и контроль численных экспериментов
+                        с возможностью анализа и визуализации результатов.
                     </p>
-                    <div class="mb-3">
-                        <span class="method-badge">Управление</span>
-                        <span class="method-badge">Анализ</span>
-                        <span class="method-badge">Визуализация</span>
-                    </div>
-                    <div class="method-requirements">
-                        <div class="requirement-item">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Требуется авторизация</span>
-                        </div>
-                        <div class="requirement-item">
-                            <i class="fas fa-check-circle"></i>
-                            <span>Конфигурация модели</span>
-                        </div>
-                    </div>
-                    <a href="math/simulation.html" class="btn-method mt-3">
-                        <i class="fas fa-play-circle me-2"></i>Запустить моделирование
+
+                    <a href="math/simulation.html" class="btn btn-primary method-action">
+                        Перейти к моделированию
                     </a>
+                </article>
+
+            </div>
+        </section>
+
+        <section class="features">
+            <h2 class="section-title">Преимущества платформы</h2>
+
+            <div class="features-grid">
+                <div class="feature">
+                    <i class="fas fa-bolt"></i>
+                    <h4>Производительность</h4>
+                    <p>Оптимизированные алгоритмы расчёта</p>
+                </div>
+
+                <div class="feature">
+                    <i class="fas fa-chart-line"></i>
+                    <h4>Анализ данных</h4>
+                    <p>Графики и визуализация результатов</p>
+                </div>
+
+                <div class="feature">
+                    <i class="fas fa-database"></i>
+                    <h4>Физические данные</h4>
+                    <p>База атомных и ионных параметров</p>
                 </div>
             </div>
-        </div>
+        </section>
+
     </div>
+</main>
 
-    <!-- Преимущества платформы -->
-    <div id="features" class="row mt-5 pt-5">
-        <div class="col-12 text-center mb-5">
-            <h2 class="display-6 fw-bold text-primary mb-3">Преимущества PlasmaLab</h2>
-            <p class="lead text-muted">Почему выбирают нашу платформу для научных исследований</p>
-        </div>
-
-        <div class="col-md-4 text-center mb-4">
-            <div class="feature-icon mx-auto">
-                <i class="fas fa-rocket"></i>
-            </div>
-            <h5>Высокая производительность</h5>
-            <p class="text-muted">Оптимизированные алгоритмы для быстрых вычислений даже с большими объемами данных</p>
-        </div>
-
-        <div class="col-md-4 text-center mb-4">
-            <div class="feature-icon mx-auto">
-                <i class="fas fa-shield-alt"></i>
-            </div>
-            <h5>Безопасность данных</h5>
-            <p class="text-muted">Надежная система авторизации и защита пользовательских конфигураций и результатов</p>
-        </div>
-
-        <div class="col-md-4 text-center mb-4">
-            <div class="feature-icon mx-auto">
-                <i class="fas fa-chart-line"></i>
-            </div>
-            <h5>Мощная визуализация</h5>
-            <p class="text-muted">Продвинутые инструменты для анализа и графического представления результатов моделирования</p>
-        </div>
-
-        <div class="col-md-4 text-center mb-4">
-            <div class="feature-icon mx-auto">
-                <i class="fas fa-graduation-cap"></i>
-            </div>
-            <h5>Профессиональный подход</h5>
-            <p class="text-muted">Разработано для научных исследований, образовательных целей и промышленных применений</p>
-        </div>
-
-        <div class="col-md-4 text-center mb-4">
-            <div class="feature-icon mx-auto">
-                <i class="fas fa-code-branch"></i>
-            </div>
-            <h5>Гибкость настроек</h5>
-            <p class="text-muted">Широкие возможности кастомизации параметров моделей и алгоритмов расчета</p>
-        </div>
-
-        <div class="col-md-4 text-center mb-4">
-            <div class="feature-icon mx-auto">
-                <i class="fas fa-users"></i>
-            </div>
-            <h5>Совместная работа</h5>
-            <p class="text-muted">Возможность совместной работы над проектами и обмена результатами исследований</p>
-        </div>
-    </div>
-</div>
-
-<!-- Футер -->
-<footer>
-    <div class="container text-center">
-        <p class="mb-2">© 2025 PlasmaLab. Все права защищены.</p>
-        <p class="text-light small">Профессиональная платформа для вычислительного моделирования физических процессов</p>
+<footer class="footer">
+    <div class="container footer-inner">
+        <span>© 2025 PlasmaLab</span>
+        <span>Research & Simulation Platform</span>
     </div>
 </footer>
 
-<!-- Модальное окно авторизации -->
-<div class="modal fade auth-modal" id="authModal" tabindex="-1">
-    <div class="modal-dialog modal-md">
-        <div class="modal-content">
-            <div class="modal-header border-0">
-                <ul class="nav nav-tabs auth-tabs w-100">
-                    <li class="nav-item w-50">
-                        <button class="nav-link active w-100" data-bs-toggle="tab" data-bs-target="#login">
-                            <i class="fas fa-sign-in-alt me-2"></i>Вход
-                        </button>
-                    </li>
-                    <li class="nav-item w-50">
-                        <button class="nav-link w-100" data-bs-toggle="tab" data-bs-target="#register">
-                            <i class="fas fa-user-plus me-2"></i>Регистрация
-                        </button>
-                    </li>
-                </ul>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="tab-content">
-                    <div class="tab-pane fade show active" id="login">
-                        <form id="loginForm">
-                            <div class="mb-3">
-                                <label class="form-label">Имя пользователя</label>
-                                <input type="text" class="form-control" name="username" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Пароль</label>
-                                <input type="password" class="form-control" name="password" required>
-                            </div>
-                            <button type="submit" class="btn btn-primary w-100 py-2">
-                                <i class="fas fa-sign-in-alt me-2"></i>Войти в систему
-                            </button>
-                        </form>
-                    </div>
-                    <div class="tab-pane fade" id="register">
-                        <form id="registerForm">
-                            <div class="mb-3">
-                                <label class="form-label">Имя пользователя</label>
-                                <input type="text" class="form-control" name="username" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Email</label>
-                                <input type="email" class="form-control" name="email" required>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Пароль</label>
-                                <input type="password" class="form-control" name="password" required>
-                            </div>
-                            <button type="submit" class="btn btn-success w-100 py-2">
-                                <i class="fas fa-user-plus me-2"></i>Создать аккаунт
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="js/auth.js"></script>
-<script src="js/methods.js"></script>
+
 </body>
 </html>

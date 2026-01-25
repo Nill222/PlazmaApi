@@ -1,48 +1,33 @@
 // chain.js - Управление ионами для PlasmaLab
 const API_BASE = "/ions";
-
-// Глобальные переменные
 let currentIons = [];
 
 document.addEventListener("DOMContentLoaded", () => {
     initializePage();
 });
 
-// Инициализация страницы
 function initializePage() {
     console.log("🔄 Инициализация страницы ионов...");
-
-    // Проверяем авторизацию
     checkAuthAndUpdateUI();
-
-    // Загружаем ионы при загрузке страницы
-    loadIons();
-
-    // Назначаем обработчики событий
     setupEventListeners();
+    loadIons(); // Автоматическая загрузка при открытии
 }
 
-// Проверка авторизации и обновление UI
 function checkAuthAndUpdateUI() {
     const token = getToken();
-    console.log("🔐 Токен в localStorage:", token ? "есть" : "нет");
 
     if (token) {
-        // Показываем защищенные операции
         document.querySelectorAll('.protected-operation').forEach(el => {
             el.style.display = 'block';
         });
-        // Показываем меню пользователя
         const userMenu = document.querySelector('.user-menu');
         const authButtons = document.querySelector('.auth-buttons');
         if (userMenu) userMenu.style.display = 'flex';
         if (authButtons) authButtons.style.display = 'none';
     } else {
-        // Скрываем защищенные операции
         document.querySelectorAll('.protected-operation').forEach(el => {
             el.style.display = 'none';
         });
-        // Показываем кнопки авторизации
         const userMenu = document.querySelector('.user-menu');
         const authButtons = document.querySelector('.auth-buttons');
         if (userMenu) userMenu.style.display = 'none';
@@ -50,7 +35,6 @@ function checkAuthAndUpdateUI() {
     }
 }
 
-// Назначение обработчиков событий
 function setupEventListeners() {
     const loadIonsBtn = document.getElementById("loadIons");
     const createForm = document.getElementById("createIonForm");
@@ -73,7 +57,6 @@ function setupEventListeners() {
         deleteBtn.addEventListener("click", handleDeleteIonById);
     }
 
-    // Обработчик для поиска по Enter
     const searchInput = document.getElementById("searchIonId");
     if (searchInput) {
         searchInput.addEventListener("keypress", (e) => {
@@ -83,7 +66,6 @@ function setupEventListeners() {
         });
     }
 
-    // Обработчик для удаления по Enter
     const deleteInput = document.getElementById("deleteIonId");
     if (deleteInput) {
         deleteInput.addEventListener("keypress", (e) => {
@@ -94,28 +76,15 @@ function setupEventListeners() {
     }
 }
 
-// Загрузка всех ионов
 async function loadIons() {
     const ionTableContainer = document.getElementById("ionTableContainer");
     const loadIonsBtn = document.getElementById("loadIons");
     const ionCount = document.getElementById("ionCount");
 
     try {
-        // Показываем индикатор загрузки
         if (loadIonsBtn) {
-            loadIonsBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Загрузка...';
+            loadIonsBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Загрузка...';
             loadIonsBtn.disabled = true;
-        }
-
-        if (ionTableContainer) {
-            ionTableContainer.innerHTML = `
-                <div class="text-center py-4">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="visually-hidden">Загрузка...</span>
-                    </div>
-                    <p class="mt-2 text-muted">Загрузка данных...</p>
-                </div>
-            `;
         }
 
         const response = await fetch(API_BASE);
@@ -127,6 +96,7 @@ async function loadIons() {
             if (ionCount) {
                 ionCount.textContent = currentIons.length;
             }
+            showMessage("✅ Ионы успешно загружены", "success");
         } else {
             throw new Error(result.body?.message || 'Ошибка загрузки данных');
         }
@@ -134,22 +104,21 @@ async function loadIons() {
         console.error('Ошибка загрузки ионов:', error);
         if (ionTableContainer) {
             ionTableContainer.innerHTML = `
-                <div class="alert alert-danger">
-                    <i class="fas fa-exclamation-triangle me-2"></i>
+                <div class="alert alert-error">
+                    <i class="fas fa-exclamation-triangle"></i>
                     Ошибка загрузки: ${error.message}
                 </div>
             `;
         }
-        showMessage('❌ Ошибка загрузки ионов', 'error');
+        showMessage("❌ Ошибка загрузки ионов", "error");
     } finally {
         if (loadIonsBtn) {
-            loadIonsBtn.innerHTML = '<i class="fas fa-sync-alt me-2"></i>Обновить список';
+            loadIonsBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Обновить список';
             loadIonsBtn.disabled = false;
         }
     }
 }
 
-// Создание нового иона
 async function handleCreateIon(e) {
     e.preventDefault();
 
@@ -164,7 +133,7 @@ async function handleCreateIon(e) {
     const originalText = submitBtn.innerHTML;
 
     try {
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Создание...';
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Создание...';
         submitBtn.disabled = true;
 
         const ionData = {
@@ -173,7 +142,6 @@ async function handleCreateIon(e) {
             charge: parseInt(document.getElementById("charge").value)
         };
 
-        // Валидация данных
         if (!validateIonData(ionData)) {
             return;
         }
@@ -188,7 +156,6 @@ async function handleCreateIon(e) {
         if (result.ok) {
             showMessage("✅ " + (result.body?.message || "Ион успешно создан"), 'success');
             form.reset();
-            // Обновляем таблицу
             loadIons();
         } else {
             const errorMsg = result.body?.message || 'Неизвестная ошибка';
@@ -203,7 +170,6 @@ async function handleCreateIon(e) {
     }
 }
 
-// Поиск иона по ID
 async function handleSearchIon() {
     const searchInput = document.getElementById("searchIonId");
     const searchResult = document.getElementById("searchResult");
@@ -219,7 +185,7 @@ async function handleSearchIon() {
 
     try {
         if (searchBtn) {
-            searchBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Поиск...';
+            searchBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Поиск...';
             searchBtn.disabled = true;
         }
 
@@ -232,7 +198,7 @@ async function handleSearchIon() {
         } else {
             searchResult.innerHTML = `
                 <div class="text-center text-muted py-4">
-                    <i class="fas fa-search fa-2x mb-2"></i>
+                    <i class="fas fa-search fa-2x"></i>
                     <p>${result.body?.message || 'Ион не найден'}</p>
                 </div>
             `;
@@ -241,20 +207,19 @@ async function handleSearchIon() {
     } catch (error) {
         console.error('Ошибка поиска иона:', error);
         searchResult.innerHTML = `
-            <div class="alert alert-danger">
-                <i class="fas fa-exclamation-triangle me-2"></i>
+            <div class="alert alert-error">
+                <i class="fas fa-exclamation-triangle"></i>
                 Ошибка поиска: ${error.message}
             </div>
         `;
     } finally {
         if (searchBtn) {
-            searchBtn.innerHTML = '<i class="fas fa-search me-2"></i>Найти';
+            searchBtn.innerHTML = '<i class="fas fa-search"></i> Найти';
             searchBtn.disabled = false;
         }
     }
 }
 
-// Удаление иона по ID
 async function handleDeleteIonById() {
     const deleteInput = document.getElementById("deleteIonId");
     const deleteBtn = document.getElementById("deleteIon");
@@ -273,13 +238,13 @@ async function handleDeleteIonById() {
         return;
     }
 
-    if (!confirm(`Вы уверены, что хотите удалить ион с ID ${ionId}?`)) {
+    if (!confirm(`Удалить ион с ID ${ionId}?`)) {
         return;
     }
 
     try {
         if (deleteBtn) {
-            deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Удаление...';
+            deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Удаление...';
             deleteBtn.disabled = true;
         }
 
@@ -292,7 +257,6 @@ async function handleDeleteIonById() {
         if (result.ok) {
             showMessage(`✅ ${result.body?.message || 'Ион успешно удален'}`, 'success');
             deleteInput.value = '';
-            // Обновляем таблицу
             loadIons();
         } else {
             showMessage(`❌ ${result.body?.message || 'Ошибка при удалении иона'}`, 'error');
@@ -302,13 +266,12 @@ async function handleDeleteIonById() {
         showMessage('❌ Ошибка удаления иона: ' + error.message, 'error');
     } finally {
         if (deleteBtn) {
-            deleteBtn.innerHTML = '<i class="fas fa-trash me-2"></i>Удалить ион';
+            deleteBtn.innerHTML = '<i class="fas fa-trash"></i> Удалить ион';
             deleteBtn.disabled = false;
         }
     }
 }
 
-// Валидация данных иона
 function validateIonData(ionData) {
     if (!ionData.name || ionData.name.length > 50) {
         showMessage('Название иона обязательно и не должно превышать 50 символов', 'error');
@@ -325,7 +288,6 @@ function validateIonData(ionData) {
     return true;
 }
 
-// Рендер таблицы ионов
 function renderIonTable(ions) {
     const ionTableContainer = document.getElementById("ionTableContainer");
     if (!ionTableContainer) return;
@@ -333,7 +295,7 @@ function renderIonTable(ions) {
     if (!ions || ions.length === 0) {
         ionTableContainer.innerHTML = `
             <div class="text-center text-muted py-5">
-                <i class="fas fa-inbox fa-3x mb-3"></i>
+                <i class="fas fa-inbox fa-2x"></i>
                 <p>Нет данных для отображения</p>
             </div>
         `;
@@ -341,15 +303,15 @@ function renderIonTable(ions) {
     }
 
     let html = `
-        <div class="table-responsive">
-            <table class="table table-hover align-middle">
-                <thead class="table-primary">
+        <div class="table-container">
+            <table class="table">
+                <thead>
                     <tr>
                         <th>ID</th>
                         <th>Название</th>
                         <th>Масса (кг)</th>
                         <th>Заряд (e)</th>
-                        <th width="120" class="text-center">Действия</th>
+                        <th>Действия</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -359,19 +321,17 @@ function renderIonTable(ions) {
         const chargeClass = getChargeClass(ion.charge);
         html += `
             <tr>
-                <td><span class="badge bg-secondary">${ion.id}</span></td>
+                <td><span class="badge badge-secondary">${ion.id}</span></td>
                 <td><strong class="text-primary">${ion.name}</strong></td>
                 <td>${formatScientific(ion.mass)}</td>
                 <td><span class="${chargeClass}">${formatCharge(ion.charge)}</span></td>
-                <td class="text-center">
-                    <div class="btn-group btn-group-sm">
-                        <button class="btn btn-outline-danger btn-action" 
-                                onclick="deleteIonFromTable(${ion.id}, '${ion.name}')" 
-                                title="Удалить ион"
-                                ${!getToken() ? 'disabled' : ''}>
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
+                <td>
+                    <button class="btn btn-danger btn-sm" 
+                            onclick="deleteIonFromTable(${ion.id}, '${ion.name}')" 
+                            title="Удалить ион"
+                            ${!getToken() ? 'disabled' : ''}>
+                        <i class="fas fa-trash"></i>
+                    </button>
                 </td>
             </tr>`;
     });
@@ -380,7 +340,6 @@ function renderIonTable(ions) {
     ionTableContainer.innerHTML = html;
 }
 
-// Рендер результатов поиска
 function renderSearchResult(ions) {
     const searchResult = document.getElementById("searchResult");
     if (!searchResult) return;
@@ -388,7 +347,7 @@ function renderSearchResult(ions) {
     if (!ions || ions.length === 0) {
         searchResult.innerHTML = `
             <div class="text-center text-muted py-4">
-                <i class="fas fa-search fa-2x mb-2"></i>
+                <i class="fas fa-search fa-2x"></i>
                 <p>Ионы не найдены</p>
             </div>
         `;
@@ -396,9 +355,9 @@ function renderSearchResult(ions) {
     }
 
     let html = `
-        <div class="table-responsive">
-            <table class="table table-sm table-hover">
-                <thead class="table-info">
+        <div class="table-container">
+            <table class="table">
+                <thead>
                     <tr>
                         <th>ID</th>
                         <th>Название</th>
@@ -413,7 +372,7 @@ function renderSearchResult(ions) {
         const chargeClass = getChargeClass(ion.charge);
         html += `
             <tr>
-                <td><span class="badge bg-secondary">${ion.id}</span></td>
+                <td><span class="badge badge-secondary">${ion.id}</span></td>
                 <td><strong class="text-primary">${ion.name}</strong></td>
                 <td>${formatScientific(ion.mass)}</td>
                 <td><span class="${chargeClass}">${formatCharge(ion.charge)}</span></td>
@@ -424,7 +383,18 @@ function renderSearchResult(ions) {
     searchResult.innerHTML = html;
 }
 
-// Удаление иона из таблицы
+function getChargeClass(charge) {
+    if (charge > 0) return 'charge-positive';
+    if (charge < 0) return 'charge-negative';
+    return 'charge-neutral';
+}
+
+function formatCharge(charge) {
+    if (charge > 0) return `+${charge}`;
+    if (charge < 0) return `${charge}`;
+    return '0';
+}
+
 window.deleteIonFromTable = async function(ionId, ionName) {
     if (!getToken()) {
         showMessage('Для удаления ионов необходимо войти в систему', 'error');
@@ -432,7 +402,7 @@ window.deleteIonFromTable = async function(ionId, ionName) {
         return;
     }
 
-    if (!confirm(`Вы уверены, что хотите удалить ион "${ionName}" (ID: ${ionId})?`)) {
+    if (!confirm(`Удалить ион "${ionName}" (ID: ${ionId})?`)) {
         return;
     }
 
@@ -444,11 +414,10 @@ window.deleteIonFromTable = async function(ionId, ionName) {
         const result = await parseApiResponse(response);
 
         if (result.ok) {
-            showMessage(`✅ Ион "${ionName}" успешно удален`, 'success');
-            // Обновляем таблицу
+            showMessage(`✅ Ион "${ionName}" удален`, 'success');
             loadIons();
         } else {
-            showMessage(`❌ ${result.body?.message || 'Ошибка при удалении иона'}`, 'error');
+            showMessage(`❌ ${result.body?.message || 'Ошибка при удалении'}`, 'error');
         }
     } catch (error) {
         console.error('Ошибка удаления иона:', error);
@@ -456,23 +425,6 @@ window.deleteIonFromTable = async function(ionId, ionName) {
     }
 };
 
-// Вспомогательные функции
-
-// Получение класса для заряда
-function getChargeClass(charge) {
-    if (charge > 0) return 'charge-positive';
-    if (charge < 0) return 'charge-negative';
-    return 'charge-neutral';
-}
-
-// Форматирование заряда
-function formatCharge(charge) {
-    if (charge > 0) return `+${charge}`;
-    if (charge < 0) return `${charge}`;
-    return '0';
-}
-
-// Форматирование научной нотации
 function formatScientific(number) {
     if (!number || isNaN(number)) return '0';
     if (Math.abs(number) < 0.001 || Math.abs(number) > 1000) {
@@ -481,7 +433,6 @@ function formatScientific(number) {
     return Number(number).toPrecision(6);
 }
 
-// Auth fetch с токеном
 async function authFetch(url, options = {}) {
     const token = getToken();
     if (!token) {
@@ -516,7 +467,6 @@ async function authFetch(url, options = {}) {
     return response;
 }
 
-// Парсинг ответа API (совместимость с auth.js)
 async function parseApiResponse(response) {
     const text = await response.text();
     try {
@@ -527,25 +477,25 @@ async function parseApiResponse(response) {
     }
 }
 
-// Показ модального окна авторизации
 function showAuthModal(tab = 'login') {
-    const authModal = new bootstrap.Modal(document.getElementById('authModal'));
+    document.getElementById('authOverlay').style.display = 'flex';
 
     if (tab === 'register') {
-        const registerTab = document.querySelector('[data-bs-target="#register"]');
-        if (registerTab) {
-            const tabInstance = new bootstrap.Tab(registerTab);
-            tabInstance.show();
+        document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
+
+        const registerTab = document.querySelector('.auth-tab[data-tab="register"]');
+        const registerForm = document.querySelector('.auth-form[data-form="register"]');
+
+        if (registerTab && registerForm) {
+            registerTab.classList.add('active');
+            registerForm.classList.add('active');
         }
     }
-
-    authModal.show();
 }
 
-// Реэкспорт функций из auth.js для глобального доступа
 window.getToken = getToken;
 window.clearToken = clearToken;
 window.showAuthModal = showAuthModal;
 
-// Инициализация при загрузке
-console.log("✅ chain.js загружен и готов к работе");
+console.log("✅ chain.js загружен");
