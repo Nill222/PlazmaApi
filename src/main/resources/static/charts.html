@@ -2,27 +2,17 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Графики результатов - PlasmaLab</title>
+    <title>PlasmaLab | Графики - 25 зависимостей</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-    <!-- Icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
-
-    <!-- Charts.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <!-- CSS -->
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/charts.css">
 </head>
-
 <body>
 
 <!-- AUTH MODAL -->
-<div class="auth-overlay" id="authOverlay" style="display: none;">
+<div class="auth-overlay" id="authOverlay">
     <div class="auth-modal">
         <div class="auth-header">
             <button class="auth-tab active" data-tab="login">Вход</button>
@@ -30,40 +20,43 @@
             <button class="auth-close" onclick="hideAuthModal()">×</button>
         </div>
         <div class="auth-body">
-            <!-- LOGIN -->
             <form id="loginForm" class="auth-form active" data-form="login">
                 <div class="auth-field">
                     <label>Имя пользователя</label>
-                    <input type="text" name="username" required>
+                    <label>
+                        <input type="text" name="username" required autocomplete="username">
+                    </label>
                 </div>
                 <div class="auth-field">
                     <label>Пароль</label>
-                    <input type="password" name="password" required>
+                    <label>
+                        <input type="password" name="password" required autocomplete="current-password">
+                    </label>
                 </div>
                 <div id="login_msg" class="auth-message"></div>
-                <button type="submit" class="btn btn-primary full">
-                    Войти
-                </button>
+                <button type="submit" class="btn btn-primary full">Войти</button>
             </form>
-
-            <!-- REGISTER -->
             <form id="registerForm" class="auth-form" data-form="register">
                 <div class="auth-field">
                     <label>Имя пользователя</label>
-                    <input type="text" name="username" required>
+                    <label>
+                        <input type="text" name="username" required autocomplete="username">
+                    </label>
                 </div>
                 <div class="auth-field">
                     <label>Email</label>
-                    <input type="email" name="email" required>
+                    <label>
+                        <input type="email" name="email" required autocomplete="email">
+                    </label>
                 </div>
                 <div class="auth-field">
                     <label>Пароль</label>
-                    <input type="password" name="password" required>
+                    <label>
+                        <input type="password" name="password" required autocomplete="new-password">
+                    </label>
                 </div>
                 <div id="signup_msg" class="auth-message"></div>
-                <button type="submit" class="btn btn-primary full">
-                    Создать аккаунт
-                </button>
+                <button type="submit" class="btn btn-primary full">Создать аккаунт</button>
             </form>
         </div>
     </div>
@@ -76,7 +69,6 @@
             <i class="fas fa-atom"></i>
             <span>PlasmaLab</span>
         </a>
-
         <nav class="nav">
             <a class="nav-link" href="index.html">Главная</a>
             <a class="nav-link" href="array.html">Атомы</a>
@@ -84,14 +76,10 @@
             <a class="nav-link" href="methods.html">Методы</a>
             <a class="nav-link active" href="charts.html">Графики</a>
         </nav>
-
         <div class="auth">
-            <!-- ГОСТЬ -->
             <div class="auth-buttons">
                 <button class="btn btn-primary" onclick="showAuthModal()">Войти</button>
             </div>
-
-            <!-- АВТОРИЗОВАН -->
             <div class="user-menu" style="display:none;">
                 <span class="user-name" id="usernameDisplay"></span>
                 <button class="btn btn-secondary" onclick="logout()">Выйти</button>
@@ -100,197 +88,242 @@
     </div>
 </header>
 
-<!-- CONTENT -->
-<main class="content">
+<!-- HERO -->
+<section class="charts-hero">
     <div class="container">
-        <!-- Заголовок -->
-        <div class="page-header">
-            <h1 class="page-title">
-                <i class="fas fa-chart-line"></i> Графики результатов
-            </h1>
-            <p class="page-subtitle">
-                Визуализация зависимостей параметров плазмы и температуры
-            </p>
+        <h1><i class="fas fa-chart-line"></i> Физические зависимости</h1>
+        <p>Полный анализ параметров плазмы: 23 графика математических зависимостей</p>
+    </div>
+</section>
+
+<!-- MAIN -->
+<main class="charts-main">
+    <div class="container">
+
+        <!-- AUTH GATE -->
+        <div id="authGate" class="auth-gate">
+            <i class="fas fa-lock"></i>
+            <h2>Требуется авторизация</h2>
+            <p>Войдите в систему для просмотра графиков</p>
+            <button class="btn btn-primary" onclick="showAuthModal()">
+                <i class="fas fa-sign-in-alt"></i> Войти
+            </button>
         </div>
 
-        <!-- Контейнер графиков -->
-        <div class="charts-container">
-            <!-- График 1: Зависимость энергии от параметров плазмы -->
-            <div class="chart-section">
-                <div class="chart-header">
-                    <h3><i class="fas fa-bolt"></i> Зависимость энергии от параметров плазмы</h3>
+        <!-- CHARTS WORKSPACE -->
+        <div id="chartsWorkspace" style="display:none;">
+
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <i class="fas fa-database"></i>
+                    <h3 id="totalSimulations">0</h3>
+                    <p>Симуляций</p>
                 </div>
-
-                <div class="chart-controls">
-                    <div class="controls-grid">
-                        <div class="control-group">
-                            <label class="control-label">
-                                <i class="fas fa-chart-line"></i> Тип графика
-                            </label>
-                            <select id="plasmaChartType" class="control-select">
-                                <option value="electronDensity-pressure">Плотность электронов от давления</option>
-                                <option value="electronVelocity-voltage">Скорость электронов от напряжения</option>
-                                <option value="currentDensity-voltage">Плотность тока от напряжения</option>
-                                <option value="ionEnergyEffective-voltage">Энергия ионов от напряжения</option>
-                            </select>
-                        </div>
-
-                        <div class="control-group">
-                            <label class="control-label">
-                                <i class="fas fa-filter"></i> Фильтр по атомам
-                            </label>
-                            <select id="atomFilter1" class="control-select">
-                                <option value="all">Все атомы</option>
-                                <!-- Будет заполнено JavaScript -->
-                            </select>
-                        </div>
-                    </div>
+                <div class="stat-card">
+                    <i class="fas fa-atom"></i>
+                    <h3 id="uniqueAtoms">0</h3>
+                    <p>Атомов</p>
                 </div>
-
-                <div class="chart-canvas-container">
-                    <canvas id="plasmaChart" class="chart-canvas"></canvas>
-                    <div class="chart-empty" id="plasmaEmpty" hidden>
-                        <i class="fas fa-info-circle"></i>
-                        Нет данных для выбранных параметров
-                    </div>
+                <div class="stat-card">
+                    <i class="fas fa-bolt"></i>
+                    <h3 id="uniqueIons">0</h3>
+                    <p>Ионов</p>
                 </div>
-
-
-                <div class="chart-info">
-                    <i class="fas fa-info-circle"></i>
-                    <span id="plasmaChartInfo">График показывает зависимость выбранного параметра плазмы</span>
+                <div class="stat-card">
+                    <i class="fas fa-chart-line"></i>
+                    <h3>24</h3>
+                    <p>Графика</p>
                 </div>
             </div>
 
-            <!-- График 2: Зависимость температуры от атома -->
-            <div class="chart-section">
-                <div class="chart-header">
-                    <h3><i class="fas fa-thermometer-half"></i> Зависимость температуры от атома</h3>
-                </div>
-
-                <div class="chart-controls">
-                    <div class="controls-grid">
-                        <div class="control-group">
-                            <label class="control-label">
-                                <i class="fas fa-atom"></i> Выберите атом
-                            </label>
-                            <select id="atomSelector" class="control-select">
-                                <option value="all">Все атомы</option>
-                                <!-- Остальные атомы будут добавлены через JavaScript -->
-                            </select>
-                        </div>
-
-                        <div class="control-group">
-                            <label class="control-label">
-                                <i class="fas fa-chart-line"></i> Тип температуры
-                            </label>
-                            <select id="temperatureType" class="control-select">
-                                <option value="avgT">Средняя температура</option>
-                                <option value="minT">Минимальная температура</option>
-                                <option value="maxT">Максимальная температура</option>
-                            </select>
-                        </div>
-
-                        <div class="control-group">
-                            <label class="control-label">
-                                <i class="fas fa-exchange-alt"></i> Коэффициент диффузии
-                            </label>
-                            <select id="diffSelector" class="control-select">
-                                <option value="1">D₁</option>
-                                <option value="2">D₂</option>
-                            </select>
-                        </div>
+            <!-- PLASMA PHYSICS (5 charts) -->
+            <div class="chart-category">
+                <h2><i class="fas fa-bolt"></i> Параметры плазмы (6)</h2>
+                <div class="charts-grid">
+                    <div class="chart-box">
+                        <h3>1. Плотность электронов от давления</h3>
+                        <label for="filter1"></label><select id="filter1" class="chart-filter"><option value="all">Все</option></select>
+                        <canvas id="chart1"></canvas>
+                        <p class="formula">n_e ~ P</p>
                     </div>
-                </div>
-
-                <div class="chart-canvas-container">
-                    <canvas id="temperatureChart" class="chart-canvas"></canvas>
-                    <div class="chart-empty" id="temperatureEmpty" hidden>
-                        <i class="fas fa-info-circle"></i>
-                        Нет данных для выбранных параметров
+                    <div class="chart-box">
+                        <h3>2. Скорость электронов от напряжения</h3>
+                        <label for="filter2"></label><select id="filter2" class="chart-filter"><option value="all">Все</option></select>
+                        <canvas id="chart2"></canvas>
+                        <p class="formula">v_e ~ √V</p>
                     </div>
-                </div>
-
-
-                <div class="chart-info">
-                    <i class="fas fa-info-circle"></i>
-                    <span id="temperatureChartInfo">
-                        График показывает распределение температуры для выбранного атома и коэффициента диффузии
-                    </span>
+                    <div class="chart-box">
+                        <h3>3. Плотность тока от напряжения (ВАХ - вольт-амперная характеристика)</h3>
+                        <label for="filter3"></label><select id="filter3" class="chart-filter"><option value="all">Все</option></select>
+                        <canvas id="chart3"></canvas>
+                        <p class="formula">I-V curve</p>
+                    </div>
+                    <div class="chart-box">
+                        <h3>4. Энергия ионов от напряжения</h3>
+                        <label for="filter4"></label><select id="filter4" class="chart-filter"><option value="all">Все</option></select>
+                        <canvas id="chart4"></canvas>
+                        <p class="formula">E = q·V</p>
+                    </div>
+                    <div class="chart-box">
+                        <h3>5. Температура электронов от напряжения</h3>
+                        <label for="filter5"></label><select id="filter5" class="chart-filter"><option value="all">Все</option></select>
+                        <canvas id="chart5"></canvas>
+                        <p class="formula">T_e ~ E_field</p>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Информационный блок -->
-        <div class="info-box">
-            <h5><i class="fas fa-info-circle"></i> О графиках</h5>
-            <p>
-                Графики позволяют визуализировать зависимости между различными параметрами плазмы и температурными характеристиками атомов.
-                Используйте фильтры для анализа конкретных данных и выявления закономерностей.
-            </p>
-            <div class="formula-box">
-                <strong>Доступные зависимости:</strong><br>
-                • Плотность электронов = f(Давление)<br>
-                • Скорость электронов = f(Напряжение)<br>
-                • Плотность тока = f(Ток)<br>
-                • Температура = f(Атом)
+            <!-- THERMAL (5 charts) -->
+            <div class="chart-category">
+                <h2><i class="fas fa-thermometer-half"></i> Температура (5)</h2>
+                <div class="charts-grid">
+                    <div class="chart-box">
+                        <h3>6. Средняя температура от переданной энергии (Thermalization)</h3>
+                        <label for="filter6"></label><select id="filter6" class="chart-filter"><option value="all">Все</option></select>
+                        <canvas id="chart6"></canvas>
+                        <p class="formula">Thermalization</p>
+                    </div>
+                    <div class="chart-box">
+                        <h3>8. Средняя температура от напряжения</h3>
+                        <label for="filter7"></label><select id="filter7" class="chart-filter"><option value="all">Все</option></select>
+                        <canvas id="chart7"></canvas>
+                        <p class="formula">T ~ V²</p>
+                    </div>
+                    <div class="chart-box">
+                        <h3>8. Диапазон температур (Min/Avg/Max)</h3>
+                        <label for="filter8"></label><select id="filter8" class="chart-filter"><option value="all">Все</option></select>
+                        <canvas id="chart8"></canvas>
+                        <p class="formula">Min/Avg/Max</p>
+                    </div>
+                    <div class="chart-box">
+                        <h3>9. Средняя температура от давления</h3>
+                        <label for="filter9"></label><select id="filter9" class="chart-filter"><option value="all">Все</option></select>
+                        <canvas id="chart9"></canvas>
+                        <p class="formula">T ~ P</p>
+                    </div>
+                    <div class="chart-box">
+                        <h3>10. Средняя температура от плотности тока</h3>
+                        <label for="filter10"></label><select id="filter10" class="chart-filter"><option value="all">Все</option></select>
+                        <canvas id="chart10"></canvas>
+                        <p class="formula">T ~ j</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ENERGY (5 charts) -->
+            <div class="chart-category">
+                <h2><i class="fas fa-fire"></i> Энергия (5)</h2>
+                <div class="charts-grid">
+                    <div class="chart-box">
+                        <h3>11. Полная энергия от напряжения</h3>
+                        <label for="filter11"></label><select id="filter11" class="chart-filter"><option value="all">Все</option></select>
+                        <canvas id="chart11"></canvas>
+                        <p class="formula">E ~ V</p>
+                    </div>
+                    <div class="chart-box">
+                        <h3>12. Энергия на атом от напряжения</h3>
+                        <label for="filter12"></label><select id="filter12" class="chart-filter"><option value="all">Все</option></select>
+                        <canvas id="chart12"></canvas>
+                        <p class="formula">E/N ~ V</p>
+                    </div>
+                    <div class="chart-box">
+                        <h3>13.  Распределение энергии</h3>
+                        <label for="filter13"></label><select id="filter13" class="chart-filter"><option value="all">Все</option></select>
+                        <canvas id="chart13"></canvas>
+                        <p class="formula">Histogram</p>
+                    </div>
+                    <div class="chart-box">
+                        <h3>14. Энергия от температуры</h3>
+                        <label for="filter14"></label><select id="filter14" class="chart-filter"><option value="all">Все</option></select>
+                        <canvas id="chart14"></canvas>
+                        <p class="formula">E ~ kT</p>
+                    </div>
+                    <div class="chart-box">
+                        <h3>15. Энергия от давления</h3>
+                        <label for="filter15"></label><select id="filter15" class="chart-filter"><option value="all">Все</option></select>
+                        <canvas id="chart15"></canvas>
+                        <p class="formula">E ~ P</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DIFFUSION (5 charts) -->
+            <div class="chart-category">
+                <h2><i class="fas fa-wave-square"></i> Диффузия (5)</h2>
+                <div class="charts-grid">
+                    <div class="chart-box">
+                        <h3>16. Объёмная диффузия от температуры (Arrhenius)</h3>
+                        <label for="filter16"></label><select id="filter16" class="chart-filter"><option value="all">Все</option></select>
+                        <canvas id="chart16"></canvas>
+                        <p class="formula">Arrhenius</p>
+                    </div>
+                    <div class="chart-box">
+                        <h3>17. Граничная диффузия от температуры</h3>
+                        <label for="filter17"></label><select id="filter17" class="chart-filter"><option value="all">Все</option></select>
+                        <canvas id="chart17"></canvas>
+                        <p class="formula">D=D₀exp(-Q/RT)</p>
+                    </div>
+                    <div class="chart-box">
+                        <h3>18. Сравнение коэффициентов (Comparison)</h3>
+                        <label for="filter18"></label><select id="filter18" class="chart-filter"><option value="all">Все</option></select>
+                        <canvas id="chart18"></canvas>
+                        <p class="formula">Comparison</p>
+                    </div>
+                    <div class="chart-box">
+                        <h3>19. Диффузия от напряжения</h3>
+                        <label for="filter19"></label><select id="filter19" class="chart-filter"><option value="all">Все</option></select>
+                        <canvas id="chart19"></canvas>
+                        <p class="formula">D ~ T ~ V</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DAMAGE & MECHANICS (4 charts) -->
+            <div class="chart-category">
+                <h2><i class="fas fa-exclamation-triangle"></i> Повреждения (4)</h2>
+                <div class="charts-grid">
+                    <div class="chart-box">
+                        <h3>20. Повреждения от энергии</h3>
+                        <label for="filter20"></label><select id="filter20" class="chart-filter"><option value="all">Все</option></select>
+                        <canvas id="chart20"></canvas>
+                        <p class="formula">E_damage ~ E</p>
+                    </div>
+                    <div class="chart-box">
+                        <h3>21. Импульс от энергии (Momentum)</h3>
+                        <label for="filter21"></label><select id="filter21" class="chart-filter"><option value="all">Все</option></select>
+                        <canvas id="chart21"></canvas>
+                        <p class="formula">Momentum</p>
+                    </div>
+                    <div class="chart-box">
+                        <h3>22. Смещение от импульса</h3>
+                        <label for="filter22"></label><select id="filter22" class="chart-filter"><option value="all">Все</option></select>
+                        <canvas id="chart22"></canvas>
+                        <p class="formula">p = mΔv</p>
+                    </div>
+                    <div class="chart-box">
+                        <h3>23. Повреждения от температуры </h3>
+                        <label for="filter23"></label><select id="filter23" class="chart-filter"><option value="all">Все</option></select>
+                        <canvas id="chart23"></canvas>
+                        <p class="formula">Thermal damage</p>
+                    </div>
+                </div>
+            </div>
             </div>
         </div>
     </div>
 </main>
 
-<!-- FOOTER -->
 <footer class="footer">
     <div class="container footer-inner">
         <span>© 2025 PlasmaLab</span>
-        <span>Research & Simulation Platform</span>
+        <span>Research Platform</span>
     </div>
 </footer>
 
-<!-- SCRIPTS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="js/auth.js"></script>
+<script src="js/main-ui.js"></script>
 <script src="js/charts.js"></script>
-
-<script>
-    // Добавляем недостающие функции для модального окна
-    function showAuthModal() {
-        document.getElementById('authOverlay').style.display = 'flex';
-    }
-
-    function hideAuthModal() {
-        document.getElementById('authOverlay').style.display = 'none';
-    }
-
-    // Инициализация авторизации
-    if (typeof updateAuthUI === 'function') {
-        updateAuthUI();
-    }
-
-    // Переключение вкладок модального окна
-    document.querySelectorAll('.auth-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
-
-            tab.classList.add('active');
-            document.querySelector(`.auth-form[data-form="${tab.dataset.tab}"]`).classList.add('active');
-        });
-    });
-
-    // Закрытие модального окна при клике вне его
-    document.getElementById('authOverlay').addEventListener('click', (e) => {
-        if (e.target === document.getElementById('authOverlay')) {
-            hideAuthModal();
-        }
-    });
-
-    // Закрытие по ESC
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && document.getElementById('authOverlay').style.display === 'flex') {
-            hideAuthModal();
-        }
-    });
-</script>
-
 </body>
 </html>

@@ -30,11 +30,11 @@
             <form id="loginForm" class="auth-form active" data-form="login">
                 <div class="auth-field">
                     <label>Имя пользователя</label>
-                    <input type="text" name="username" required>
+                    <input type="text" name="username" required autocomplete="username">
                 </div>
                 <div class="auth-field">
                     <label>Пароль</label>
-                    <input type="password" name="password" required>
+                    <input type="password" name="password" required autocomplete="current-password">
                 </div>
                 <div id="login_msg" class="auth-message"></div>
                 <button type="submit" class="btn btn-primary full">Войти</button>
@@ -44,15 +44,15 @@
             <form id="registerForm" class="auth-form" data-form="register">
                 <div class="auth-field">
                     <label>Имя пользователя</label>
-                    <input type="text" name="username" required>
+                    <input type="text" name="username" required autocomplete="username">
                 </div>
                 <div class="auth-field">
                     <label>Email</label>
-                    <input type="email" name="email" required>
+                    <input type="email" name="email" required autocomplete="email">
                 </div>
                 <div class="auth-field">
                     <label>Пароль</label>
-                    <input type="password" name="password" required>
+                    <input type="password" name="password" required autocomplete="new-password">
                 </div>
                 <div id="signup_msg" class="auth-message"></div>
                 <button type="submit" class="btn btn-primary full">Создать аккаунт</button>
@@ -70,7 +70,7 @@
         </a>
 
         <nav class="nav">
-            <a class="nav-link active" href="#">Главная</a>
+            <a class="nav-link active" href="index.html">Главная</a>
             <a class="nav-link" href="array.html">Атомы</a>
             <a class="nav-link" href="chain.html">Ионы</a>
             <a class="nav-link" href="methods.html">Методы</a>
@@ -152,65 +152,9 @@
     </div>
 </footer>
 
+<!-- ВАЖНО: auth.js должен загружаться ПЕРВЫМ -->
 <script src="js/auth.js"></script>
-<script src="js/auth-ui.js"></script>
+<script src="js/main-ui.js"></script>
 
-<script>
-    // Функции для модального окна
-    function showAuthModal() {
-        document.getElementById('authOverlay').style.display = 'flex';
-    }
-
-    function hideAuthModal() {
-        document.getElementById('authOverlay').style.display = 'none';
-    }
-
-    // Переключение вкладок
-    document.querySelectorAll('.auth-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
-
-            tab.classList.add('active');
-            document.querySelector(`.auth-form[data-form="${tab.dataset.tab}"]`).classList.add('active');
-        });
-    });
-
-    // Закрытие модального окна при клике вне его
-    document.getElementById('authOverlay').addEventListener('click', (e) => {
-        if (e.target === document.getElementById('authOverlay')) {
-            hideAuthModal();
-        }
-    });
-
-    // Закрытие по ESC
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && document.getElementById('authOverlay').style.display === 'flex') {
-            hideAuthModal();
-        }
-    });
-
-    // Обработка ссылок - проверка авторизации для защищенных страниц
-    document.addEventListener('DOMContentLoaded', function() {
-        const protectedLinks = [
-            { selector: 'a[href="methods.html"]', message: 'Для доступа к методам моделирования необходимо войти в систему' },
-            { selector: 'a[href="charts.html"]', message: 'Для просмотра графиков необходимо войти в систему' }
-        ];
-
-        protectedLinks.forEach(item => {
-            const link = document.querySelector(item.selector);
-            if (link) {
-                link.addEventListener('click', function(e) {
-                    const token = getToken ? getToken() : localStorage.getItem('authToken');
-                    if (!token) {
-                        e.preventDefault();
-                        showMessage ? showMessage(item.message, 'error') : alert(item.message);
-                        showAuthModal();
-                    }
-                });
-            }
-        });
-    });
-</script>
 </body>
 </html>

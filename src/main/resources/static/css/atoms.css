@@ -1,0 +1,529 @@
+/* ==================== ATOMS PAGE STYLES ==================== */
+
+.main-content {
+    min-height: calc(100vh - 200px);
+    padding: 3rem 0;
+}
+
+/* ==================== PAGE HEADER ==================== */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.page-header h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.page-header h1 i {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: spin 20s linear infinite;
+}
+
+.page-header p {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+}
+
+/* ==================== CONTROLS ==================== */
+.controls {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.search-box {
+    flex: 1;
+    min-width: 300px;
+    position: relative;
+}
+
+.search-box i {
+    position: absolute;
+    left: 1.2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+}
+
+.search-box input {
+    width: 100%;
+    padding: 1rem 1rem 1rem 3rem;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-main);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(94,234,212,0.1);
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.filter-group label {
+    color: var(--text-muted);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.filter-group select {
+    padding: 0.8rem 1.2rem;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-main);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.filter-group select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+/* ==================== LOADING & EMPTY STATES ==================== */
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 5rem 2rem;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid var(--border);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.loading-state p {
+    margin-top: 1.5rem;
+    color: var(--text-muted);
+    font-size: 1.1rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 5rem 2rem;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    color: var(--text-dark);
+    margin-bottom: 1.5rem;
+}
+
+.empty-state h3 {
+    font-size: 1.8rem;
+    color: var(--text-main);
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: var(--text-muted);
+}
+
+/* ==================== ATOMS GRID ==================== */
+.atoms-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* ==================== ATOM CARD ==================== */
+.atom-card {
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.8rem;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.atom-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--gradient-glow);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.atom-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow), var(--shadow-glow);
+    border-color: var(--primary);
+}
+
+.atom-card:hover::before {
+    opacity: 1;
+}
+
+.atom-card > * {
+    position: relative;
+    z-index: 1;
+}
+
+/* Card Header */
+.atom-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+}
+
+.atom-symbol {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.atom-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: rgba(94,234,212,0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--primary);
+    transition: all 0.4s ease;
+    box-shadow: 0 0 20px rgba(94,234,212,0.2);
+}
+
+.atom-card:hover .atom-icon {
+    transform: scale(1.1) rotate(10deg);
+    box-shadow: 0 0 30px rgba(94,234,212,0.4);
+}
+
+.atom-name h3 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--text-main);
+    margin-bottom: 0.2rem;
+}
+
+.atom-name p {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.atom-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.atom-actions button {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.atom-actions button:hover {
+    background: rgba(94,234,212,0.1);
+    border-color: var(--primary);
+    color: var(--primary);
+    transform: scale(1.1);
+}
+
+.atom-actions button.delete:hover {
+    background: rgba(244,67,54,0.1);
+    border-color: #f44336;
+    color: #f44336;
+}
+
+/* Card Body */
+.atom-properties {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.property {
+    display: flex;
+    flex-direction: column;
+}
+
+.property-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-dark);
+    margin-bottom: 0.3rem;
+    font-weight: 600;
+}
+
+.property-value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-main);
+}
+
+.property-value.highlight {
+    color: var(--primary);
+}
+
+/* Structure Badge */
+.structure-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}
+
+.structure-badge.SC {
+    background: rgba(94,234,212,0.15);
+    color: var(--primary);
+    border: 1px solid rgba(94,234,212,0.3);
+}
+
+.structure-badge.BCC {
+    background: rgba(129,140,248,0.15);
+    color: var(--secondary);
+    border: 1px solid rgba(129,140,248,0.3);
+}
+
+.structure-badge.FCC {
+    background: rgba(244,114,182,0.15);
+    color: var(--accent);
+    border: 1px solid rgba(244,114,182,0.3);
+}
+
+.structure-badge.HCP {
+    background: rgba(251,191,36,0.15);
+    color: #fbbf24;
+    border: 1px solid rgba(251,191,36,0.3);
+}
+
+/* ==================== MODAL ==================== */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(8px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.modal {
+    background: var(--bg-surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    width: 600px;
+    max-width: 90%;
+    max-height: 90vh;
+    overflow: hidden;
+    animation: scaleIn 0.3s ease-out;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-header h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-main);
+}
+
+.modal-close {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 1.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-close:hover {
+    background: rgba(255,255,255,0.1);
+    color: var(--text-main);
+    transform: rotate(90deg);
+}
+
+.modal-body {
+    padding: 2rem;
+    overflow-y: auto;
+    max-height: calc(90vh - 100px);
+}
+
+/* ==================== FORM ==================== */
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.form-field {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1rem;
+}
+
+.form-field label {
+    margin-bottom: 0.5rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.form-field input,
+.form-field select {
+    padding: 0.9rem 1rem;
+    background: var(--bg-main);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text-main);
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-field input:focus,
+.form-field select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(94,234,212,0.1);
+}
+
+.form-field small {
+    margin-top: 0.3rem;
+    color: var(--text-dark);
+    font-size: 0.8rem;
+}
+
+.form-message {
+    padding: 0.8rem;
+    border-radius: var(--radius-sm);
+    margin: 1rem 0;
+    text-align: center;
+    font-weight: 500;
+    display: none;
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+}
+
+/* ==================== RESPONSIVE ==================== */
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        gap: 1.5rem;
+        align-items: flex-start;
+    }
+
+    .controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .search-box {
+        min-width: 100%;
+    }
+
+    .filter-group {
+        width: 100%;
+    }
+
+    .filter-group select {
+        flex: 1;
+    }
+
+    .atoms-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+
+    .atom-properties {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ==================== ANIMATIONS ==================== */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+    from {
+        transform: scale(0.9);
+        opacity: 0;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
