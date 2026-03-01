@@ -68,6 +68,17 @@ public class ThermalServiceImpl implements ThermalService {
         }
         int steps = (int) (tMax / dt);
 
+        final int MAX_STEPS = 1_000_000;
+
+        if (steps > MAX_STEPS) {
+            System.err.printf(
+                    "Warning: too many time steps (%d). Limiting to %d steps.%n",
+                    steps, MAX_STEPS
+            );
+            steps = MAX_STEPS;
+            dt = tMax / steps; // пересчитываем шаг, чтобы уложиться в tMax
+        }
+
         // Инициализация температурного поля
         double[] T = new double[N];
         for (int i = 0; i < N; i++) T[i] = T0;
@@ -130,7 +141,9 @@ public class ThermalServiceImpl implements ThermalService {
             T = T_new;
 
             // Сохраняем результаты с определённой частотой
-            if (step % 10 == 0 || step == steps - 1) {
+            int saveEvery = Math.max(steps / 500, 1);
+
+            if (step % saveEvery == 0 || step == steps - 1) {
                 temperatureProfiles.add(T.clone());
                 times.add(time);
             }
