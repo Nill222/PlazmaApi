@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Управление ионами - PlasmaLab</title>
+    <title>PlasmaLab | Ионы</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <!-- Fonts -->
@@ -13,54 +13,89 @@
 
     <!-- CSS -->
     <link rel="stylesheet" href="css/main.css">
-    <link rel="stylesheet" href="css/chain.css">
+    <link rel="stylesheet" href="css/ions.css">
 </head>
-
 <body>
 
 <!-- AUTH MODAL -->
-<div class="auth-overlay" id="authOverlay" style="display: none;">
+<div class="auth-overlay" id="authOverlay">
     <div class="auth-modal">
         <div class="auth-header">
             <button class="auth-tab active" data-tab="login">Вход</button>
             <button class="auth-tab" data-tab="register">Регистрация</button>
             <button class="auth-close" onclick="hideAuthModal()">×</button>
         </div>
+
         <div class="auth-body">
             <!-- LOGIN -->
             <form id="loginForm" class="auth-form active" data-form="login">
                 <div class="auth-field">
                     <label>Имя пользователя</label>
-                    <input type="text" name="username" required>
+                    <input type="text" name="username" required autocomplete="username">
                 </div>
                 <div class="auth-field">
                     <label>Пароль</label>
-                    <input type="password" name="password" required>
+                    <input type="password" name="password" required autocomplete="current-password">
                 </div>
                 <div id="login_msg" class="auth-message"></div>
-                <button type="submit" class="btn btn-primary full">
-                    Войти
-                </button>
+                <button type="submit" class="btn btn-primary full">Войти</button>
             </form>
 
             <!-- REGISTER -->
             <form id="registerForm" class="auth-form" data-form="register">
                 <div class="auth-field">
                     <label>Имя пользователя</label>
-                    <input type="text" name="username" required>
+                    <input type="text" name="username" required autocomplete="username">
                 </div>
                 <div class="auth-field">
                     <label>Email</label>
-                    <input type="email" name="email" required>
+                    <input type="email" name="email" required autocomplete="email">
                 </div>
                 <div class="auth-field">
                     <label>Пароль</label>
-                    <input type="password" name="password" required>
+                    <input type="password" name="password" required autocomplete="new-password">
                 </div>
                 <div id="signup_msg" class="auth-message"></div>
-                <button type="submit" class="btn btn-primary full">
-                    Создать аккаунт
-                </button>
+                <button type="submit" class="btn btn-primary full">Создать аккаунт</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- CREATE ION MODAL -->
+<div class="modal-overlay" id="createIonModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>Создать новый ион</h3>
+            <button class="modal-close" onclick="hideCreateModal()">×</button>
+        </div>
+        <div class="modal-body">
+            <form id="createIonForm">
+                <div class="form-field">
+                    <label>Название иона *</label>
+                    <input type="text" name="name" required maxlength="25" pattern="^[A-Z][a-z0-9A-Z]*$" placeholder="H+, He2+, Li+...">
+                    <small>Начинается с заглавной буквы, только буквы и цифры (2-25 символов)</small>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-field">
+                        <label>Масса (кг) *</label>
+                        <input type="number" name="mass" required step="any" min="1e-30" max="1e-23" placeholder="1.67e-27">
+                        <small>Диапазон: 1e-30 до 1e-23 кг</small>
+                    </div>
+                    <div class="form-field">
+                        <label>Заряд *</label>
+                        <input type="number" name="charge" required min="-3" max="3" placeholder="1">
+                        <small>От -3 до +3</small>
+                    </div>
+                </div>
+
+                <div id="create_msg" class="form-message"></div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="hideCreateModal()">Отмена</button>
+                    <button type="submit" class="btn btn-primary">Создать ион</button>
+                </div>
             </form>
         </div>
     </div>
@@ -97,121 +132,101 @@
     </div>
 </header>
 
-<!-- CONTENT -->
-<main class="content">
+<!-- MAIN CONTENT -->
+<main class="main-content">
     <div class="container">
-        <!-- Заголовок -->
+        <!-- PAGE HEADER -->
         <div class="page-header">
-            <h1 class="page-title">
-                <i class="fas fa-bolt"></i> Управление ионами
-            </h1>
-            <p class="page-subtitle">База данных ионных частиц и их характеристик</p>
+            <div>
+                <h1>
+                    <i class="fas fa-bolt"></i>
+                    База данных ионов
+                </h1>
+                <p>Справочник заряженных частиц для плазменного моделирования</p>
+            </div>
+            <button class="btn btn-primary" onclick="showCreateModal()" id="createIonBtn">
+                <i class="fas fa-plus"></i>
+                Добавить ион
+            </button>
         </div>
 
-        <!-- Список ионов -->
-        <div class="card">
-            <div class="card-header">
-                <h2><i class="fas fa-list"></i> Список ионов</h2>
+        <!-- SEARCH & FILTERS -->
+        <div class="controls">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Поиск по названию...">
             </div>
-            <div class="card-body">
-                <div class="flex-between mb-4">
-                    <button id="loadIons" class="btn btn-primary">
-                        <i class="fas fa-sync-alt"></i> Обновить список
-                    </button>
-                    <div class="text-muted">
-                        <i class="fas fa-info-circle"></i>
-                        Всего ионов: <span id="ionCount">0</span>
-                    </div>
-                </div>
 
-                <div id="ionTableContainer" class="table-container">
-                    <!-- Таблица будет загружена через JS -->
-                </div>
+            <div class="filter-group">
+                <label>Заряд:</label>
+                <select id="chargeFilter">
+                    <option value="">Все</option>
+                    <option value="negative">Отрицательные</option>
+                    <option value="positive">Положительные</option>
+                    <option value="-3">-3</option>
+                    <option value="-2">-2</option>
+                    <option value="-1">-1</option>
+                    <option value="1">+1</option>
+                    <option value="2">+2</option>
+                    <option value="3">+3</option>
+                </select>
             </div>
+
+            <div class="filter-group">
+                <label>Сортировка:</label>
+                <select id="sortBy">
+                    <option value="name">По названию</option>
+                    <option value="mass">По массе</option>
+                    <option value="charge">По заряду</option>
+                </select>
+            </div>
+
+            <button class="btn btn-secondary" onclick="resetFilters()">
+                <i class="fas fa-redo"></i>
+                Сбросить
+            </button>
         </div>
 
-        <!-- Создание нового иона -->
-        <div class="card protected-operation">
-            <div class="card-header">
-                <h2><i class="fas fa-plus-circle"></i> Создать новый ион</h2>
-            </div>
-            <div class="card-body">
-                <form id="createIonForm" class="form-grid">
-                    <div class="form-group">
-                        <label class="form-label">Название иона</label>
-                        <input type="text" id="ionName" class="form-input" placeholder="Na⁺, Cl⁻, Ca²⁺" required>
-                        <div class="form-help">Используйте стандартные обозначения</div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Масса (кг)</label>
-                        <input type="number" id="mass" class="form-input" step="any" placeholder="3.818e-26" required>
-                        <div class="form-help">Масса в килограммах</div>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label">Заряд (e)</label>
-                        <input type="number" id="charge" class="form-input" placeholder="1, -1, 2" required>
-                        <div class="form-help">Заряд в элементарных зарядах</div>
-                    </div>
-
-                    <div class="form-group">
-                        <button type="submit" class="btn btn-success">
-                            <i class="fas fa-save"></i> Создать ион
-                        </button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <!-- Поиск иона -->
-        <div class="card">
-            <div class="card-header">
-                <h2><i class="fas fa-search"></i> Поиск иона</h2>
-            </div>
-            <div class="card-body">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label class="form-label">Найти ион по ID</label>
-                        <input type="number" id="searchIonId" class="form-input" placeholder="Введите ID иона">
-                    </div>
-
-                    <div class="form-group">
-                        <button id="searchIon" class="btn btn-primary">
-                            <i class="fas fa-search"></i> Найти
-                        </button>
-                    </div>
+        <!-- STATS BAR -->
+        <div class="stats-bar">
+            <div class="stat-card">
+                <i class="fas fa-bolt"></i>
+                <div>
+                    <span class="stat-value" id="totalIons">0</span>
+                    <span class="stat-label">Всего ионов</span>
                 </div>
-
-                <div id="searchResult" class="mt-4"></div>
             </div>
-        </div>
-
-        <!-- Управление ионами -->
-        <div class="card">
-            <div class="card-header">
-                <h2><i class="fas fa-cogs"></i> Управление ионами</h2>
-            </div>
-            <div class="card-body">
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label class="form-label">Удалить ион по ID</label>
-                        <input type="number" id="deleteIonId" class="form-input" placeholder="Введите ID иона для удаления">
-                    </div>
-
-                    <div class="form-group">
-                        <button id="deleteIon" class="btn btn-danger">
-                            <i class="fas fa-trash"></i> Удалить ион
-                        </button>
-                    </div>
+            <div class="stat-card">
+                <i class="fas fa-plus-circle"></i>
+                <div>
+                    <span class="stat-value" id="positiveCount">0</span>
+                    <span class="stat-label">Положительные</span>
                 </div>
-
-                <div class="alert alert-warning mt-3">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <strong>Внимание:</strong> удаление иона невозможно отменить
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-minus-circle"></i>
+                <div>
+                    <span class="stat-value" id="negativeCount">0</span>
+                    <span class="stat-label">Отрицательные</span>
                 </div>
             </div>
         </div>
+
+        <!-- LOADING STATE -->
+        <div id="loadingState" class="loading-state">
+            <div class="spinner"></div>
+            <p>Загрузка ионов...</p>
+        </div>
+
+        <!-- EMPTY STATE -->
+        <div id="emptyState" class="empty-state" style="display:none;">
+            <i class="fas fa-bolt"></i>
+            <h3>Ионы не найдены</h3>
+            <p>Попробуйте изменить параметры поиска</p>
+        </div>
+
+        <!-- IONS GRID -->
+        <div id="ionsGrid" class="ions-grid"></div>
     </div>
 </main>
 
@@ -225,48 +240,8 @@
 
 <!-- SCRIPTS -->
 <script src="js/auth.js"></script>
-<script src="js/chain.js"></script>
-
-<script>
-    // Добавляем недостающие функции для модального окна
-    function showAuthModal() {
-        document.getElementById('authOverlay').style.display = 'flex';
-    }
-
-    function hideAuthModal() {
-        document.getElementById('authOverlay').style.display = 'none';
-    }
-
-    // Инициализация авторизации
-    if (typeof updateAuthUI === 'function') {
-        updateAuthUI();
-    }
-
-    // Переключение вкладок модального окна
-    document.querySelectorAll('.auth-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
-
-            tab.classList.add('active');
-            document.querySelector(`.auth-form[data-form="${tab.dataset.tab}"]`).classList.add('active');
-        });
-    });
-
-    // Закрытие модального окна при клике вне его
-    document.getElementById('authOverlay').addEventListener('click', (e) => {
-        if (e.target === document.getElementById('authOverlay')) {
-            hideAuthModal();
-        }
-    });
-
-    // Закрытие по ESC
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && document.getElementById('authOverlay').style.display === 'flex') {
-            hideAuthModal();
-        }
-    });
-</script>
+<script src="js/main-ui.js"></script>
+<script src="js/ions.js"></script>
 
 </body>
 </html>
