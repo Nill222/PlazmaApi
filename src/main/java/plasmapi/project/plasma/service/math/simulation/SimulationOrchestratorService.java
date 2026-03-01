@@ -6,5 +6,5 @@ import plasmapi.project.plasma.dto.mathDto.simulation.SimulationResultDto;
 
 public interface SimulationOrchestratorService {
     @Transactional
-    SimulationResultDto runSimulation(SimulationRequestDto req);
+    SimulationResult runSimulation(SimulationRequest request);
 }

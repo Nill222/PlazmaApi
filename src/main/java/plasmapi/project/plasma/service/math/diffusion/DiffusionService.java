@@ -1,10 +1,15 @@
 package plasmapi.project.plasma.service.math.diffusion;
 
-import plasmapi.project.plasma.dto.mathDto.diffusion.DiffusionProfileDto;
-import plasmapi.project.plasma.dto.mathDto.diffusion.DiffusionRequest;
-import plasmapi.project.plasma.dto.mathDto.simulation.SimulationRequestDto;
+import plasmapi.project.plasma.model.atom.AtomList;
+import plasmapi.project.plasma.model.res.Ion;
+import plasmapi.project.plasma.model.res.PlasmaConfiguration;
 
 public interface DiffusionService {
-
-    DiffusionProfileDto calculateFromConfig(SimulationRequestDto dto, Integer configId, Integer atomListId, double exposureTime, double exposureRate, double ionEnergy);
+    DiffusionProfile calculateProfile(
+            AtomList atom,
+            Ion ion,
+            PlasmaConfiguration plasmaConfig,
+            double exposureTime,
+            double ambientTemp
+    );
 }

@@ -7,10 +7,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import plasmapi.project.plasma.dto.ApiResponse;
 import plasmapi.project.plasma.dto.logikDTO.ResultDTO;
-import plasmapi.project.plasma.dto.mathDto.simulation.SimulationRequestDto;
 import plasmapi.project.plasma.dto.mathDto.simulation.SimulationResultDto;
 import plasmapi.project.plasma.service.logik.ResultService;
 import plasmapi.project.plasma.service.math.simulation.SimulationOrchestratorService;
+import plasmapi.project.plasma.service.math.simulation.SimulationRequest;
+import plasmapi.project.plasma.service.math.simulation.SimulationResult;
 
 import java.util.Optional;
 
@@ -28,11 +29,11 @@ public class SimulationController {
      * Тело запроса — SimulationRequestDto.
      */
     @PostMapping("/run")
-    public ResponseEntity<ApiResponse<SimulationResultDto>> runSimulation(
-            @Valid @RequestBody SimulationRequestDto request) {
+    public ResponseEntity<ApiResponse<SimulationResult>> runSimulation(
+            @Valid @RequestBody SimulationRequest request) {
 
-        SimulationResultDto result = simulationService.runSimulation(request);
-        ApiResponse<SimulationResultDto> resp = new ApiResponse<>(
+        SimulationResult result = simulationService.runSimulation(request);
+        ApiResponse<SimulationResult> resp = new ApiResponse<>(
                 result,
                 "Симуляция выполнена",
                 HttpStatus.OK.value()

@@ -6,6 +6,5 @@ import plasmapi.project.plasma.dto.mathDto.potential.PotentialParametersDto;
 import plasmapi.project.plasma.model.atom.AtomList;
 
 public interface PotentialService {
-
-    PotentialParametersDto computePotential(double r, Integer atomListId);
+    PotentialParameters computePotential(double r, AtomList atom);
 }

@@ -8,6 +8,6 @@ public interface ResonanceService {
     /**
      * Возвращает резонансный множитель xi >= 1 (1 - нет усиления).
      */
-    double computeXi(Integer atomListId, ResonanceInputDto in);
+    double computeXi(AtomList atom, double ionEnergyEv);
 }
 
