@@ -112,7 +112,7 @@
                             <h4>Идентификаторы</h4>
                             <div class="param-row">
                                 <div class="param-field">
-                                    <label>Атом (мишень)</label>
+                                    <label>Атом</label>
                                     <select name="atomId" required id="atomSel"></select>
                                 </div>
                                 <div class="param-field">
@@ -142,7 +142,7 @@
                                     <input type="number" name="pressure" value="10" step="any" min="0" required>
                                 </div>
                                 <div class="param-field">
-                                    <label>T электронов, K</label>
+                                    <label>Температура электронов, K</label>
                                     <input type="number" name="electronTemperature" value="11600" step="any" min="0" required>
                                 </div>
                             </div>
@@ -153,11 +153,11 @@
                             <h4>Геометрия камеры</h4>
                             <div class="param-row">
                                 <div class="param-field">
-                                    <label>Ширина, м</label>
+                                    <label>Анод, м</label>
                                     <input type="number" name="chamberWidth" value="0.1" step="any" min="0" required>
                                 </div>
                                 <div class="param-field">
-                                    <label>Глубина, м</label>
+                                    <label>Катод, м</label>
                                     <input type="number" name="chamberDepth" value="0.1" step="any" min="0" required>
                                 </div>
                             </div>
@@ -168,7 +168,7 @@
                             <h4>Обработка</h4>
                             <div class="param-row">
                                 <div class="param-field">
-                                    <label>Время, с</label>
+                                    <label>Время облучения, с</label>
                                     <input type="number" name="exposureTime" value="1.0" step="any" min="0" required>
                                 </div>
                                 <div class="param-field">
@@ -191,190 +191,231 @@
                     </form>
                 </div>
 
-                <!-- RIGHT: RESULTS -->
-                <div class="sim-panel">
-                    <div class="panel-header">
-                        <h3><i class="fas fa-chart-bar"></i> Результаты</h3>
+                <!-- RESULTS -->
+                <div id="resDisplay" style="display:none;">
+                    <div class="res-tabs">
+                        <button class="res-tab active" data-tab="material">Материалы</button>
+                        <button class="res-tab" data-tab="plasma">Плазма</button>
+                        <button class="res-tab" data-tab="chamber">Геометрия камеры</button>
+                        <button class="res-tab" data-tab="ion">Параметры удара иона</button>
+                        <button class="res-tab" data-tab="thermal">Материал для тепла и диффузии</button>
+                        <button class="res-tab" data-tab="diffusion">Диффузия</button>
+                        <button class="res-tab" data-tab="damage">Повреждения и энергия</button>
                     </div>
 
-                    <!-- IDLE -->
-                    <div id="resIdle" class="res-state">
-                        <i class="fas fa-play-circle"></i>
-                        <h4>Готово к запуску</h4>
-                        <p>Настройте параметры и запустите симуляцию</p>
-                    </div>
-
-                    <!-- RUNNING -->
-                    <div id="resRunning" class="res-state" style="display:none;">
-                        <div class="spinner-lg"></div>
-                        <h4>Выполняется...</h4>
-                        <div class="progress-bar"><div id="progressBar" class="progress-fill"></div></div>
-                    </div>
-
-                    <!-- RESULTS -->
-                    <div id="resDisplay" style="display:none;">
-                        <div class="res-tabs">
-                            <button class="res-tab" data-tab="energy">Энергия</button>
-                            <button class="res-tab" data-tab="thermal">Температура</button>
-                            <button class="res-tab" data-tab="diffusion">Диффузия</button>
-                            <button class="res-tab" data-tab="plasma">Плазма</button>
-                            <button class="res-tab" data-tab="additional_physics">Дополнительная физика</button>
+                    <div class="res-content">
+                        <!-- MATERIAL TAB -->
+                        <div class="res-panel active" data-tab="material">
+                            <h4 class="res-section-title">Материалы симуляции</h4>
+                            <div class="res-cards">
+                                <div class="res-card">
+                                    <span class="res-label">Атом</span>
+                                    <span class="res-value" id="r_atom_name">—</span>
+                                </div>
+                                <div class="res-card">
+                                    <span class="res-label">Ион</span>
+                                    <span class="res-value" id="r_ion_name">—</span>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="res-content">
-
-                            <!-- ENERGY TAB -->
-                            <div class="res-panel" data-tab="energy">
-                                <h4 class="res-section-title">Энергетические параметры</h4>
-                                <div class="res-cards">
-                                    <div class="res-card">
-                                        <span class="res-label">Общая переданная энергия</span>
-                                        <span class="res-value" id="r_total_transferred_energy">-</span>
-                                        <span class="res-unit">Дж</span>
-                                    </div>
-                                    <div class="res-card">
-                                        <span class="res-label">Cредняя передаваемая энергия на атом</span>
-                                        <span class="res-value" id="r_avg_transferred_per_atom">-</span>
-                                        <span class="res-unit">Дж</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Temperature TAB-->
-                            <div class="res-panel" data-tab="thermal">
-                                <h4 class="res-section-title">Температурные характеристики</h4>
-                                <div class="res-cards">
-                                    <div class="res-card temp-min">
-                                        <span class="res-label">Минимальная T</span>
-                                        <span class="res-value" id="r_minT">-</span>
-                                        <span class="res-unit">K</span>
-                                    </div>
-                                    <div class="res-card temp-avg">
-                                        <span class="res-label">Средняя T</span>
-                                        <span class="res-value" id="r_avgTemp">-</span>
-                                        <span class="res-unit">K</span>
-                                    </div>
-                                    <div class="res-card temp-max">
-                                        <span class="res-label">Максимальная T</span>
-                                        <span class="res-value" id="r_maxT">-</span>
-                                        <span class="res-unit">K</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- DIFFUSION TAB -->
-                            <div class="res-panel" data-tab="diffusion">
-                                <h4 class="res-section-title">Диффузионные параметры</h4>
-                                <div class="res-cards">
-                                    <div class="res-card">
-                                        <span class="res-label">D₁</span>
-                                        <span class="res-value" id="r_diffusion_coefficient_1">-</span>
-                                        <span class="res-unit">м²/с</span>
-                                    </div>
-                                    <div class="res-card">
-                                        <span class="res-label">D₂</span>
-                                        <span class="res-value" id="r_diffusion_coefficient_2">-</span>
-                                        <span class="res-unit">м²/с</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- PLASMA TAB -->
-                            <div class="res-panel" data-tab="plasma">
-                                <h4 class="res-section-title">Параметры плазмы</h4>
-                                <div class="res-cards">
-                                    <div class="res-card">
-                                        <span class="res-label">Напряжение</span>
-                                        <span class="res-value" id="r_voltage">-</span>
-                                        <span class="res-unit">В</span>
-                                    </div>
-                                    <div class="res-card">
-                                        <span class="res-label">Электронная температура</span>
-                                        <span class="res-value" id="r_electron_temperature">-</span>
-                                        <span class="res-unit">К</span>
-                                    </div>
-                                    <div class="res-card">
-                                        <span class="res-label">Энергия иона</span>
-                                        <span class="res-value" id="r_ion_energy">-</span>
-                                        <span class="res-unit">Дж</span>
-                                    </div>
-                                    <div class="res-card">
-                                        <span class="res-label">Давление</span>
-                                        <span class="res-value" id="r_pressure">-</span>
-                                        <span class="res-unit">Па</span>
-                                    </div>
-                                    <div class="res-card">
-                                        <span class="res-label">Плотность электрона</span>
-                                        <span class="res-value" id="r_electron_density">-</span>
-                                        <span class="res-unit">K</span>
-                                    </div>
-                                    <div class="res-card">
-                                        <span class="res-label">Скорость электрона</span>
-                                        <span class="res-value" id="r_electron_velocity">-</span>
-                                        <span class="res-unit">м/с</span>
-                                    </div>
-                                    <div class="res-card">
-                                        <span class="res-label">Плотность тока</span>
-                                        <span class="res-value" id="r_current_density">-</span>
-                                        <span class="res-unit">А/м²</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Additional Physics tab -->
-                            <div class="res-panel" data-tab="additional_physics">
-                                <h4 class="res-section-title">Дополнительная физика</h4>
+                        <!-- PLASMA TAB -->
+                        <div class="res-panel" data-tab="plasma">
+                            <h4 class="res-section-title">Параметры плазмы</h4>
+                            <div class="res-cards">
                                 <div class="res-card">
-                                    <span class="res-label">Глубина слоя</span>
-                                    <span class="res-value" id="r_depth"></span>
-                                    <span class="res-unit">м</span>
+                                    <span class="res-label">Напряжение</span>
+                                    <span class="res-value" id="r_voltage">—</span>
+                                    <span class="res-unit">В</span>
                                 </div>
                                 <div class="res-card">
-                                    <span class="res-label">Концентрация</span>
-                                    <span class="res-value" id="r_concentration"></span>
+                                    <span class="res-label">Ток</span>
+                                    <span class="res-value" id="r_current">—</span>
+                                    <span class="res-unit">А</span>
+                                </div>
+                                <div class="res-card">
+                                    <span class="res-label">Давление</span>
+                                    <span class="res-value" id="r_pressure">—</span>
+                                    <span class="res-unit">Па</span>
+                                </div>
+                                <div class="res-card">
+                                    <span class="res-label">Температура электронов</span>
+                                    <span class="res-value" id="r_electrontemp">—</span>
+                                    <span class="res-unit">K</span>
+                                </div>
+                                <div class="res-card">
+                                    <span class="res-label">Время облучения</span>
+                                    <span class="res-value" id="r_exposure_time">—</span>
+                                    <span class="res-unit">с</span>
+                                </div>
+                                <div class="res-card">
+                                    <span class="res-label">Плотность электронов</span>
+                                    <span class="res-value" id="r_electron_density">—</span>
                                     <span class="res-unit">м⁻³</span>
                                 </div>
                                 <div class="res-card">
-                                    <span class="res-label">Термально активная диффузия</span>
-                                    <span class="res-value" id="r_d_thermal"></span>
-                                    <span class="res-unit">м²/с</span>
+                                    <span class="res-label">Скорость электронов</span>
+                                    <span class="res-value" id="r_electron_velocity">—</span>
+                                    <span class="res-unit">м/с</span>
                                 </div>
                                 <div class="res-card">
-                                    <span class="res-label">Общий импульс</span>
-                                    <span class="res-value" id="r_total_momentum"></span>
-                                    <span class="res-unit">кг⋅м/с</span>
+                                    <span class="res-label">Плотность тока</span>
+                                    <span class="res-value" id="r_current_density">—</span>
+                                    <span class="res-unit">А/м²</span>
                                 </div>
+                            </div>
+                        </div>
+
+                        <!-- CHAMBER TAB -->
+                        <div class="res-panel" data-tab="chamber">
+                            <h4 class="res-section-title">Геометрия камеры</h4>
+                            <div class="res-cards">
                                 <div class="res-card">
-                                    <span class="res-label">Суммарная энергия повреждения</span>
-                                    <span class="res-value" id="r_total_damage"></span>
-                                    <span class="res-unit">Дж</span>
-                                </div>
-                                <div class="res-card">
-                                    <span class="res-label">Полное смещение</span>
-                                    <span class="res-value" id="r_total_displacement"></span>
+                                    <span class="res-label">Анод</span>
+                                    <span class="res-value" id="r_chamber_width">—</span>
                                     <span class="res-unit">м</span>
                                 </div>
                                 <div class="res-card">
-                                    <span class="res-label">Создано в</span>
-                                    <span class="res-value" id="r_created_at"></span>
-                                    <span class="res-unit"></span>
+                                    <span class="res-label">Катод</span>
+                                    <span class="res-value" id="r_chamber_depth">—</span>
+                                    <span class="res-unit">м</span>
                                 </div>
                             </div>
-
                         </div>
 
-                        <div class="res-actions">
-                            <button class="btn btn-secondary" onclick="newSim()">
-                                <i class="fas fa-redo"></i> Новая симуляция
-                            </button>
-                            <button class="btn btn-primary" onclick="saveRes()" id="saveBtn">
-                                <i class="fas fa-save"></i> Сохранить в БД
-                            </button>
+                        <!-- ION IMPACT TAB -->
+                        <div class="res-panel" data-tab="ion">
+                            <h4 class="res-section-title">Параметры удара иона</h4>
+                            <div class="res-cards">
+                                <div class="res-card">
+                                    <span class="res-label">Энергия иона (переопределение)</span>
+                                    <span class="res-value" id="r_ion_energy_override">—</span>
+                                    <span class="res-unit">эВ</span>
+                                </div>
+                                <div class="res-card">
+                                    <span class="res-label">Угол падения иона</span>
+                                    <span class="res-value" id="r_ion_incidence_angle">—</span>
+                                    <span class="res-unit">°</span>
+                                </div>
+                                <div class="res-card">
+                                    <span class="res-label">Целевая температура</span>
+                                    <span class="res-value" id="r_target_temperature">—</span>
+                                    <span class="res-unit">K</span>
+                                </div>
+                                <div class="res-card">
+                                    <span class="res-label">Энергия связи поверхности</span>
+                                    <span class="res-value" id="r_surface_binding_energy">—</span>
+                                    <span class="res-unit">эВ</span>
+                                </div>
+                            </div>
                         </div>
 
-                        <div id="saveStatus" class="save-status"></div>
+                        <!-- THERMAL TAB -->
+                        <div class="res-panel" data-tab="thermal">
+                            <h4 class="res-section-title">Теплофизические свойства</h4>
+                            <div class="res-cards">
+                                <div class="res-card">
+                                    <span class="res-label">Теплопроводность</span>
+                                    <span class="res-value" id="r_thermal_conductivity">—</span>
+                                    <span class="res-unit">Вт/(м·К)</span>
+                                </div>
+                                <div class="res-card">
+                                    <span class="res-label">Теплоемкость</span>
+                                    <span class="res-value" id="r_heat_capacity">—</span>
+                                    <span class="res-unit">Дж/(кг·К)</span>
+                                </div>
+                                <div class="res-card">
+                                    <span class="res-label">Плотность</span>
+                                    <span class="res-value" id="r_density">—</span>
+                                    <span class="res-unit">кг/м³</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- DIFFUSION TAB -->
+                        <div class="res-panel" data-tab="diffusion">
+                            <h4 class="res-section-title">Диффузионный профиль</h4>
+                            <div class="res-cards">
+                                <div class="res-card">
+                                    <span class="res-label">D₁ (предэкспонента первого канала)</span>
+                                    <span class="res-value" id="r_d1">—</span>
+                                    <span class="res-unit">м²/с</span>
+                                </div>
+                                <div class="res-card">
+                                    <span class="res-label">D₂ (предэкспонента второго канала)</span>
+                                    <span class="res-value" id="r_d2">—</span>
+                                    <span class="res-unit">м²/с</span>
+                                </div>
+                                <div class="res-card">
+                                    <span class="res-label">Q₁ (энергия активации первого канала)</span>
+                                    <span class="res-value" id="r_q1">—</span>
+                                    <span class="res-unit">эВ</span>
+                                </div>
+                                <div class="res-card">
+                                    <span class="res-label">Q₂ (энергия активации второго канала)</span>
+                                    <span class="res-value" id="r_q2">—</span>
+                                    <span class="res-unit">эВ</span>
+                                </div>
+                                <div class="res-card">
+                                    <span class="res-label">D термический коэффициент диффузии</span>
+                                    <span class="res-value" id="r_d_thermal">—</span>
+                                    <span class="res-unit">м²/с</span>
+                                </div>
+                                <div class="res-card">
+                                    <span class="res-label">D эффективный коэффициент диффузии (с учётом облучения)</span>
+                                    <span class="res-value" id="r_d_effective">—</span>
+                                    <span class="res-unit">м²/с</span>
+                                </div>
+                                <div class="res-card">
+                                    <span class="res-label">Средняя глубина проникновения</span>
+                                    <span class="res-value" id="r_mean_depth">—</span>
+                                    <span class="res-unit">м</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- DAMAGE TAB -->
+                        <div class="res-panel" data-tab="damage">
+                            <h4 class="res-section-title">Повреждения и энергия</h4>
+                            <div class="res-cards">
+                                <div class="res-card">
+                                    <span class="res-label">Полная переданная энергия</span>
+                                    <span class="res-value" id="r_total_transferred_energy">—</span>
+                                    <span class="res-unit">эВ</span>
+                                </div>
+                                <div class="res-card">
+                                    <span class="res-label">Средняя энергия на атом</span>
+                                    <span class="res-value" id="r_avg_transferred_per_atom">—</span>
+                                    <span class="res-unit">эВ</span>
+                                </div>
+                                <div class="res-card">
+                                    <span class="res-label">Полные повреждения</span>
+                                    <span class="res-value" id="r_total_damage">—</span>
+                                    <span class="res-unit">эВ</span>
+                                </div>
+                                <div class="res-card">
+                                    <span class="res-label">Полный импульс</span>
+                                    <span class="res-value" id="r_total_momentum">—</span>
+                                    <span class="res-unit">кг·м/с</span>
+                                </div>
+                                <div class="res-card">
+                                    <span class="res-label">Полное смещение</span>
+                                    <span class="res-value" id="r_total_displacement">—</span>
+                                    <span class="res-unit">смещ.</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
+                    <div class="res-actions">
+                        <button class="btn btn-secondary" onclick="newSim()">
+                            <i class="fas fa-redo"></i> Новая симуляция
+                        </button>
+                        <button class="btn btn-primary" onclick="saveRes()" id="saveBtn">
+                            <i class="fas fa-save"></i> Сохранить в БД
+                        </button>
+                    </div>
+
+                    <div id="saveStatus" class="save-status"></div>
                 </div>
             </div>
         </div>
