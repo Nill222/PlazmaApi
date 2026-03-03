@@ -7,8 +7,11 @@ import plasmapi.project.plasma.model.res.Ion;
 import plasmapi.project.plasma.model.res.PlasmaConfiguration;
 import plasmapi.project.plasma.repository.AtomListRepository;
 import plasmapi.project.plasma.repository.IonRepository;
+import plasmapi.project.plasma.service.PhysicalConstants;
 import plasmapi.project.plasma.service.math.diffusion.DiffusionProfile;
-import plasmapi.project.plasma.service.math.diffusion.impl.DiffusionServiceImpl;
+import plasmapi.project.plasma.service.math.diffusion.DiffusionService;
+import plasmapi.project.plasma.service.math.plazma.PlasmaResult;
+import plasmapi.project.plasma.service.math.plazma.PlasmaService;
 import plasmapi.project.plasma.service.math.simulation.SimulationOrchestratorService;
 import plasmapi.project.plasma.service.math.simulation.SimulationRequest;
 import plasmapi.project.plasma.service.math.simulation.SimulationResult;
@@ -19,52 +22,84 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
 
     private final AtomListRepository atomRepo;
     private final IonRepository ionRepo;
-    private final DiffusionServiceImpl diffusionService;
+    private final PlasmaService plasmaService;
+    private final DiffusionService diffusionService;
 
-    // Значения по умолчанию для теплофизических свойств (TODO: получать из БД)
-    private static final double DEFAULT_DENSITY = 7800.0;          // кг/м³ (сталь)
-    private static final double DEFAULT_HEAT_CAPACITY = 500.0;    // Дж/(кг·К)
-    private static final double DEFAULT_THERMAL_CONDUCTIVITY = 20.0; // Вт/(м·К)
-    private static final double DEFAULT_SURFACE_BINDING_ENERGY = 3.0; // эВ
-    private static final double DEFAULT_AMBIENT_TEMP = 300.0;      // К
+    // Значения по умолчанию (если в БД отсутствуют)
+    private static final double DEFAULT_DENSITY = 7800.0;             // кг/м³
+    private static final double DEFAULT_CP = 500.0;                   // Дж/(кг·К)
+    private static final double DEFAULT_K = 20.0;                     // Вт/(м·К)
+    private static final double DEFAULT_SURFACE_BINDING = 3.0;        // эВ
+    private static final double DEFAULT_AMBIENT = 300.0;              // К
+    private static final double DEFAULT_THICKNESS = 1e-3;             // 1 мм
+    private static final double DEFAULT_PROJECTED_RANGE = 10e-9;      // 10 нм
 
     @Override
     public SimulationResult runSimulation(SimulationRequest request) {
-        // 1. Поиск атома по названию (atom_name)
+
+        // 1️⃣ Материал
         AtomList atom = atomRepo.findById(request.getAtomId())
-                .orElseThrow(() -> new IllegalArgumentException("Атом не найден: " + request.getAtomId()));
+                .orElseThrow(() -> new IllegalArgumentException("Atom not found"));
 
-        // 2. Поиск иона по названию
+        // 2️⃣ Ион
         Ion ion = ionRepo.findById(request.getIonId())
-                .orElseThrow(() -> new IllegalArgumentException("Ион не найден: " + request.getIonId()));
+                .orElseThrow(() -> new IllegalArgumentException("Ion not found"));
 
-        // 3. Создание конфигурации плазмы из данных запроса
-        PlasmaConfiguration plasmaConfig = new PlasmaConfiguration();
-        plasmaConfig.setVoltage(request.getVoltage());
-        plasmaConfig.setCurrent(request.getCurrent());
-        plasmaConfig.setChamberWidth(request.getChamberWidth());
-        plasmaConfig.setChamberDepth(request.getChamberDepth());
-        plasmaConfig.setIonIncidenceAngle(request.getAngle());
-        plasmaConfig.setSurfaceBindingEnergy(DEFAULT_SURFACE_BINDING_ENERGY);
-        // Теплофизические свойства пока из констант
-        plasmaConfig.setDensity(DEFAULT_DENSITY);
-        plasmaConfig.setHeatCapacity(DEFAULT_HEAT_CAPACITY);
-        plasmaConfig.setThermalConductivity(DEFAULT_THERMAL_CONDUCTIVITY);
-        plasmaConfig.setTargetTemperature(request.getAmbientTemp() != null ? request.getAmbientTemp() : DEFAULT_AMBIENT_TEMP);
+        // 3️⃣ Температура окружающей среды
+        double ambientTemp = request.getAmbientTemp() != null
+                ? request.getAmbientTemp()
+                : DEFAULT_AMBIENT;
 
-        // 4. Температура окружающей среды
-        double ambientTemp = request.getAmbientTemp() != null ? request.getAmbientTemp() : DEFAULT_AMBIENT_TEMP;
+        // 4️⃣ Формируем PlasmaConfiguration (только процесс!)
+        PlasmaConfiguration cfg = new PlasmaConfiguration();
 
-        // 5. Запуск диффузионного расчёта
+        cfg.setVoltage(request.getVoltage());
+        cfg.setCurrent(request.getCurrent());
+        cfg.setPressure(request.getPressure());
+        cfg.setElectronTemperature(request.getElectronTemp());
+        cfg.setExposureTime(request.getExposureTime());
+
+        cfg.setChamberWidth(request.getChamberWidth());
+        cfg.setChamberDepth(request.getChamberDepth());
+        cfg.setIonIncidenceAngle(request.getAngle());
+
+        // Материальные свойства (пока дефолт, позже можно в БД)
+        cfg.setDensity(DEFAULT_DENSITY);
+        cfg.setHeatCapacity(DEFAULT_CP);
+        cfg.setThermalConductivity(DEFAULT_K);
+        cfg.setSurfaceBindingEnergy(DEFAULT_SURFACE_BINDING);
+        cfg.setTargetTemperature(ambientTemp);
+
+        // 5️⃣ Расчёт параметров плазмы
+        PlasmaResult plasma = plasmaService.calculate(cfg, ion, null);
+
+        double ionEnergyEv = plasma.ionEnergyEv();
+        double ionFlux = plasma.ionFlux();                // ион/(м²·с)
+        double exposureTime = request.getExposureTime();
+
+        // 6️⃣ Мощность на поверхность (Вт/м²)
+        // P = Γ * E * e
+        double ionEnergyJ = ionEnergyEv * PhysicalConstants.EV;
+        double powerDensity = ionFlux * ionEnergyJ;      // Вт/м²
+
+        // 7️⃣ Переводим в powerInput для ThermalService
+        // ThermalService считает что powerInput — Вт/м²
+        // Поэтому передаём именно powerDensity
+        cfg.setIonEnergyOverride(ionEnergyEv); // фиксируем чтобы DiffusionService использовал то же
+
+        // 8️⃣ Защита от безумного dt
+        if (exposureTime <= 0)
+            throw new IllegalArgumentException("Exposure time must be positive");
+
+        // 9️⃣ Запуск диффузии
         DiffusionProfile profile = diffusionService.calculateProfile(
                 atom,
                 ion,
-                plasmaConfig,
-                request.getExposureTime(),
+                cfg,
+                exposureTime,
                 ambientTemp
         );
 
-        // 6. Формирование результата
-        return new SimulationResult(profile, atom, ion, plasmaConfig);
+        return new SimulationResult(profile, atom, ion, cfg);
     }
 }
