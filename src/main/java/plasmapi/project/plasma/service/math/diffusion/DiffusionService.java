@@ -7,6 +7,7 @@ import plasmapi.project.plasma.model.res.PlasmaConfiguration;
 public interface DiffusionService {
     DiffusionProfile calculateProfile(
             AtomList atom,
+            AlloyComposition alloy,
             Ion ion,
             PlasmaConfiguration plasmaConfig,
             double exposureTime,

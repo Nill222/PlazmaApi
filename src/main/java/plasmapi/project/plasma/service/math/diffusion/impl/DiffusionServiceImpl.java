@@ -9,6 +9,8 @@ import plasmapi.project.plasma.model.res.Ion;
 import plasmapi.project.plasma.model.res.PlasmaConfiguration;
 import plasmapi.project.plasma.service.PhysicalConstants;
 import plasmapi.project.plasma.service.math.collision.CollisionService;
+import plasmapi.project.plasma.service.math.diffusion.AlloyComponent;
+import plasmapi.project.plasma.service.math.diffusion.AlloyComposition;
 import plasmapi.project.plasma.service.math.diffusion.DiffusionProfile;
 import plasmapi.project.plasma.service.math.diffusion.DiffusionService;
 import plasmapi.project.plasma.service.math.plazma.PlasmaResult;
@@ -34,40 +36,33 @@ public class DiffusionServiceImpl implements DiffusionService {
     private final SLRService slrService;
     private final ResonanceService resonanceService;
 
-    // Физические константы
-    private static final double R = PhysicalConstants.R;           // Дж/(моль·К)
-    private static final double KB = PhysicalConstants.KB;         // Дж/К
-    private static final double NA = PhysicalConstants.NA;         // моль⁻¹
-    private static final double EV = PhysicalConstants.EV;         // Дж/эВ
+    private static final double R = PhysicalConstants.R;
+    private static final double KB = PhysicalConstants.KB;
+    private static final double NA = PhysicalConstants.NA;
+    private static final double EV = PhysicalConstants.EV;
 
-    // Эмпирические коэффициенты (можно вынести в application.properties)
-    private static final double MIN_D = 1e-40;      // минимальный коэффициент диффузии, м²/с
-    private static final double MAX_D = 1e-6;       // максимальный коэффициент диффузии, м²/с
-    private static final double ALPHA = 0.25;        // вклад жёсткости в энергию активации
-    private static final double BETA = 1e-3;         // подавление диффузии жёсткостью
-    private static final double RADIATION_FACTOR = 20.0; // множитель в экспоненте радиационного ускорения
-    private static final double SLR_COUPLING = 0.05; // вклад SLR-фактора
-    private static final double DEFAULT_IMPACT_PARAMETER_FACTOR = 0.5; // доля от re для прицельного параметра
+    private static final double MIN_D = 1e-40;
+    private static final double MAX_D = 1e-6;
+    private static final double ALPHA = 0.25;
+    private static final double BETA = 1e-3;
+    private static final double RADIATION_FACTOR = 20.0;
+    private static final double SLR_COUPLING = 0.05;
+    private static final double DEFAULT_IMPACT_PARAMETER_FACTOR = 0.5;
 
-    /**
-     * Рассчитывает профиль диффузии под облучением.
-     *
-     * @param atom         материал мишени
-     * @param ion          тип иона
-     * @param plasmaConfig конфигурация плазмы/пучка
-     * @param exposureTime время облучения, с
-     * @param ambientTemp  температура окружающей среды, К
-     * @return объект с результатами диффузии
-     */
     public DiffusionProfile calculateProfile(
             AtomList atom,
+            AlloyComposition alloy,
             Ion ion,
             PlasmaConfiguration plasmaConfig,
             double exposureTime,
             double ambientTemp
     ) {
-        // 1. Термический расчёт (температура меняется со временем)
+
+        boolean isAlloy = alloy != null && alloy.getComponents() != null && !alloy.getComponents().isEmpty();
+
+        // 1. Thermal
         ThermalDtoAdapter adapter = new ThermalDtoAdapter(plasmaConfig, ambientTemp, exposureTime);
+
         ThermalResult thermal = thermalService.simulate(
                 plasmaConfig,
                 adapter.getT0(),
@@ -81,77 +76,127 @@ public class DiffusionServiceImpl implements DiffusionService {
                 adapter.getH(),
                 adapter.getN()
         );
-        // Для простоты используем конечную температуру как характеристическую
-        List<Double> temps = thermal.times(); // если ThermalResult хранит список средних температур
+
+        List<Double> temps = thermal.times();
         double finalT = temps.get(temps.size() - 1);
 
-        // 2. Плазменные параметры
+        // 2. Plasma
         PlasmaResult plasma = plasmaService.calculate(plasmaConfig, ion, null);
         double ionEnergyEv = plasma.ionEnergyEv();
         double ionFlux = plasma.ionFlux();
         double fluence = ionFlux * exposureTime;
 
-        // 3. Базовые свойства атома
-        // TODO: заменить valence на atomicNumber, когда появится
-        int Z = atom.getValence(); // временно
+        // 3. D1 / D2
+        double D1;
+        double D2;
 
-        // 4. Предэкспоненциальные множители диффузии (пока из packingFactor, TODO заменить на отдельные поля)
-        double D1 = atom.getPackingFactor1() != null ? atom.getPackingFactor1() : 1e-18;
-        double D2 = atom.getPackingFactor2() != null ? atom.getPackingFactor2() : 1e-19;
+        if (!isAlloy) {
+            D1 = atom.getPackingFactor1() != null ? atom.getPackingFactor1() : 1e-18;
+            D2 = atom.getPackingFactor2() != null ? atom.getPackingFactor2() : 1e-19;
+        } else {
+            D1 = 0.0;
+            D2 = 0.0;
 
-        // 5. Энергии активации (Дж/моль)
-        double Q1 = getActivationEnergy(atom, true);
-        double Q2 = getActivationEnergy(atom, false);
+            for (AlloyComponent c : alloy.getComponents()) {
+                AtomList a = c.getAtom();
+                double x = c.getFraction();
 
-        // 6. Потенциал – используем равновесное расстояние для оценки жёсткости
-        //    Сначала вычислим потенциал при любом разумном r (например, равновесном)
-        PotentialParameters potential = potentialService.computePotential(atom.getA() * 1e-10, atom);
-        double stiffness = potential.stiffness();
-        double re = potential.re(); // равновесное расстояние, м
+                double d1 = a.getPackingFactor1() != null ? a.getPackingFactor1() : 1e-18;
+                double d2 = a.getPackingFactor2() != null ? a.getPackingFactor2() : 1e-19;
 
-        // Модификация энергий активации под действием напряжений (эмпирика)
-        double Veff = stiffness * re; // эффективная энергия (размерность Дж·м? но эмпирика)
+                D1 += x * d1;
+                D2 += x * d2;
+            }
+        }
+
+        // 4. Activation energy
+        double Q1;
+        double Q2;
+
+        if (!isAlloy) {
+            Q1 = getActivationEnergy(atom, true);
+            Q2 = getActivationEnergy(atom, false);
+        } else {
+            Q1 = 0.0;
+            Q2 = 0.0;
+
+            for (AlloyComponent c : alloy.getComponents()) {
+                AtomList a = c.getAtom();
+                double x = c.getFraction();
+
+                Q1 += x * getActivationEnergy(a, true);
+                Q2 += x * getActivationEnergy(a, false);
+            }
+        }
+
+        // 5. Potential
+        double stiffness;
+        double re;
+
+        if (!isAlloy) {
+            PotentialParameters p = potentialService.computePotential(atom.getA() * 1e-10, atom);
+            stiffness = p.stiffness();
+            re = p.re();
+        } else {
+            stiffness = computeEffectiveStiffness(alloy);
+            re = computeEffectiveRe(alloy);
+        }
+
+        // 6. Energy activation modification
+        double Veff = stiffness * re;
         double Q1_mod = Q1 + ALPHA * Veff;
         double Q2_mod = Q2 + ALPHA * Veff;
 
-        // 7. Термический коэффициент диффузии
+        // 7. Thermal diffusion
         double term1 = D1 * Math.exp(-Q1_mod / (R * finalT));
         double term2 = D2 * Math.exp(-Q2_mod / (R * finalT));
-        double D_thermal = (term1 + term2) * Math.exp(-BETA * stiffness);
-        D_thermal = clamp(D_thermal);
 
-        // 8. Радиационно-стимулированная диффузия (столкновительное усиление)
-        double Esurf = plasmaConfig.getSurfaceBindingEnergy() != null ? plasmaConfig.getSurfaceBindingEnergy() : 3.0;
-        double impactParam = re * DEFAULT_IMPACT_PARAMETER_FACTOR; // характерный прицельный параметр
+        double D_thermal = clamp((term1 + term2) * Math.exp(-BETA * stiffness));
+
+        // 8. Collision
+        double Esurf = plasmaConfig.getSurfaceBindingEnergy() != null
+                ? plasmaConfig.getSurfaceBindingEnergy()
+                : 3.0;
+
+        double impactParam = re * DEFAULT_IMPACT_PARAMETER_FACTOR;
+
+        AtomList collisionAtom = isAlloy ? alloy.getComponents().get(0).getAtom() : atom;
+
         CollisionResult collision = collisionService.simulate(
-                ion, atom, ionEnergyEv, impactParam, Esurf
+                ion, collisionAtom, ionEnergyEv, impactParam, Esurf
         );
-        double transferredJ = collision.transferredEnergy() * EV; // в Дж
-        double ionEnergyJ = ionEnergyEv * EV;
-        double E_total = Math.max(transferredJ + ionEnergyJ, 0.0);
-        double exponent = Math.min(E_total / (RADIATION_FACTOR * KB * finalT), 20.0); // ограничиваем
-        double D_collision = D_thermal * Math.exp(exponent);
-        D_collision = clamp(D_collision);
 
-        // 9. Учёт ионного перемешивания (SLR)
+        double transferredJ = collision.transferredEnergy() * EV;
+        double ionEnergyJ = ionEnergyEv * EV;
+
+        double E_total = Math.max(transferredJ + ionEnergyJ, 0.0);
+
+        double exponent = Math.min(E_total / (RADIATION_FACTOR * KB * finalT), 20.0);
+
+        double D_collision = clamp(D_thermal * Math.exp(exponent));
+
+        // 9. SLR
         double thetaRad = Math.toRadians(plasmaConfig.getIonIncidenceAngle());
+
         double slrFactor = slrService.computeFactor(fluence, thetaRad);
         slrFactor = Math.min(Math.max(slrFactor, 0.0), 10.0);
-        double D_slr = D_collision * (1.0 + SLR_COUPLING * slrFactor);
-        D_slr = clamp(D_slr);
 
-        // 10. Резонансный фактор (используем новые поля атома)
-        double xi = resonanceService.computeXi(atom, ionEnergyEv);
-        double D_effective = D_slr * Math.max(1.0, Math.log1p(xi));
-        D_effective = clamp(D_effective);
+        double D_slr = clamp(D_collision * (1.0 + SLR_COUPLING * slrFactor));
 
-        // 11. Профиль диффузии (экспоненциальное приближение)
+        // 10. Resonance
+        double xi = resonanceService.computeXi(collisionAtom, ionEnergyEv);
+
+        double D_effective = clamp(D_slr * Math.max(1.0, Math.log1p(xi)));
+
+        // 11. Profile
         double meanDepth = Math.sqrt(2 * D_effective * exposureTime);
         if (meanDepth < 1e-12) meanDepth = 1e-12;
 
         List<Double> depths = new ArrayList<>();
         List<Double> conc = new ArrayList<>();
-        double dx = meanDepth * 6.0 / 199; // до 6 сигм
+
+        double dx = meanDepth * 6.0 / 199;
+
         for (int i = 0; i < 200; i++) {
             double x = i * dx;
             depths.add(x);
@@ -160,7 +205,8 @@ public class DiffusionServiceImpl implements DiffusionService {
 
         return new DiffusionProfile(
                 D1, D2,
-                Q1 / (NA * EV), Q2 / (NA * EV), // обратно в эВ
+                Q1 / (NA * EV),
+                Q2 / (NA * EV),
                 D_thermal,
                 D_effective,
                 meanDepth,
@@ -169,31 +215,61 @@ public class DiffusionServiceImpl implements DiffusionService {
         );
     }
 
-    // Ограничитель коэффициента диффузии
     private double clamp(double D) {
         if (Double.isNaN(D) || D < MIN_D) return MIN_D;
         return Math.min(D, MAX_D);
     }
 
-    /**
-     * Возвращает энергию активации для канала диффузии в Дж/моль.
-     * Если в атоме есть специальные поля activationEnergyEv1/2, используем их,
-     * иначе оцениваем как долю от энергии когезии.
-     *
-     * @param atom  атом
-     * @param first true для первого канала, false для второго
-     */
-    private double getActivationEnergy(AtomList atom, boolean first) {
-        // Пытаемся получить из специальных полей (пока не добавлены, поэтому закомментировано)
-        // Double ev = first ? atom.getActivationEnergyEv1() : atom.getActivationEnergyEv2();
-        // if (ev != null) return ev * EV * NA;
+    private double computeEffectiveStiffness(AlloyComposition alloy) {
+        double result = 0.0;
+        var comps = alloy.getComponents();
 
-        // Оценка из энергии когезии
-        Double cohEv = first ? atom.getCohesiveEnergyEv1() : atom.getCohesiveEnergyEv2();
-        if (cohEv == null) {
-            cohEv = 4.3; // значение по умолчанию для многих металлов
+        for (int i = 0; i < comps.size(); i++) {
+            for (int j = 0; j < comps.size(); j++) {
+
+                double xi = comps.get(i).getFraction();
+                double xj = comps.get(j).getFraction();
+
+                AtomList ai = comps.get(i).getAtom();
+                AtomList aj = comps.get(j).getAtom();
+
+                double ki = potentialService.computePotential(ai.getA() * 1e-10, ai).stiffness();
+                double kj = potentialService.computePotential(aj.getA() * 1e-10, aj).stiffness();
+
+                result += xi * xj * Math.sqrt(ki * kj);
+            }
         }
-        double fraction = first ? 0.25 : 0.45; // коэффициенты из оригинальной модели
+        return result;
+    }
+
+    private double computeEffectiveRe(AlloyComposition alloy) {
+        double result = 0.0;
+        var comps = alloy.getComponents();
+
+        for (int i = 0; i < comps.size(); i++) {
+            for (int j = 0; j < comps.size(); j++) {
+
+                double xi = comps.get(i).getFraction();
+                double xj = comps.get(j).getFraction();
+
+                AtomList ai = comps.get(i).getAtom();
+                AtomList aj = comps.get(j).getAtom();
+
+                double rei = potentialService.computePotential(ai.getA() * 1e-10, ai).re();
+                double rej = potentialService.computePotential(aj.getA() * 1e-10, aj).re();
+
+                result += xi * xj * ((rei + rej) / 2.0);
+            }
+        }
+        return result;
+    }
+
+    private double getActivationEnergy(AtomList atom, boolean first) {
+        Double cohEv = first ? atom.getCohesiveEnergyEv1() : atom.getCohesiveEnergyEv2();
+        if (cohEv == null) cohEv = 4.3;
+
+        double fraction = first ? 0.25 : 0.45;
+
         return cohEv * EV * NA * fraction;
     }
 
@@ -201,8 +277,6 @@ public class DiffusionServiceImpl implements DiffusionService {
         private final PlasmaConfiguration cfg;
         private final double ambientTemp;
         private final double exposureTime;
-        // Можно добавить поля для projectedRange, boundaryCondition, h, N, если они должны передаваться извне
-        // Но пока сделаем методы, возвращающие значения по умолчанию или из cfg.
 
         ThermalDtoAdapter(PlasmaConfiguration cfg, double ambientTemp, double exposureTime) {
             this.cfg = cfg;
@@ -223,32 +297,26 @@ public class DiffusionServiceImpl implements DiffusionService {
         }
 
         double getThickness() {
-            // TODO: получить из cfg или параметра
-            return 0.001; // 1 мм по умолчанию
+            return 0.001;
         }
 
         Double getPowerInput() {
-            // TODO: рассчитать из потока и энергии ионов
             return null;
         }
 
         Double getProjectedRange() {
-            // TODO: получить из cfg или рассчитать
-            return 10e-9; // 10 нм по умолчанию
+            return 10e-9;
         }
 
         ThermalServiceImpl.BoundaryCondition getBoundaryCondition() {
-            // TODO: получить из cfg
-            return ThermalServiceImpl.BoundaryCondition.ADIABATIC; // по умолчанию
+            return ThermalServiceImpl.BoundaryCondition.ADIABATIC;
         }
 
         double getH() {
-            // TODO: получить из cfg
-            return 0.0; // для адиабатического не важно
+            return 0.0;
         }
 
         Integer getN() {
-            // TODO: получить из cfg или null для авто
             return null;
         }
     }

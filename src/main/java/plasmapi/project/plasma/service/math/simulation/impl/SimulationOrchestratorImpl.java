@@ -8,6 +8,8 @@ import plasmapi.project.plasma.model.res.PlasmaConfiguration;
 import plasmapi.project.plasma.repository.AtomListRepository;
 import plasmapi.project.plasma.repository.IonRepository;
 import plasmapi.project.plasma.service.PhysicalConstants;
+import plasmapi.project.plasma.service.math.diffusion.AlloyComponent;
+import plasmapi.project.plasma.service.math.diffusion.AlloyComposition;
 import plasmapi.project.plasma.service.math.diffusion.DiffusionProfile;
 import plasmapi.project.plasma.service.math.diffusion.DiffusionService;
 import plasmapi.project.plasma.service.math.plazma.PlasmaResult;
@@ -15,6 +17,8 @@ import plasmapi.project.plasma.service.math.plazma.PlasmaService;
 import plasmapi.project.plasma.service.math.simulation.SimulationOrchestratorService;
 import plasmapi.project.plasma.service.math.simulation.SimulationRequest;
 import plasmapi.project.plasma.service.math.simulation.SimulationResult;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -25,30 +29,67 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
     private final PlasmaService plasmaService;
     private final DiffusionService diffusionService;
 
-    // Значения по умолчанию (если в БД отсутствуют)
-    private static final double DEFAULT_DENSITY = 7800.0;             // кг/м³
-    private static final double DEFAULT_CP = 500.0;                   // Дж/(кг·К)
-    private static final double DEFAULT_K = 20.0;                     // Вт/(м·К)
-    private static final double DEFAULT_SURFACE_BINDING = 3.0;        // эВ
-    private static final double DEFAULT_AMBIENT = 300.0;              // К
+    // Значения по умолчанию
+    private static final double DEFAULT_DENSITY = 7800.0;
+    private static final double DEFAULT_CP = 500.0;
+    private static final double DEFAULT_K = 20.0;
+    private static final double DEFAULT_SURFACE_BINDING = 3.0;
+    private static final double DEFAULT_AMBIENT = 300.0;
 
     @Override
     public SimulationResult runSimulation(SimulationRequest request) {
 
-        // 1️⃣ Материал
-        AtomList atom = atomRepo.findById(request.getAtomId())
-                .orElseThrow(() -> new IllegalArgumentException("Atom not found"));
+        // 1️⃣ Материал (fallback, если нет alloy)
+        AtomList atom = null;
+        if (request.getAtomId() != null) {
+            atom = atomRepo.findById(request.getAtomId())
+                    .orElseThrow(() -> new IllegalArgumentException("Atom not found"));
+        }
 
         // 2️⃣ Ион
         Ion ion = ionRepo.findById(request.getIonId())
                 .orElseThrow(() -> new IllegalArgumentException("Ion not found"));
 
-        // 3️⃣ Температура окружающей среды
+        // 3️⃣ Температура
         double ambientTemp = request.getAmbientTemp() != null
                 ? request.getAmbientTemp()
                 : DEFAULT_AMBIENT;
 
-        // 4️⃣ Формируем PlasmaConfiguration (только процесс!)
+        // 4️⃣ Сборка СПЛАВА 🔥
+        AlloyComposition alloy = null;
+
+        if (request.getComposition() != null && !request.getComposition().isEmpty()) {
+
+            List<AlloyComponent> components = request.getComposition().stream()
+                    .map(c -> new AlloyComponent(
+                            atomRepo.findById(c.getAtomId())
+                                    .orElseThrow(() -> new IllegalArgumentException("Atom not found: " + c.getAtomId())),
+                            c.getFraction()
+                    ))
+                    .toList();
+
+            double sum = components.stream()
+                    .mapToDouble(AlloyComponent::getFraction)
+                    .sum();
+
+            if (Math.abs(sum - 1.0) > 1e-6) {
+                throw new IllegalArgumentException("Fractions must sum to 1");
+            }
+
+            alloy = new AlloyComposition(components);
+
+            // если atom не задан — берём первый как fallback
+            if (atom == null) {
+                atom = components.get(0).getAtom();
+            }
+        }
+
+        // ❗ защита: должен быть либо atom либо alloy
+        if (atom == null) {
+            throw new IllegalArgumentException("Atom or composition must be provided");
+        }
+
+        // 5️⃣ PlasmaConfiguration
         PlasmaConfiguration cfg = new PlasmaConfiguration();
 
         cfg.setVoltage(request.getVoltage());
@@ -61,37 +102,36 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
         cfg.setChamberDepth(request.getChamberDepth());
         cfg.setIonIncidenceAngle(request.getAngle());
 
-        // Материальные свойства (пока дефолт, позже можно в БД)
+        // Материал (пока дефолт)
         cfg.setDensity(DEFAULT_DENSITY);
         cfg.setHeatCapacity(DEFAULT_CP);
         cfg.setThermalConductivity(DEFAULT_K);
         cfg.setSurfaceBindingEnergy(DEFAULT_SURFACE_BINDING);
         cfg.setTargetTemperature(ambientTemp);
 
-        // 5️⃣ Расчёт параметров плазмы
+        // 6️⃣ Плазма
         PlasmaResult plasma = plasmaService.calculate(cfg, ion, null);
 
         double ionEnergyEv = plasma.ionEnergyEv();
-        double ionFlux = plasma.ionFlux();                // ион/(м²·с)
+        double ionFlux = plasma.ionFlux();
         double exposureTime = request.getExposureTime();
 
-        // 6️⃣ Мощность на поверхность (Вт/м²)
-        // P = Γ * E * e
+        // 7️⃣ Мощность
         double ionEnergyJ = ionEnergyEv * PhysicalConstants.EV;
-        double powerDensity = ionFlux * ionEnergyJ;      // Вт/м²
+        double powerDensity = ionFlux * ionEnergyJ;
 
-        // 7️⃣ Переводим в powerInput для ThermalService
-        // ThermalService считает что powerInput — Вт/м²
-        // Поэтому передаём именно powerDensity
-        cfg.setIonEnergyOverride(ionEnergyEv); // фиксируем чтобы DiffusionService использовал то же
+        // фиксируем энергию
+        cfg.setIonEnergyOverride(ionEnergyEv);
 
-        // 8️⃣ Защита от безумного dt
-        if (exposureTime <= 0)
+        // 8️⃣ Проверка
+        if (exposureTime <= 0) {
             throw new IllegalArgumentException("Exposure time must be positive");
+        }
 
-        // 9️⃣ Запуск диффузии
+        // 9️⃣ Диффузия (🔥 теперь с alloy)
         DiffusionProfile profile = diffusionService.calculateProfile(
                 atom,
+                alloy,
                 ion,
                 cfg,
                 exposureTime,
