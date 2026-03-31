@@ -31,8 +31,6 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
     private static final double DEFAULT_K = 20.0;                     // Вт/(м·К)
     private static final double DEFAULT_SURFACE_BINDING = 3.0;        // эВ
     private static final double DEFAULT_AMBIENT = 300.0;              // К
-    private static final double DEFAULT_THICKNESS = 1e-3;             // 1 мм
-    private static final double DEFAULT_PROJECTED_RANGE = 10e-9;      // 10 нм
 
     @Override
     public SimulationResult runSimulation(SimulationRequest request) {

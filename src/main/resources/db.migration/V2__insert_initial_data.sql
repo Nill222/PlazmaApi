@@ -60,7 +60,7 @@ INSERT INTO plazma.ions (name, mass, charge) VALUES
 
 INSERT INTO plazma.users (username, password_hash, email, role)
 VALUES
-    ('admin', '$2a$10$examplehash', 'admin@plasma.local', 'ADMIN');
+    ('admin', '$2a$10$examplehash', 'admin@plasma.local', 'ROLE_ADMIN');
 
 INSERT INTO plazma.configs (user_id, name, description)
 VALUES (

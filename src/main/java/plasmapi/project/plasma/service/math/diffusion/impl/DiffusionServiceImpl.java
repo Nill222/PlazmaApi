@@ -77,7 +77,7 @@ public class DiffusionServiceImpl implements DiffusionService {
                 adapter.getPowerInput(),
                 adapter.getProjectedRange(),
                 adapter.getBoundaryCondition(),
-                ambientTemp, // или adapter.getAmbientTemp()? уже есть
+                ambientTemp,
                 adapter.getH(),
                 adapter.getN()
         );

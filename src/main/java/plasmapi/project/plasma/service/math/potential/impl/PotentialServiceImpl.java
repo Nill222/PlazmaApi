@@ -113,20 +113,17 @@ public class PotentialServiceImpl implements PotentialService {
      * Вычисляет равновесное расстояние между ближайшими соседями в зависимости от структуры.
      */
     private double equilibriumDistance(double a, StructureType structure) {
-        switch (structure) {
-            case FCC:
-                return a / Math.sqrt(2);
-            case BCC:
-                return a * Math.sqrt(3) / 2;
-            case SC:
-                return a;
-            case HCP:
+        return switch (structure) {
+            case FCC -> a / Math.sqrt(2);
+            case BCC -> a * Math.sqrt(3) / 2;
+            case SC -> a;
+            case HCP ->
                 // Для гексагональной плотноупакованной ближайшее расстояние обычно равно a (параметр решётки)
-                return a;
-            default:
+                    a;
+            default ->
                 // По умолчанию используем старый метод (если он есть)
-                return a * LatticePhysics.morseReFactor(structure);
-        }
+                    a * LatticePhysics.morseReFactor(structure);
+        };
     }
 
     /**
