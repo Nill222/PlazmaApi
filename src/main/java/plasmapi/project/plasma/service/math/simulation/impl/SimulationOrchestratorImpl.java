@@ -39,23 +39,32 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
     @Override
     public SimulationResult runSimulation(SimulationRequest request) {
 
-        // 1️⃣ Материал (fallback, если нет alloy)
+        // =========================
+        // 1️⃣ MATERIAL (atom fallback)
+        // =========================
         AtomList atom = null;
+
         if (request.getAtomId() != null) {
             atom = atomRepo.findById(request.getAtomId())
                     .orElseThrow(() -> new IllegalArgumentException("Atom not found"));
         }
 
-        // 2️⃣ Ион
+        // =========================
+        // 2️⃣ ION
+        // =========================
         Ion ion = ionRepo.findById(request.getIonId())
                 .orElseThrow(() -> new IllegalArgumentException("Ion not found"));
 
-        // 3️⃣ Температура
+        // =========================
+        // 3️⃣ TEMPERATURE
+        // =========================
         double ambientTemp = request.getAmbientTemp() != null
                 ? request.getAmbientTemp()
                 : DEFAULT_AMBIENT;
 
-        // 4️⃣ Сборка СПЛАВА 🔥
+        // =========================
+        // 4️⃣ ALLOY BUILD 🔥
+        // =========================
         AlloyComposition alloy = null;
 
         if (request.getComposition() != null && !request.getComposition().isEmpty()) {
@@ -78,18 +87,20 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
 
             alloy = new AlloyComposition(components);
 
-            // если atom не задан — берём первый как fallback
+            // fallback atom (важно для resonance и др.)
             if (atom == null) {
                 atom = components.get(0).getAtom();
             }
         }
 
-        // ❗ защита: должен быть либо atom либо alloy
+        // защита
         if (atom == null) {
             throw new IllegalArgumentException("Atom or composition must be provided");
         }
 
-        // 5️⃣ PlasmaConfiguration
+        // =========================
+        // 5️⃣ CONFIG
+        // =========================
         PlasmaConfiguration cfg = new PlasmaConfiguration();
 
         cfg.setVoltage(request.getVoltage());
@@ -102,33 +113,41 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
         cfg.setChamberDepth(request.getChamberDepth());
         cfg.setIonIncidenceAngle(request.getAngle());
 
-        // Материал (пока дефолт)
+        // material props
         cfg.setDensity(DEFAULT_DENSITY);
         cfg.setHeatCapacity(DEFAULT_CP);
         cfg.setThermalConductivity(DEFAULT_K);
         cfg.setSurfaceBindingEnergy(DEFAULT_SURFACE_BINDING);
         cfg.setTargetTemperature(ambientTemp);
 
-        // 6️⃣ Плазма
+        // =========================
+        // 6️⃣ PLASMA
+        // =========================
         PlasmaResult plasma = plasmaService.calculate(cfg, ion, null);
 
         double ionEnergyEv = plasma.ionEnergyEv();
         double ionFlux = plasma.ionFlux();
-        double exposureTime = request.getExposureTime();
+        double exposureTime = cfg.getExposureTime();
 
-        // 7️⃣ Мощность
-        double ionEnergyJ = ionEnergyEv * PhysicalConstants.EV;
-        double powerDensity = ionFlux * ionEnergyJ;
-
-        // фиксируем энергию
-        cfg.setIonEnergyOverride(ionEnergyEv);
-
-        // 8️⃣ Проверка
         if (exposureTime <= 0) {
             throw new IllegalArgumentException("Exposure time must be positive");
         }
 
-        // 9️⃣ Диффузия (🔥 теперь с alloy)
+        // =========================
+        // 7️⃣ POWER (🔥 КЛЮЧЕВОЕ)
+        // =========================
+        double ionEnergyJ = ionEnergyEv * PhysicalConstants.EV;
+        double powerDensity = ionFlux * ionEnergyJ;
+
+        // 👉 теперь thermal реально работает
+        cfg.setDensity(powerDensity);
+
+        // фиксируем энергию для diffusion
+        cfg.setIonEnergyOverride(ionEnergyEv);
+
+        // =========================
+        // 8️⃣ DIFFUSION
+        // =========================
         DiffusionProfile profile = diffusionService.calculateProfile(
                 atom,
                 alloy,

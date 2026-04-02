@@ -49,6 +49,7 @@ public class DiffusionServiceImpl implements DiffusionService {
     private static final double SLR_COUPLING = 0.05;
     private static final double DEFAULT_IMPACT_PARAMETER_FACTOR = 0.5;
 
+    @Override
     public DiffusionProfile calculateProfile(
             AtomList atom,
             AlloyComposition alloy,
@@ -60,7 +61,9 @@ public class DiffusionServiceImpl implements DiffusionService {
 
         boolean isAlloy = alloy != null && alloy.getComponents() != null && !alloy.getComponents().isEmpty();
 
-        // 1. Thermal
+        // =========================
+        // 1. THERMAL
+        // =========================
         ThermalDtoAdapter adapter = new ThermalDtoAdapter(plasmaConfig, ambientTemp, exposureTime);
 
         ThermalResult thermal = thermalService.simulate(
@@ -77,59 +80,56 @@ public class DiffusionServiceImpl implements DiffusionService {
                 adapter.getN()
         );
 
-        List<Double> temps = thermal.times();
-        double finalT = temps.get(temps.size() - 1);
+        double finalT = thermal.times().get(thermal.times().size() - 1);
 
-        // 2. Plasma
+        // =========================
+        // 2. PLASMA
+        // =========================
         PlasmaResult plasma = plasmaService.calculate(plasmaConfig, ion, null);
+
         double ionEnergyEv = plasma.ionEnergyEv();
         double ionFlux = plasma.ionFlux();
         double fluence = ionFlux * exposureTime;
 
+        // =========================
         // 3. D1 / D2
-        double D1;
-        double D2;
+        // =========================
+        double D1 = 0.0;
+        double D2 = 0.0;
 
         if (!isAlloy) {
             D1 = atom.getPackingFactor1() != null ? atom.getPackingFactor1() : 1e-18;
             D2 = atom.getPackingFactor2() != null ? atom.getPackingFactor2() : 1e-19;
         } else {
-            D1 = 0.0;
-            D2 = 0.0;
-
             for (AlloyComponent c : alloy.getComponents()) {
-                AtomList a = c.getAtom();
                 double x = c.getFraction();
+                AtomList a = c.getAtom();
 
-                double d1 = a.getPackingFactor1() != null ? a.getPackingFactor1() : 1e-18;
-                double d2 = a.getPackingFactor2() != null ? a.getPackingFactor2() : 1e-19;
-
-                D1 += x * d1;
-                D2 += x * d2;
+                D1 += x * (a.getPackingFactor1() != null ? a.getPackingFactor1() : 1e-18);
+                D2 += x * (a.getPackingFactor2() != null ? a.getPackingFactor2() : 1e-19);
             }
         }
 
-        // 4. Activation energy
-        double Q1;
-        double Q2;
+        // =========================
+        // 4. ACTIVATION ENERGY
+        // =========================
+        double Q1 = 0.0;
+        double Q2 = 0.0;
 
         if (!isAlloy) {
             Q1 = getActivationEnergy(atom, true);
             Q2 = getActivationEnergy(atom, false);
         } else {
-            Q1 = 0.0;
-            Q2 = 0.0;
-
             for (AlloyComponent c : alloy.getComponents()) {
-                AtomList a = c.getAtom();
                 double x = c.getFraction();
-
-                Q1 += x * getActivationEnergy(a, true);
-                Q2 += x * getActivationEnergy(a, false);
+                Q1 += x * getActivationEnergy(c.getAtom(), true);
+                Q2 += x * getActivationEnergy(c.getAtom(), false);
             }
         }
 
-        // 5. Potential
+        // =========================
+        // 5. POTENTIAL (pair avg)
+        // =========================
         double stiffness;
         double re;
 
@@ -142,40 +142,65 @@ public class DiffusionServiceImpl implements DiffusionService {
             re = computeEffectiveRe(alloy);
         }
 
-        // 6. Energy activation modification
+        // =========================
+        // 6. MODIFY Q
+        // =========================
         double Veff = stiffness * re;
         double Q1_mod = Q1 + ALPHA * Veff;
         double Q2_mod = Q2 + ALPHA * Veff;
 
-        // 7. Thermal diffusion
-        double term1 = D1 * Math.exp(-Q1_mod / (R * finalT));
-        double term2 = D2 * Math.exp(-Q2_mod / (R * finalT));
+        // =========================
+        // 7. THERMAL DIFFUSION
+        // =========================
+        double D_thermal = clamp(
+                (D1 * Math.exp(-Q1_mod / (R * finalT)) +
+                        D2 * Math.exp(-Q2_mod / (R * finalT)))
+                        * Math.exp(-BETA * stiffness)
+        );
 
-        double D_thermal = clamp((term1 + term2) * Math.exp(-BETA * stiffness));
-
-        // 8. Collision
+        // =========================
+        // 8. COLLISION (🔥 NEW)
+        // =========================
         double Esurf = plasmaConfig.getSurfaceBindingEnergy() != null
                 ? plasmaConfig.getSurfaceBindingEnergy()
                 : 3.0;
 
         double impactParam = re * DEFAULT_IMPACT_PARAMETER_FACTOR;
 
-        AtomList collisionAtom = isAlloy ? alloy.getComponents().get(0).getAtom() : atom;
+        double transferredJ;
 
-        CollisionResult collision = collisionService.simulate(
-                ion, collisionAtom, ionEnergyEv, impactParam, Esurf
-        );
+        if (!isAlloy) {
+            CollisionResult collision = collisionService.simulate(
+                    ion, atom, ionEnergyEv, impactParam, Esurf
+            );
+            transferredJ = collision.transferredEnergy() * EV;
+        } else {
+            // 🔥 AVG по компонентам
+            transferredJ = 0.0;
 
-        double transferredJ = collision.transferredEnergy() * EV;
+            for (AlloyComponent c : alloy.getComponents()) {
+                CollisionResult col = collisionService.simulate(
+                        ion,
+                        c.getAtom(),
+                        ionEnergyEv,
+                        impactParam,
+                        Esurf
+                );
+
+                transferredJ += c.getFraction() * col.transferredEnergy() * EV;
+            }
+        }
+
         double ionEnergyJ = ionEnergyEv * EV;
-
         double E_total = Math.max(transferredJ + ionEnergyJ, 0.0);
 
         double exponent = Math.min(E_total / (RADIATION_FACTOR * KB * finalT), 20.0);
 
         double D_collision = clamp(D_thermal * Math.exp(exponent));
 
+        // =========================
         // 9. SLR
+        // =========================
         double thetaRad = Math.toRadians(plasmaConfig.getIonIncidenceAngle());
 
         double slrFactor = slrService.computeFactor(fluence, thetaRad);
@@ -183,12 +208,18 @@ public class DiffusionServiceImpl implements DiffusionService {
 
         double D_slr = clamp(D_collision * (1.0 + SLR_COUPLING * slrFactor));
 
-        // 10. Resonance
-        double xi = resonanceService.computeXi(collisionAtom, ionEnergyEv);
+        // =========================
+        // 10. RESONANCE
+        // =========================
+        AtomList refAtom = isAlloy ? alloy.getComponents().get(0).getAtom() : atom;
+
+        double xi = resonanceService.computeXi(refAtom, ionEnergyEv);
 
         double D_effective = clamp(D_slr * Math.max(1.0, Math.log1p(xi)));
 
-        // 11. Profile
+        // =========================
+        // 11. PROFILE
+        // =========================
         double meanDepth = Math.sqrt(2 * D_effective * exposureTime);
         if (meanDepth < 1e-12) meanDepth = 1e-12;
 
@@ -220,8 +251,10 @@ public class DiffusionServiceImpl implements DiffusionService {
         return Math.min(D, MAX_D);
     }
 
+    // 🔥 PAIR MODEL
     private double computeEffectiveStiffness(AlloyComposition alloy) {
         double result = 0.0;
+
         var comps = alloy.getComponents();
 
         for (int i = 0; i < comps.size(); i++) {
@@ -239,11 +272,13 @@ public class DiffusionServiceImpl implements DiffusionService {
                 result += xi * xj * Math.sqrt(ki * kj);
             }
         }
+
         return result;
     }
 
     private double computeEffectiveRe(AlloyComposition alloy) {
         double result = 0.0;
+
         var comps = alloy.getComponents();
 
         for (int i = 0; i < comps.size(); i++) {
@@ -261,6 +296,7 @@ public class DiffusionServiceImpl implements DiffusionService {
                 result += xi * xj * ((rei + rej) / 2.0);
             }
         }
+
         return result;
     }
 
