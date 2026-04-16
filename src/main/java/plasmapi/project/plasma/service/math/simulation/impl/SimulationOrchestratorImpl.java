@@ -118,14 +118,21 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
 
         cfg.setTargetTemperature(r.getAmbientTemp());
 
-        // ✅ КЛЮЧЕВОЕ — берём из БД
-        if (atom.getDsteny() == null) {
-            throw new IllegalStateException(
-                    "Density is not defined for atom id=" + atom.getId()
-            );
-        }
+        // =========================
+        // ФИЗИЧЕСКИЕ СВОЙСТВА (из БД)
+        // =========================
+        if (atom.getDsteny() == null)
+            throw new IllegalStateException("Density missing for atom " + atom.getId());
+
+        if (atom.getHeatCapacity() == null)
+            throw new IllegalStateException("Heat capacity missing for atom " + atom.getId());
+
+        if (atom.getThermalConductivity() == null)
+            throw new IllegalStateException("Thermal conductivity missing for atom " + atom.getId());
 
         cfg.setDensity(atom.getDsteny());
+        cfg.setHeatCapacity(atom.getHeatCapacity());
+        cfg.setThermalConductivity(atom.getThermalConductivity());
 
         return cfg;
     }

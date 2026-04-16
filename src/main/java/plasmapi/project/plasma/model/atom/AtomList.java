@@ -28,6 +28,12 @@ public class AtomList {
 
     private Double dsteny;
 
+    @Column(name = "heat_capacity")
+    private Double heatCapacity;
+
+    @Column(name = "thermal_conductivity")
+    private Double thermalConductivity;
+
     @Column(name = "full_name", length = 50)
     private String fullName;
 
