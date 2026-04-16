@@ -5,8 +5,10 @@ import org.springframework.stereotype.Service;
 import plasmapi.project.plasma.model.atom.AtomList;
 import plasmapi.project.plasma.model.res.Ion;
 import plasmapi.project.plasma.model.res.PlasmaConfiguration;
-import plasmapi.project.plasma.service.PhysicalConstants;
+import plasmapi.project.plasma.repository.AtomListRepository;
+import plasmapi.project.plasma.repository.IonRepository;
 import plasmapi.project.plasma.service.math.diffusion.*;
+import plasmapi.project.plasma.service.math.ion.IonComponent;
 import plasmapi.project.plasma.service.math.ion.IonComposition;
 import plasmapi.project.plasma.service.math.plazma.PlasmaResult;
 import plasmapi.project.plasma.service.math.plazma.PlasmaService;
@@ -19,6 +21,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SimulationOrchestratorImpl implements SimulationOrchestratorService {
 
+    private final AtomListRepository atomRepository;
+    private final IonRepository ionRepository;
+
     private final PlasmaService plasmaService;
     private final DiffusionService diffusionService;
 
@@ -26,17 +31,17 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
     public SimulationResult runSimulation(SimulationRequest request) {
 
         // =========================
-        // 1. ATOM (обязателен)
+        // 1. ATOM
         // =========================
-        AtomList atom = requireAtom(request.getAtomId());
+        AtomList atom = getAtomOrThrow(request.getAtomId());
 
         // =========================
-        // 2. ION (обязателен)
+        // 2. ION (fallback)
         // =========================
-        Ion ion = requireIon(request.getIonId());
+        Ion ion = getIonOrThrow(request.getIonId());
 
         // =========================
-        // 3. ALLOY (опционально)
+        // 3. ALLOY
         // =========================
         AlloyComposition alloy = null;
         if (request.getComposition() != null && !request.getComposition().isEmpty()) {
@@ -44,7 +49,15 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
         }
 
         // =========================
-        // 4. PLASMA CONFIG (ТОЛЬКО ИЗ ВХОДА)
+        // 4. ION COMPOSITION (🔥 теперь есть)
+        // =========================
+        IonComposition ionComp = null;
+        if (request.getIonComposition() != null && !request.getIonComposition().isEmpty()) {
+            ionComp = buildIonComposition(request.getIonComposition());
+        }
+
+        // =========================
+        // 5. CONFIG
         // =========================
         PlasmaConfiguration cfg = buildConfig(request);
 
@@ -58,20 +71,21 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
         }
 
         // =========================
-        // 5. PLASMA CALCULATION
+        // 6. PLASMA
         // =========================
         PlasmaResult plasma = plasmaService.calculate(
                 cfg,
                 ion,
-                null,
+                ionComp,
                 null
         );
 
-        // =========================
-        // 6. DIFFUSION PROFILE
-        // =========================
-        IonComposition ionComp = null; // если появится — прокинем
+        // сохраняем рассчитанную энергию
+        cfg.setIonEnergyOverride(plasma.ionEnergyEv());
 
+        // =========================
+        // 7. DIFFUSION
+        // =========================
         DiffusionProfile profile = diffusionService.calculateProfile(
                 atom,
                 alloy,
@@ -102,12 +116,7 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
         cfg.setChamberDepth(r.getChamberDepth());
         cfg.setIonIncidenceAngle(r.getAngle());
 
-        // ❗ ВСЁ, что не пришло — НЕ придумываем
         cfg.setTargetTemperature(r.getAmbientTemp());
-        cfg.setDensity(null);
-        cfg.setHeatCapacity(null);
-        cfg.setThermalConductivity(null);
-        cfg.setSurfaceBindingEnergy(null);
 
         return cfg;
     }
@@ -118,12 +127,11 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
     private AlloyComposition buildAlloy(List<AlloyComponentDto> dtoList) {
 
         List<AlloyComponent> list = new ArrayList<>();
-
         double sum = 0.0;
 
         for (AlloyComponentDto dto : dtoList) {
 
-            AtomList atom = requireAtom(dto.getAtomId());
+            AtomList atom = getAtomOrThrow(dto.getAtomId());
 
             double x = dto.getFraction();
             if (x <= 0) {
@@ -142,17 +150,55 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
     }
 
     // =========================================================
-    // ATOM / ION LOADERS
+    // ION COMPOSITION (🔥 новое)
     // =========================================================
-    private AtomList requireAtom(Integer id) {
-        if (id == null) throw new IllegalArgumentException("atomId is null");
-        // предполагается repository inject (не показан)
-        throw new UnsupportedOperationException("inject AtomListRepository");
+    private IonComposition buildIonComposition(List<IonComponent> dtoList) {
+
+        List<IonComponent> list = new ArrayList<>();
+        double sum = 0.0;
+
+        for (IonComponent dto : dtoList) {
+
+            Ion ion = getIonOrThrow(dto.getIon().getId());
+
+            double x = dto.getFraction();
+            if (x <= 0) {
+                throw new IllegalArgumentException("Ion fraction must be > 0");
+            }
+
+            list.add(new IonComponent(ion, x));
+            sum += x;
+        }
+
+        if (Math.abs(sum - 1.0) > 1e-6) {
+            throw new IllegalArgumentException("Ion fractions must sum to 1.0");
+        }
+
+        return new IonComposition(list);
     }
 
-    private Ion requireIon(Integer id) {
-        if (id == null) throw new IllegalArgumentException("ionId is null");
-        // предполагается repository inject (не показан)
-        throw new UnsupportedOperationException("inject IonRepository");
+    // =========================================================
+    // DB ACCESS
+    // =========================================================
+    private AtomList getAtomOrThrow(Integer id) {
+        if (id == null) {
+            throw new IllegalArgumentException("atomId is null");
+        }
+
+        return atomRepository.findById(id)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Atom not found: " + id)
+                );
+    }
+
+    private Ion getIonOrThrow(Integer id) {
+        if (id == null) {
+            throw new IllegalArgumentException("ionId is null");
+        }
+
+        return ionRepository.findById(id)
+                .orElseThrow(() ->
+                        new IllegalArgumentException("Ion not found: " + id)
+                );
     }
 }
