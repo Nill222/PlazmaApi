@@ -3,6 +3,7 @@ package plasmapi.project.plasma.service.math.simulation;
 import lombok.Getter;
 import lombok.Setter;
 import plasmapi.project.plasma.service.math.diffusion.AlloyComponentDto;
+import plasmapi.project.plasma.service.math.ion.IonComponent;
 
 import java.util.List;
 
@@ -25,4 +26,5 @@ public class SimulationRequest {
     private double angle;              // градусы
     private Double ambientTemp;         // К, температура окружающей среды (опционально, по умолчанию 300)
     private List<AlloyComponentDto> composition;
+    private List<IonComponent> ionComposition;
 }
