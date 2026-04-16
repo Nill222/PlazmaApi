@@ -25,7 +25,7 @@ public class IonCollisionAveragingService {
             double Esurf
     ) {
 
-        // 🔹 fallback — старая логика
+        // 🔹 fallback — одиночное столкновение
         if (ionComp == null && alloy == null) {
             return collisionService.simulate(
                     fallbackIon,
@@ -36,20 +36,21 @@ public class IonCollisionAveragingService {
             );
         }
 
-        double totalTransferred = 0.0;
-        double totalDamage = 0.0;
-        double totalTheta = 0.0;
-        double totalImpact = 0.0;
+        double transferredSum = 0.0;
+        double damageSum = 0.0;
+        double thetaSum = 0.0;
+        double impactSum = 0.0;
 
-        // 🔹 нормировочный коэффициент (на всякий случай)
-        double norm = 0.0;
+        double weightSum = 0.0;
 
-        // --- 1️⃣ только ионы ---
+        // =========================
+        // 🔹 только сплав ионов
+        // =========================
         if (alloy == null) {
 
             for (IonComponent ic : ionComp.getComponents()) {
 
-                double xi = ic.getFraction();
+                double w = ic.getFraction();
 
                 CollisionResult r = collisionService.simulate(
                         ic.getIon(),
@@ -59,25 +60,25 @@ public class IonCollisionAveragingService {
                         Esurf
                 );
 
-                totalTransferred += xi * r.transferredEnergy();
-                totalDamage += xi * r.damageEnergy();
-                totalTheta += xi * r.thetaCM();
-                totalImpact += xi * r.impactParameter();
+                transferredSum += w * r.transferredEnergy();
+                damageSum += w * r.damageEnergy();
+                thetaSum += w * r.thetaCM();
+                impactSum += w * r.impactParameter();
 
-                norm += xi;
+                weightSum += w;
             }
         }
 
-        // --- 2️⃣ pair averaging (ion × alloy) ---
+        // =========================
+        // 🔹 ion × alloy (pair averaging)
+        // =========================
         else {
 
+            assert ionComp != null;
             for (IonComponent ic : ionComp.getComponents()) {
                 for (AlloyComponent ac : alloy.getComponents()) {
 
-                    double xi = ic.getFraction();
-                    double xj = ac.getFraction();
-
-                    double w = xi * xj;
+                    double w = ic.getFraction() * ac.getFraction();
 
                     CollisionResult r = collisionService.simulate(
                             ic.getIon(),
@@ -87,29 +88,29 @@ public class IonCollisionAveragingService {
                             Esurf
                     );
 
-                    totalTransferred += w * r.transferredEnergy();
-                    totalDamage += w * r.damageEnergy();
-                    totalTheta += w * r.thetaCM();
-                    totalImpact += w * r.impactParameter();
+                    transferredSum += w * r.transferredEnergy();
+                    damageSum += w * r.damageEnergy();
+                    thetaSum += w * r.thetaCM();
+                    impactSum += w * r.impactParameter();
 
-                    norm += w;
+                    weightSum += w;
                 }
             }
         }
 
-        // 🔥 защита от кривых долей
-        if (norm > 0) {
-            totalTransferred /= norm;
-            totalDamage /= norm;
-            totalTheta /= norm;
-            totalImpact /= norm;
+        // 🔥 нормализация
+        if (weightSum > 0.0) {
+            transferredSum /= weightSum;
+            damageSum /= weightSum;
+            thetaSum /= weightSum;
+            impactSum /= weightSum;
         }
 
         return CollisionResult.builder()
-                .transferredEnergy(totalTransferred)
-                .damageEnergy(totalDamage)
-                .thetaCM(totalTheta)
-                .impactParameter(totalImpact)
+                .transferredEnergy(transferredSum)
+                .damageEnergy(damageSum)
+                .thetaCM(thetaSum)
+                .impactParameter(impactSum)
                 .build();
     }
 }

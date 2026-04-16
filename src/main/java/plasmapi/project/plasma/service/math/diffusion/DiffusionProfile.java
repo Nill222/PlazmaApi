@@ -22,4 +22,5 @@ public class DiffusionProfile {
     private final double meanDepth;         // средняя глубина проникновения, м
     private final List<Double> depths;      // массив глубин для построения профиля, м
     private final List<Double> concentration; // относительная концентрация (нормированная) на соответствующих глубинах
+
 }
