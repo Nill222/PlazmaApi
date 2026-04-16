@@ -32,7 +32,7 @@ public class ResonanceServiceImpl implements ResonanceService {
 
         // Знаменатель лоренциана
         double denominator = Math.pow(ionEnergyEv - E_res, 2) + Math.pow(Gamma / 2.0, 2);
-        double xi = 1.0 + A / denominator;
+        double xi = 1 + A * (Gamma*Gamma / 4) / denominator;
         return Math.min(xi, MAX_XI);
     }
 }

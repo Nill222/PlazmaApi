@@ -20,6 +20,14 @@ public class AtomList {
     @Column(name = "atom_name", nullable = false, length = 20)
     private String atomName;
 
+    @Column(name = "atom_number")
+    private Integer atomNumber;
+
+    @Column(name = "molar_mass")
+    private Double molarMass;
+
+    private Double dsteny;
+
     @Column(name = "full_name", length = 50)
     private String fullName;
 

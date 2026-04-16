@@ -12,83 +12,175 @@ import plasmapi.project.plasma.service.math.collision.CollisionService;
 @RequiredArgsConstructor
 public class CollisionServiceImpl implements CollisionService {
 
-    private static final double A0 = 0.529e-10; // бор радиус, м
-    private static final double ZBL_CONST = 0.4685e-10; // постоянная в формуле ZBL
+    private static final double A0 = 0.529e-10;
+    private static final double EV = PhysicalConstants.EV;
 
-    /**
-     * Моделирует столкновение иона с атомом.
-     * @param ion ион
-     * @param atom атом мишени
-     * @param ionEnergyEv энергия иона в эВ
-     * @param impactParameter прицельный параметр, м
-     * @param surfaceBindingEnergy эВ, энергия связи на поверхности (для порога смещения)
-     * @return результат столкновения
-     */
+    private static final double MIN_ENERGY_EV = 1e-3;
+    private static final double KAPPA = 0.8;
+
+    // ZBL universal screening
+    private static final double[] C = {0.1818, 0.5099, 0.2802, 0.02817};
+    private static final double[] D = {3.2, 0.9423, 0.4029, 0.2016};
+
     @Override
-    public CollisionResult simulate(Ion ion, AtomList atom, double ionEnergyEv,
-                                    double impactParameter, double surfaceBindingEnergy) {
-        // Атомные номера
-        int Z1 = ion.getCharge();      // предполагаем, что такое поле есть
-        int Z2 = atom.getValence();     // аналогично
+    public CollisionResult simulate(
+            Ion ion,
+            AtomList atom,
+            double ionEnergyEv,
+            double impactParameter,
+            double surfaceBindingEnergyEv
+    ) {
 
-        // Массы в кг
-        double M1 = ion.getMass();         // метод, возвращающий массу в кг
-        double M2 = atom.getMass();        // атомная масса в кг (из молярной массы / NA)
+        int Z1 = Math.max(1, ion.getCharge());
+        int Z2 = Math.max(1, atom.getValence());
 
-        // Энергия иона в джоулях (для перевода в СИ при необходимости)
-        double E = ionEnergyEv * PhysicalConstants.EV;
+        double M1 = Math.max(1e-30, ion.getMass());
+        double M2 = Math.max(1e-30, atom.getMass());
 
-        // Максимальная переданная энергия в Ц-системе
-        double Tmax = 4 * M1 * M2 / ((M1 + M2) * (M1 + M2)) * E;
+        double mu = (M1 * M2) / (M1 + M2);
 
-        // Угол рассеяния в системе центра масс (ZBL)
-        double thetaCM = zblScatteringAngle(Z1, Z2, M1, M2, E, impactParameter);
+        double E_ev = Math.max(MIN_ENERGY_EV, ionEnergyEv);
+        double E = E_ev * EV;
 
-        // Переданная энергия
-        double transferred = Tmax * Math.pow(Math.sin(thetaCM / 2), 2);
+        double v = Math.sqrt(2.0 * E / M1);
 
-        // Энергия, переданная в электронные потери (NRT)
-        double eps = reducedEnergyLindhard(Z1, Z2, M1, M2, E);
-        double kg = electronicStoppingFactor(Z1, Z2, eps);
-        double damageEnergy = 0.8 * transferred / (1 + kg); // NRT damage energy
+        // =========================
+        // 1. ZBL screening length
+        // =========================
+        double a = 0.8853 * A0 /
+                (Math.pow(Z1, 0.23) + Math.pow(Z2, 0.23));
 
-        // Пороговая энергия смещения (обычно 2 * поверхностная энергия связи)
-        double displacementThreshold = 2 * surfaceBindingEnergy * PhysicalConstants.EV;
+        // =========================
+        // 2. Reduced energy ε
+        // =========================
+        double eps = reducedEnergy(Z1, Z2, M1, M2, E, a);
+
+        // =========================
+        // 3. Nuclear stopping
+        // =========================
+        double Sn = nuclearStopping(eps, Z1, Z2, M1, M2, a);
+
+        // =========================
+        // 4. Electronic stopping (улучшенный)
+        // =========================
+        double Se = electronicStopping(Z1, Z2, E_ev);
+
+        // =========================
+        // 5. Scattering (✔ FIXED)
+        // =========================
+        double theta = scatteringAngle(Z1, Z2, impactParameter, a, mu, v);
+
+        // =========================
+        // 6. Energy transfer
+        // =========================
+        double gamma = 4 * M1 * M2 / Math.pow(M1 + M2, 2);
+        double Tmax = gamma * E;
+
+        double transferred = Tmax * Math.pow(Math.sin(theta / 2.0), 2);
+        transferred = Math.min(transferred, Tmax); // защита
+
+        // =========================
+        // 7. Damage (NRT-like)
+        // =========================
+        double Ed = Math.max(surfaceBindingEnergyEv, 1.0) * EV;
+
+        double defects = 0.0;
+
+        if (transferred > Ed) {
+            double damageEnergy = KAPPA * transferred;
+            defects = damageEnergy / (2.0 * Ed);
+        }
 
         return CollisionResult.builder()
-                .transferredEnergy(transferred / PhysicalConstants.EV) // обратно в эВ
-                .damageEnergy(damageEnergy / PhysicalConstants.EV)
-                .thetaCM(thetaCM)
+                .transferredEnergy(transferred / EV)
+                .nuclearStopping(Sn)
+                .electronicStopping(Se)
+                .thetaCM(theta)
+                .defectCount(defects)
                 .impactParameter(impactParameter)
                 .build();
     }
 
-    /**
-     * Расчёт угла рассеяния по модели ZBL.
-     */
-    private double zblScatteringAngle(int Z1, int Z2, double M1, double M2, double E, double b) {
-        double a = ZBL_CONST / (Math.pow(Z1, 0.23) + Math.pow(Z2, 0.23));
-        double eps = reducedEnergyLindhard(Z1, Z2, M1, M2, E);
-        double s = Math.log(1 + 1.138 * eps) / (2 * eps);
-        double t = b / a;
-        return 2 * Math.atan(s * Math.exp(-t / (2 * s)));
+    // =========================
+    // REDUCED ENERGY ε
+    // =========================
+    private double reducedEnergy(int Z1, int Z2, double M1, double M2, double E, double a) {
+
+        double e2 = PhysicalConstants.E_CHARGE_SQ /
+                (4.0 * Math.PI * PhysicalConstants.EPS0);
+
+        double E0 = (Z1 * Z2 * e2) / a;
+
+        double massFactor = M2 / (M1 + M2);
+
+        return Math.max((E / Math.max(E0, 1e-30)) * massFactor, 1e-12);
     }
 
-    /**
-     * Приведённая энергия Линдхарда (безразмерная).
-     */
-    private double reducedEnergyLindhard(int Z1, int Z2, double M1, double M2, double E) {
-        double aU = 0.8854 * A0 / (Math.pow(Z1, 0.23) + Math.pow(Z2, 0.23));
-        double e2 = PhysicalConstants.E_CHARGE_SQ / (4 * Math.PI * PhysicalConstants.EPS0); // e^2/(4pi eps0) в Дж*м
-        return (aU * M2 * E) / (Z1 * Z2 * e2 * (M1 + M2));
+    // =========================
+    // NUCLEAR STOPPING (ZBL)
+    // =========================
+    private double nuclearStopping(double eps, int Z1, int Z2, double M1, double M2, double a) {
+
+        double g;
+
+        if (eps < 1e-6) {
+            g = Math.sqrt(eps);
+        } else {
+            g = Math.log(1 + 1.138 * eps) /
+                    (eps + 0.01321 * Math.pow(eps, 0.21226)
+                            + 0.19593 * Math.sqrt(eps));
+        }
+
+        double e2 = PhysicalConstants.E_CHARGE_SQ /
+                (4.0 * Math.PI * PhysicalConstants.EPS0);
+
+        return (4 * Math.PI * a * a)
+                * Math.pow(Z1 * Z2 * e2, 2)
+                * (M1 * M2 / Math.pow(M1 + M2, 2))
+                * g;
     }
 
-    /**
-     * Электронный тормозной фактор k*g(ε) по NRT.
-     */
-    private double electronicStoppingFactor(int Z1, int Z2, double eps) {
-        // Формула из NRT: k = 0.133 * Z1^(2/3) * Z2^(1/2) / (Z1^(1/2) + Z2^(1/2))^(2/3)?
-        // Упрощённый вариант, используемый в коде:
-        return 0.133 * Math.pow(Z1, 2.0/3) * Math.pow(Z2, 1.0/3) * Math.pow(Z1 + Z2, 0.5) * Math.pow(eps, 1.0/3);
+    // =========================
+    // ELECTRONIC STOPPING (Lindhard-Scharff)
+    // =========================
+    private double electronicStopping(int Z1, int Z2, double E_ev) {
+
+        double k = 0.0793;
+
+        double Se = k * Math.pow(Z1, 2.0 / 3.0)
+                * Math.sqrt(Z2)
+                * Math.sqrt(Math.max(E_ev, 1e-6));
+
+        return Se * 1e-20;
+    }
+
+    // =========================
+    // SCATTERING (ключевой фикс)
+    // =========================
+    private double scatteringAngle(int Z1, int Z2, double b, double a, double mu, double v) {
+
+        double e2 = PhysicalConstants.E_CHARGE_SQ /
+                (4.0 * Math.PI * PhysicalConstants.EPS0);
+
+        double phi = zblPhi(b / a);
+
+        double numerator = Z1 * Z2 * e2 * phi;
+        double denominator = mu * v * v * Math.max(b, 1e-12);
+
+        return 2.0 * Math.atan(numerator / denominator);
+    }
+
+    // =========================
+    // ZBL screening
+    // =========================
+    private double zblPhi(double x) {
+
+        double phi = 0.0;
+
+        for (int i = 0; i < C.length; i++) {
+            phi += C[i] * Math.exp(-D[i] * x);
+        }
+
+        return phi;
     }
 }

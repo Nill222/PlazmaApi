@@ -1,7 +1,9 @@
 package plasmapi.project.plasma.service.math.ion;
 
+import lombok.Getter;
 import plasmapi.project.plasma.model.res.Ion;
 
+@Getter
 public class IonComponent {
     private final Ion ion;
     private final double fraction;
@@ -11,6 +13,4 @@ public class IonComponent {
         this.fraction = fraction;
     }
 
-    public Ion getIon() { return ion; }
-    public double getFraction() { return fraction; }
 }
