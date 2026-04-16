@@ -59,7 +59,7 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
         // =========================
         // 5. CONFIG
         // =========================
-        PlasmaConfiguration cfg = buildConfig(request);
+        PlasmaConfiguration cfg = buildConfig(request, atom);
 
         double ambientTemp = request.getAmbientTemp() != null
                 ? request.getAmbientTemp()
@@ -102,7 +102,7 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
     // =========================================================
     // CONFIG
     // =========================================================
-    private PlasmaConfiguration buildConfig(SimulationRequest r) {
+    private PlasmaConfiguration buildConfig(SimulationRequest r, AtomList atom) {
 
         PlasmaConfiguration cfg = new PlasmaConfiguration();
 
@@ -117,6 +117,15 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
         cfg.setIonIncidenceAngle(r.getAngle());
 
         cfg.setTargetTemperature(r.getAmbientTemp());
+
+        // ✅ КЛЮЧЕВОЕ — берём из БД
+        if (atom.getDsteny() == null) {
+            throw new IllegalStateException(
+                    "Density is not defined for atom id=" + atom.getId()
+            );
+        }
+
+        cfg.setDensity(atom.getDsteny());
 
         return cfg;
     }
