@@ -36,7 +36,7 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
         AtomList atom = getAtomOrThrow(request.getAtomId());
 
         // =========================
-        // 2. ION (fallback)
+        // 2. ION
         // =========================
         Ion ion = getIonOrThrow(request.getIonId());
 
@@ -49,7 +49,7 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
         }
 
         // =========================
-        // 4. ION COMPOSITION (🔥 теперь есть)
+        // 4. ION COMPOSITION
         // =========================
         IonComposition ionComp = null;
         if (request.getIonComposition() != null && !request.getIonComposition().isEmpty()) {
@@ -71,7 +71,7 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
         }
 
         // =========================
-        // 6. PLASMA
+        // 6. PLASMA (ОДИН РАЗ)
         // =========================
         PlasmaResult plasma = plasmaService.calculate(
                 cfg,
@@ -80,7 +80,7 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
                 null
         );
 
-        // сохраняем рассчитанную энергию
+        // фиксируем энергию в конфиге
         cfg.setIonEnergyOverride(plasma.ionEnergyEv());
 
         // =========================
@@ -96,7 +96,16 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
                 ambientTemp
         );
 
-        return new SimulationResult(profile, atom, ion, cfg);
+        // =========================
+        // 8. RESULT (с PhysicsStats)
+        // =========================
+        return new SimulationResult(
+                profile,
+                atom,
+                ion,
+                cfg,
+                profile.getStats() // 🔥 теперь явно доступно
+        );
     }
 
     // =========================================================
@@ -119,7 +128,7 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
         cfg.setTargetTemperature(r.getAmbientTemp());
 
         // =========================
-        // ФИЗИЧЕСКИЕ СВОЙСТВА (из БД)
+        // ФИЗИКА ИЗ БД
         // =========================
         if (atom.getDsteny() == null)
             throw new IllegalStateException("Density missing for atom " + atom.getId());
@@ -166,7 +175,7 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
     }
 
     // =========================================================
-    // ION COMPOSITION (🔥 новое)
+    // ION COMPOSITION
     // =========================================================
     private IonComposition buildIonComposition(List<IonComponent> dtoList) {
 

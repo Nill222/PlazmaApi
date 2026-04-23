@@ -6,6 +6,7 @@ import lombok.Setter;
 import plasmapi.project.plasma.model.atom.AtomList;
 import plasmapi.project.plasma.model.res.Ion;
 import plasmapi.project.plasma.model.res.PlasmaConfiguration;
+import plasmapi.project.plasma.service.math.PhysicsStats;
 import plasmapi.project.plasma.service.math.diffusion.DiffusionProfile;
 
 /**
@@ -20,4 +21,5 @@ public class SimulationResult {
     private final AtomList atom;
     private final Ion ion;
     private final PlasmaConfiguration plasmaConfig;
+    private final PhysicsStats stats;
 }

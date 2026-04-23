@@ -2,7 +2,7 @@ package plasmapi.project.plasma.service.math.diffusion;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.Setter;
+import plasmapi.project.plasma.service.math.PhysicsStats;
 
 import java.util.List;
 
@@ -22,5 +22,5 @@ public class DiffusionProfile {
     private final double meanDepth;         // средняя глубина проникновения, м
     private final List<Double> depths;      // массив глубин для построения профиля, м
     private final List<Double> concentration; // относительная концентрация (нормированная) на соответствующих глубинах
-
+    private final PhysicsStats stats;
 }

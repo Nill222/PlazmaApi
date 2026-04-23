@@ -8,6 +8,7 @@ import plasmapi.project.plasma.model.atom.AtomList;
 import plasmapi.project.plasma.model.res.Ion;
 import plasmapi.project.plasma.model.res.PlasmaConfiguration;
 import plasmapi.project.plasma.service.PhysicalConstants;
+import plasmapi.project.plasma.service.math.PhysicsStats;
 import plasmapi.project.plasma.service.math.diffusion.*;
 import plasmapi.project.plasma.service.math.ion.IonCollisionAveragingService;
 import plasmapi.project.plasma.service.math.ion.IonComposition;
@@ -272,6 +273,55 @@ public class DiffusionServiceImpl implements DiffusionService {
         }
 
         double meanDepth = Rp;
+
+        // =========================
+// 13. РАСЧЕТ ДОП. ПАРАМЕТРОВ (NEW)
+// =========================
+
+// 1. Плотность тока
+        double area = (plasmaConfig.getChamberWidth() != null && plasmaConfig.getChamberDepth() != null)
+                ? plasmaConfig.getChamberWidth() * plasmaConfig.getChamberDepth()
+                : 1.0;
+        double currentDensityValue = (plasmaConfig.getCurrent() != null)
+                ? plasmaConfig.getCurrent() / area
+                : 0.0;
+
+// 2. Параметры электронов
+        double Te_ev = (plasmaConfig.getElectronTemperature() != null)
+                ? plasmaConfig.getElectronTemperature()
+                : 5.0; // Эв (типичное значение для тлеющего разряда)
+        double me = 9.109e-31;
+        double electronVelocity = Math.sqrt(8.0 * EV * Te_ev / (Math.PI * me));
+
+// n_e ≈ ionFlux / v_ion (м⁻³)
+        double v_ion = Math.sqrt(2.0 * ionEnergyEv * EV / ion.getMass());
+        double electronDensity = ionFlux / Math.max(v_ion, 1e-6);
+
+// 3. Энергетика
+        double totalTransferred = collision.transferredEnergy() * fluence;
+        double avgTransferred = collision.transferredEnergy();
+
+// 4. Повреждения и смещения
+        double totalDamage = Nd * fluence; // суммарные дефекты на м²
+        double totalDisplacement = totalDamage * re; // "суммарный путь" смещенных атомов
+
+// 5. Импульс
+// p = sqrt(2 * m * E_kin)
+        double momentumPerIon = Math.sqrt(2.0 * ion.getMass() * (collision.transferredEnergy() * EV));
+        double totalMomentum = momentumPerIon * fluence;
+
+        PhysicsStats stats = new PhysicsStats(
+                electronDensity,
+                electronVelocity,
+                currentDensityValue,
+                Esurf,
+                totalTransferred,
+                avgTransferred,
+                totalDamage,
+                totalMomentum,
+                totalDisplacement
+        );
+
         return new DiffusionProfile(
                 D1, D2,
                 Q1 / (NA * EV),
@@ -280,7 +330,8 @@ public class DiffusionServiceImpl implements DiffusionService {
                 D_effective,
                 meanDepth,
                 depths,
-                conc
+                conc,
+                stats
         );
     }
 
