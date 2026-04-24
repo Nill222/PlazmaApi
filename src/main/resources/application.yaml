@@ -6,9 +6,9 @@ spring:
     name: PlazmaApi
 
   datasource:
-    url: jdbc:postgresql://localhost:5433/postgres
+    url: jdbc:postgresql://localhost:5432/postgres
     username: postgres
-    password: root
+    password: 1234
     driver-class-name: org.postgresql.Driver
 #mysecretpassword
   jpa:

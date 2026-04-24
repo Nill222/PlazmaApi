@@ -12,7 +12,7 @@ import plasmapi.project.plasma.service.math.ion.IonComposition;
 @Service
 @RequiredArgsConstructor
 public class PlasmaServiceImpl implements PlasmaService {
-
+    //todo степень ионизации газовых ионов в вакуме в тлеющем разряде
     /**
      * Расчёт энергии и потока ионов.
      * Поддерживает:

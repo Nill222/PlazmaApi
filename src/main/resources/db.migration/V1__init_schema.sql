@@ -88,7 +88,7 @@ CREATE TABLE plazma.plasma_configurations (
                                               melting_point DOUBLE PRECISION,
                                               lattice_parameter_override DOUBLE PRECISION,
 
-                                              config_id INT UNIQUE REFERENCES plazma.configs(id) ON DELETE CASCADE
+                                              config_id INT REFERENCES plazma.configs(id) ON DELETE CASCADE
 );
 
 -- =======================

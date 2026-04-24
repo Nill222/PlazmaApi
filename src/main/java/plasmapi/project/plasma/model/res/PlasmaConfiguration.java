@@ -16,8 +16,6 @@ public class PlasmaConfiguration {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-
-
     //Плазма
     private Double voltage;
     private Double current;
@@ -25,6 +23,10 @@ public class PlasmaConfiguration {
     private Double electronTemperature;
     private Double ionTemperature;
     private Double exposureTime;
+
+    private Double currentDensity;
+    private Double electronDensity;
+    private Double electronVelocity;
 
     //Геометрия камеры
     private Double chamberWidth;
