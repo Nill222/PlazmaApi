@@ -8,6 +8,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/charts.css">
+    <link rel="stylesheet" href="css/charts.export.css">
 </head>
 <body>
 
@@ -92,11 +93,18 @@
         <div id="chartsWorkspace" style="display:none;">
 
             <!-- Stats -->
+
             <div class="stats-grid">
                 <div class="stat-card"><i class="fas fa-database"></i><h3 id="totalSimulations">0</h3><p>Симуляций</p></div>
                 <div class="stat-card"><i class="fas fa-atom"></i><h3 id="uniqueAtoms">0</h3><p>Атомов</p></div>
                 <div class="stat-card"><i class="fas fa-bolt"></i><h3 id="uniqueIons">0</h3><p>Ионов</p></div>
                 <div class="stat-card"><i class="fas fa-chart-line"></i><h3>28</h3><p>Графиков</p></div>
+            </div>
+
+            <div class="export-all-bar">
+                <button class="export-all-btn" id="exportAllWordBtn">
+                    <i class="fas fa-file-word"></i> Скачать всё (Word)
+                </button>
             </div>
 
             <!-- Macro для chart-box: используем одинаковую структуру -->
@@ -200,6 +208,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/plotly.js-dist@2.27.0/plotly.min.js"></script>
+<script src="js/docx.iife.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/main-ui.js"></script>
 <script type="module" src="js/charts.js"></script>
