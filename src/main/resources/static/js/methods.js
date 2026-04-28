@@ -560,60 +560,70 @@ function updateThermal3D(stats) {
     }
 
     if (typeKey === 'sphere') {
-        const sampleSpherePoints = (xArr, yArr, zArr, maxPoints = 500) => {
-            const total = xArr.length;
-            if (total <= maxPoints) return { x: xArr, y: yArr, z: zArr };
-            const picked = new Set();
-            while (picked.size < maxPoints) {
-                picked.add(Math.floor(Math.random() * total));
-            }
-            const idx = [...picked];
-            return {
-                x: idx.map(i => xArr[i]),
-                y: idx.map(i => yArr[i]),
-                z: idx.map(i => zArr[i]),
-            };
-        };
+        const avgTempByDepth = depths.map((_, dIdx) => {
+            let sum = 0;
+            for (let tIdx = 0; tIdx < zGrid.length; tIdx++) sum += zGrid[tIdx][dIdx];
+            return sum / Math.max(zGrid.length, 1);
+        });
 
-        const sampled = sampleSpherePoints(xs, ys, zs, 500);
+        const shellCount = Math.min(6, Math.max(3, depths.length));
+        const uSteps = 42;
+        const vSteps = 28;
+        const traces = [];
         const maxDepth = Math.max(...depths, 1e-12);
-        const maxTime = Math.max(...times, 1e-12);
-        const sphereX = [];
-        const sphereY = [];
-        const sphereZ = [];
 
-        for (let i = 0; i < sampled.x.length; i++) {
-            const radius = Math.max(sampled.x[i] / maxDepth, 0.03);
-            const theta = 2 * Math.PI * (sampled.y[i] / maxTime);
-            const phi = Math.acos(2 * Math.random() - 1); // равномерно по сфере
-            sphereX.push(radius * Math.sin(phi) * Math.cos(theta));
-            sphereY.push(radius * Math.sin(phi) * Math.sin(theta));
-            sphereZ.push(radius * Math.cos(phi));
-        }
+        for (let s = 0; s < shellCount; s++) {
+            const idx = Math.round((s / (shellCount - 1)) * (depths.length - 1));
+            const radius = Math.max(depths[idx] / maxDepth, 0.08);
+            const shellTemp = avgTempByDepth[idx];
 
-        window.Plotly.react(chartId, [{
-            type: 'scatter3d',
-            mode: 'markers',
-            x: sphereX,
-            y: sphereY,
-            z: sphereZ,
-            marker: {
-                size: 4,
-                opacity: 0.75,
-                color: sampled.z,
+            const xMat = [];
+            const yMat = [];
+            const zMat = [];
+            const cMat = [];
+
+            for (let vi = 0; vi < vSteps; vi++) {
+                const phi = Math.PI * (vi / (vSteps - 1));
+                const xRow = [];
+                const yRow = [];
+                const zRow = [];
+                const cRow = [];
+                for (let ui = 0; ui < uSteps; ui++) {
+                    const theta = 2 * Math.PI * (ui / (uSteps - 1));
+                    xRow.push(radius * Math.sin(phi) * Math.cos(theta));
+                    yRow.push(radius * Math.sin(phi) * Math.sin(theta));
+                    zRow.push(radius * Math.cos(phi));
+                    cRow.push(shellTemp);
+                }
+                xMat.push(xRow);
+                yMat.push(yRow);
+                zMat.push(zRow);
+                cMat.push(cRow);
+            }
+
+            traces.push({
+                type: 'surface',
+                x: xMat,
+                y: yMat,
+                z: zMat,
+                surfacecolor: cMat,
                 colorscale: 'Viridis',
-                showscale: true,
-                colorbar: {
+                opacity: 0.2 + 0.6 * (s + 1) / shellCount,
+                showscale: s === shellCount - 1,
+                colorbar: s === shellCount - 1 ? {
                     title: 'Температура (K)',
                     tickfont: { color: '#94a3b8' },
                     len: 0.7,
                     thickness: 12,
-                },
-            },
-            hovertemplate: 'Температура: %{marker.color:.4g} K<extra></extra>',
-        }], {
+                } : undefined,
+                hovertemplate: 'Радиус оболочки: ' + radius.toFixed(3) + '<br>T: %{surfacecolor:.4g} K<extra></extra>',
+                contours: { x: { show: false }, y: { show: false }, z: { show: false } },
+            });
+        }
+
+        window.Plotly.react(chartId, traces, {
             ...layout,
-            title: { text: 'Сферическая проекция изотерм', font: { size: 14 } },
+            title: { text: 'Сферические изотермы (оболочки)', font: { size: 14 } },
             scene: {
                 ...layout.scene,
                 xaxis: thermalSceneAxis('X (норм.)'),
