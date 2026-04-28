@@ -9,5 +9,8 @@ public record PhysicsStats(
     double avgTransferredPerAtom, // Средняя энергия на атом (эВ)
     double totalDamage,           // Суммарные дефекты (вакансии/м²)
     double totalMomentum,         // Переданный импульс (кг·м/с)
-    double totalDisplacement      // Смещение атомов (м)
+    double totalDisplacement,      // Смещение атомов (м)
+    double finalProbeTemperature,  // Температура в контрольной точке (K)
+    double debyeFrontSpeed,        // Скорость фронта до температуры Дебая (м/с)
+    double debyeFrontDepth         // Глубина фронта Дебая (м)
 ) {}

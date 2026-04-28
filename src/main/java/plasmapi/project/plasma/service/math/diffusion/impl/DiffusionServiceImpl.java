@@ -324,7 +324,10 @@ public class DiffusionServiceImpl implements DiffusionService {
                 avgTransferred,
                 totalDamage,
                 totalMomentum,
-                totalDisplacement
+                totalDisplacement,
+                thermal.finalProbeTemperature(),
+                thermal.debyeFrontSpeed(),
+                thermal.debyeFrontDepth()
         );
 
         return new DiffusionProfile(

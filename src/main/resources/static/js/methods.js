@@ -5,6 +5,7 @@ let simReq = null;
 let allAtoms = [];
 let allIons = [];
 let currentPreset = 'magnetron';
+const thermal3dHistory = [];
 
 const AUTOGEN_PRESETS = {
     magnetron: { voltage:[200,800],   current:[0.2,3.0],   pressure:[0.1,5],     etemp:[11600,34800],   width:[0.1,0.4],  depth:[0.1,0.4],  time:[5,120],   angle:[0,20] },
@@ -448,6 +449,67 @@ function showResults(r) {
         set('r_d_effective', fmt(r.profile.d_effective));
         set('r_mean_depth',  fmt(r.profile.meanDepth));
     }
+
+    updateThermal3D(stats);
+}
+
+function updateThermal3D(stats) {
+    const chartWrap = document.getElementById('thermal3dWrap');
+    const chartId = 'thermal3dChart';
+    if (!chartWrap || typeof window.Plotly === 'undefined') return;
+
+    const finalProbeTemperature = Number(stats?.finalProbeTemperature);
+    const debyeFrontSpeed = Number(stats?.debyeFrontSpeed);
+    const debyeFrontDepth = Number(stats?.debyeFrontDepth);
+
+    const validPoint =
+        Number.isFinite(finalProbeTemperature) &&
+        Number.isFinite(debyeFrontSpeed) &&
+        Number.isFinite(debyeFrontDepth);
+
+    if (validPoint) {
+        thermal3dHistory.push({
+            x: finalProbeTemperature,
+            y: debyeFrontSpeed,
+            z: debyeFrontDepth,
+        });
+    }
+
+    if (!thermal3dHistory.length) {
+        chartWrap.style.display = 'none';
+        return;
+    }
+
+    chartWrap.style.display = 'block';
+
+    window.Plotly.react(chartId, [{
+        type: 'scatter3d',
+        mode: 'markers+text',
+        x: thermal3dHistory.map(p => p.x),
+        y: thermal3dHistory.map(p => p.y),
+        z: thermal3dHistory.map(p => p.z),
+        text: thermal3dHistory.map((_, i) => `#${i + 1}`),
+        textposition: 'top center',
+        marker: {
+            size: 6,
+            color: thermal3dHistory.map((_, i) => i + 1),
+            colorscale: 'Turbo',
+            opacity: 0.9,
+        },
+        hovertemplate:
+            'Tfinal: %{x:.4g} K<br>' +
+            'Vdebye: %{y:.4g} м/с<br>' +
+            'Depth: %{z:.4g} м<extra></extra>',
+    }], {
+        paper_bgcolor: 'rgba(0,0,0,0)',
+        plot_bgcolor: 'rgba(0,0,0,0)',
+        margin: { l: 0, r: 0, t: 8, b: 0 },
+        scene: {
+            xaxis: { title: 'finalProbeTemperature (K)' },
+            yaxis: { title: 'debyeFrontSpeed (м/с)' },
+            zaxis: { title: 'debyeFrontDepth (м)' },
+        },
+    }, { responsive: true, displaylogo: false });
 }
 
 function set(id, val) {
@@ -592,6 +654,12 @@ function resetForm() {
         chamberWidth:'0.1', chamberDepth:'0.1', exposureTime:'1.0', angle:'0' };
     Object.entries(defaults).forEach(([id, val]) => { const el = document.getElementById(id); if (el) el.value = val; });
     curRes = null; simReq = null;
+    thermal3dHistory.length = 0;
+    const chartWrap = document.getElementById('thermal3dWrap');
+    if (chartWrap) chartWrap.style.display = 'none';
+    if (typeof window.Plotly !== 'undefined' && document.getElementById('thermal3dChart')) {
+        window.Plotly.purge('thermal3dChart');
+    }
     showIdle();
     updateCompositionInfo();
     updateIonCompositionInfo();
