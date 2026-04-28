@@ -460,33 +460,90 @@ function set(id, val) {
 async function saveRes() {
     if (!curRes || !simReq) { showMsg('Нет результатов для сохранения', 'error'); return; }
 
+    const pickFirstValidId = (...candidates) => {
+        for (const candidate of candidates) {
+            if (Array.isArray(candidate)) {
+                for (const item of candidate) {
+                    const id = Number(item?.id ?? item?.atomId ?? item?.ionId ?? item);
+                    if (Number.isInteger(id) && id > 0) return id;
+                }
+                continue;
+            }
+            const id = Number(candidate);
+            if (Number.isInteger(id) && id > 0) return id;
+        }
+        return null;
+    };
+
     const stats = curRes.stats || {};
+    const plasma = curRes.plasmaConfig || {};
+    const profile = curRes.profile || {};
+    const atomId = pickFirstValidId(
+        simReq.atomId,
+        simReq.atomIds,
+        simReq.composition?.map(x => x?.atomId),
+        curRes.atom?.id
+    );
+    const ionId = pickFirstValidId(
+        simReq.ionId,
+        simReq.ionIds,
+        simReq.ionComposition?.map(x => x?.ion?.id ?? x?.ionId),
+        curRes.ion?.id
+    );
+    const configId = pickFirstValidId(simReq.configId, simReq.configIds, curRes.plasmaConfig?.id);
+
+    const plasmaParameters = {
+        electronDensity: Number(stats.electronDensity ?? 0),
+        electronVelocity: Number(stats.electronVelocity ?? 0),
+        currentDensity: Number(stats.currentDensity ?? 0),
+        ionEnergy: Number(plasma.ionEnergyOverride ?? 0),
+        voltage: Number(plasma.voltage ?? simReq.voltage ?? 0),
+        pressure: Number(plasma.pressure ?? simReq.pressure ?? 0),
+        electronTemp: Number(plasma.electronTemperature ?? simReq.electronTemp ?? 0),
+        ionFlux: 0,
+    };
+
+    const diffusionProfile = {
+        D1: Number(profile.d1 ?? profile.D1 ?? 0),
+        D2: Number(profile.d2 ?? profile.D2 ?? 0),
+        Q1: Number(profile.q1_ev ?? profile.Q1 ?? 0),
+        Q2: Number(profile.q2_ev ?? profile.Q2 ?? 0),
+        D_thermal: Number(profile.d_thermal ?? profile.D_thermal ?? 0),
+        D_effective: Number(profile.d_effective ?? profile.D_effective ?? 0),
+        depth: Number(profile.meanDepth ?? profile.depth ?? 0),
+    };
+
+    const avgT = Number(plasma.targetTemperature ?? simReq.ambientTemp ?? 300);
+
     try {
+        if (!atomId || !ionId || !configId) {
+            throw new Error('Не заданы atomId/ionId/configId для сохранения результата');
+        }
+
         const token = window.PlasmaAuth?.getToken();
         const res = await fetch(`${API}/create`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: token ? `Bearer ${token}` : '' },
             body: JSON.stringify({
-                ionComposition:       simReq.ionComposition,
-                composition:          simReq.composition,
-                configId:             simReq.configId,
-                voltage:              simReq.voltage,
-                current:              simReq.current,
-                pressure:             simReq.pressure,
-                electronTemp:         simReq.electronTemp,
-                chamberWidth:         simReq.chamberWidth,
-                chamberDepth:         simReq.chamberDepth,
-                exposureTime:         simReq.exposureTime,
-                angle:                simReq.angle,
-                // данные из stats
-                totalTransferredEnergy: stats.totalTransferredEnergy,
-                avgTransferredPerAtom:  stats.avgTransferredPerAtom,
-                totalDamage:            stats.totalDamage,
-                totalMomentum:          stats.totalMomentum,
-                totalDisplacement:      stats.totalDisplacement,
-                // остальное
-                profile:     curRes.profile,
-                plasmaConfig: curRes.plasmaConfig,
+                atomId,
+                configId,
+                ionId,
+                atomName:             curRes.atom?.atomName || '',
+                s:                    formatComposition(simReq.composition),
+                totalTransferredEnergy: Number(stats.totalTransferredEnergy ?? 0),
+                avgTransferredPerAtom:  Number(stats.avgTransferredPerAtom ?? 0),
+                avgT,
+                minT: avgT,
+                maxT: avgT,
+                diffusionCoefficient1: Number(profile.d1 ?? profile.D1 ?? 0),
+                diffusionCoefficient2: Number(profile.d2 ?? profile.D2 ?? 0),
+                plasmaParameters,
+                perAtomTransferredEnergies: [],
+                diffusionProfile,
+                coolingProfile: [],
+                totalDamage:            Number(stats.totalDamage ?? 0),
+                totalMomentum:          Number(stats.totalMomentum ?? 0),
+                totalDisplacement:      Number(stats.totalDisplacement ?? 0),
             }),
         });
 
