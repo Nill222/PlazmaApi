@@ -6,6 +6,17 @@ let allAtoms = [];
 let allIons = [];
 let currentPreset = 'magnetron';
 
+const THERMAL_3D_LAYOUT_BASE = {
+    paper_bgcolor: 'rgba(0,0,0,0)',
+    plot_bgcolor: 'rgba(0,0,0,0)',
+    margin: { l: 0, r: 0, b: 0, t: 50 },
+    font: { family: 'Inter, sans-serif', color: '#94a3b8' },
+};
+
+function thermalSceneAxis(title) {
+    return { title, color: '#94a3b8', gridcolor: '#2a3650', zerolinecolor: '#2a3650' };
+}
+
 const AUTOGEN_PRESETS = {
     magnetron: { voltage:[200,800],   current:[0.2,3.0],   pressure:[0.1,5],     etemp:[11600,34800],   width:[0.1,0.4],  depth:[0.1,0.4],  time:[5,120],   angle:[0,20] },
     etching:   { voltage:[100,400],   current:[0.05,1.0],  pressure:[1,50],      etemp:[23200,69600],   width:[0.1,0.3],  depth:[0.1,0.3],  time:[10,300],  angle:[0,45] },
@@ -115,6 +126,9 @@ function setupHandlers() {
     });
     document.getElementById('compositionList')   ?.addEventListener('change', updateCompositionInfo);
     document.getElementById('ionCompositionList')?.addEventListener('change', updateIonCompositionInfo);
+    document.getElementById('thermal3dType')?.addEventListener('change', () => {
+        if (curRes?.stats) updateThermal3D(curRes.stats);
+    });
 }
 
 function runSimHandler(e) { e.preventDefault(); runSim(); }
@@ -456,6 +470,7 @@ function updateThermal3D(stats) {
     const chartWrap = document.getElementById('thermal3dWrap');
     const chartId = 'thermal3dChart';
     if (!chartWrap || typeof window.Plotly === 'undefined') return;
+    const typeKey = document.getElementById('thermal3dType')?.value || 'surface';
 
     const times = Array.isArray(stats?.thermalTimes) ? stats.thermalTimes.map(Number) : [];
     const depths = Array.isArray(stats?.thermalDepths) ? stats.thermalDepths.map(Number) : [];
@@ -474,70 +489,68 @@ function updateThermal3D(stats) {
 
     chartWrap.style.display = 'block';
 
-    const pointX = [];
-    const pointY = [];
-    const pointZ = [];
-    const maxPoints = 2500;
-    const strideT = Math.max(1, Math.ceil(times.length / Math.sqrt(maxPoints)));
-    const strideD = Math.max(1, Math.ceil(depths.length / Math.sqrt(maxPoints)));
-
-    for (let ti = 0; ti < times.length; ti += strideT) {
-        for (let di = 0; di < depths.length; di += strideD) {
-            pointX.push(depths[di]);
-            pointY.push(times[ti]);
-            pointZ.push(Number(map[ti][di]));
+    const zGrid = map.map(row => row.map(Number));
+    const xs = [];
+    const ys = [];
+    const zs = [];
+    for (let ti = 0; ti < times.length; ti++) {
+        for (let di = 0; di < depths.length; di++) {
+            xs.push(depths[di]);
+            ys.push(times[ti]);
+            zs.push(zGrid[ti][di]);
         }
+    }
+
+    const layout = {
+        ...THERMAL_3D_LAYOUT_BASE,
+        title: { text: 'Температурное поле T(depth, time)', font: { size: 14 } },
+        scene: {
+            xaxis: thermalSceneAxis('Глубина (м)'),
+            yaxis: thermalSceneAxis('Время (с)'),
+            zaxis: thermalSceneAxis('Температура (K)'),
+            bgcolor: 'rgba(0,0,0,0)',
+            camera: {
+                eye: { x: 1.5, y: 1.5, z: 1.2 },
+            },
+        },
+    };
+
+    if (typeKey === 'scatter') {
+        window.Plotly.react(chartId, [{
+            type: 'scatter3d',
+            mode: 'markers',
+            x: xs, y: ys, z: zs,
+            marker: {
+                size: 3,
+                color: zs,
+                colorscale: 'Viridis',
+                showscale: true,
+                colorbar: {
+                    title: 'Температура (K)',
+                    tickfont: { color: '#94a3b8' },
+                    len: 0.7,
+                    thickness: 12,
+                },
+            },
+            hovertemplate: 'Глубина: %{x}<br>Время: %{y}<br>Температура: %{z}<extra></extra>',
+        }], layout, { responsive: true, displayModeBar: false, scrollZoom: true });
+        return;
     }
 
     window.Plotly.react(chartId, [{
         type: 'surface',
-        x: depths,
-        y: times,
-        z: map.map(row => row.map(Number)),
-        colorscale: 'Turbo',
-        contours: {
-            z: { show: true, usecolormap: true, project: { z: true } },
+        x: depths, y: times, z: zGrid,
+        colorscale: 'Viridis',
+        showscale: true,
+        colorbar: {
+            title: 'Температура (K)',
+            tickfont: { color: '#94a3b8' },
+            len: 0.7,
+            thickness: 12,
         },
-        hovertemplate:
-            'Глубина: %{x:.4g} м<br>' +
-            'Время: %{y:.4g} с<br>' +
-            'Температура: %{z:.4g} K<extra></extra>',
-    }, {
-        type: 'scatter3d',
-        mode: 'markers',
-        x: pointX,
-        y: pointY,
-        z: pointZ,
-        marker: {
-            size: 2,
-            opacity: 0.35,
-            color: pointZ,
-            colorscale: 'Turbo',
-            showscale: false,
-        },
-        hovertemplate:
-            'Глубина: %{x:.4g} м<br>' +
-            'Время: %{y:.4g} с<br>' +
-            'Температура: %{z:.4g} K<extra></extra>',
-    }], {
-        paper_bgcolor: 'rgba(0,0,0,0)',
-        plot_bgcolor: 'rgba(0,0,0,0)',
-        margin: { l: 0, r: 0, t: 8, b: 0 },
-        title: { text: 'Температурное поле T(depth, time)', font: { size: 14 } },
-        scene: {
-            xaxis: { title: 'Глубина, м' },
-            yaxis: { title: 'Время, с' },
-            zaxis: { title: 'Температура, K' },
-            camera: {
-                eye: { x: 1.6, y: 1.5, z: 1.2 },
-                up: { x: 0, y: 0, z: 1 },
-            },
-        },
-    }, {
-        responsive: true,
-        displaylogo: false,
-        scrollZoom: true,
-    });
+        hovertemplate: 'Глубина: %{x}<br>Время: %{y}<br>Температура: %{z}<extra></extra>',
+        contours: { z: { show: true, usecolormap: true, highlightcolor: '#42f462', project: { z: true } } },
+    }], layout, { responsive: true, displayModeBar: false, scrollZoom: true });
 }
 
 function set(id, val) {
