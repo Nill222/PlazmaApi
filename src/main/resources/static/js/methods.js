@@ -474,6 +474,21 @@ function updateThermal3D(stats) {
 
     chartWrap.style.display = 'block';
 
+    const pointX = [];
+    const pointY = [];
+    const pointZ = [];
+    const maxPoints = 2500;
+    const strideT = Math.max(1, Math.ceil(times.length / Math.sqrt(maxPoints)));
+    const strideD = Math.max(1, Math.ceil(depths.length / Math.sqrt(maxPoints)));
+
+    for (let ti = 0; ti < times.length; ti += strideT) {
+        for (let di = 0; di < depths.length; di += strideD) {
+            pointX.push(depths[di]);
+            pointY.push(times[ti]);
+            pointZ.push(Number(map[ti][di]));
+        }
+    }
+
     window.Plotly.react(chartId, [{
         type: 'surface',
         x: depths,
@@ -482,6 +497,23 @@ function updateThermal3D(stats) {
         colorscale: 'Turbo',
         contours: {
             z: { show: true, usecolormap: true, project: { z: true } },
+        },
+        hovertemplate:
+            'Глубина: %{x:.4g} м<br>' +
+            'Время: %{y:.4g} с<br>' +
+            'Температура: %{z:.4g} K<extra></extra>',
+    }, {
+        type: 'scatter3d',
+        mode: 'markers',
+        x: pointX,
+        y: pointY,
+        z: pointZ,
+        marker: {
+            size: 2,
+            opacity: 0.35,
+            color: pointZ,
+            colorscale: 'Turbo',
+            showscale: false,
         },
         hovertemplate:
             'Глубина: %{x:.4g} м<br>' +
@@ -496,8 +528,16 @@ function updateThermal3D(stats) {
             xaxis: { title: 'Глубина, м' },
             yaxis: { title: 'Время, с' },
             zaxis: { title: 'Температура, K' },
+            camera: {
+                eye: { x: 1.6, y: 1.5, z: 1.2 },
+                up: { x: 0, y: 0, z: 1 },
+            },
         },
-    }, { responsive: true, displaylogo: false });
+    }, {
+        responsive: true,
+        displaylogo: false,
+        scrollZoom: true,
+    });
 }
 
 function set(id, val) {
