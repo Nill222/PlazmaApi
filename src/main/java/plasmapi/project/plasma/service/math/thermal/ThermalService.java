@@ -16,6 +16,11 @@ public interface ThermalService {
             ThermalServiceImpl.BoundaryCondition boundaryCondition,
             double ambientTemp,
             double h,
-            Integer N
+            Integer N,
+            Double debyeTemperature,
+            Double probeDepth,
+            boolean thermalCyclingEnabled,
+            Double cyclePeriod,
+            Double dutyCycle
     );
 }

@@ -74,10 +74,15 @@ public class DiffusionServiceImpl implements DiffusionService {
                 adapter.getBoundaryCondition(),
                 ambientTemp,
                 adapter.getH(),
-                adapter.getN()
+                adapter.getN(),
+                adapter.getDebyeTemperature(atom),
+                adapter.getProbeDepth(),
+                adapter.isThermalCyclingEnabled(),
+                adapter.getCyclePeriod(),
+                adapter.getDutyCycle()
         );
 
-        double finalT = thermal.times().get(thermal.times().size() - 1);
+        double finalT = thermal.finalProbeTemperature();
 
         // =========================
         // 2. PLASMA
@@ -452,7 +457,17 @@ public class DiffusionServiceImpl implements DiffusionService {
         }
 
         Double getPowerInput() {
-            return null;
+            if (cfg.getVoltage() == null || cfg.getCurrent() == null) {
+                return null;
+            }
+            double power = cfg.getVoltage() * cfg.getCurrent();
+            double area = 1.0;
+            if (cfg.getChamberWidth() != null && cfg.getChamberDepth() != null
+                    && cfg.getChamberWidth() > 0 && cfg.getChamberDepth() > 0) {
+                area = cfg.getChamberWidth() * cfg.getChamberDepth();
+            }
+            // Возвращаем удельный поток мощности, Вт/м^2.
+            return power / area;
         }
 
         Double getProjectedRange() {
@@ -469,6 +484,27 @@ public class DiffusionServiceImpl implements DiffusionService {
 
         Integer getN() {
             return null;
+        }
+
+        Double getDebyeTemperature(AtomList atom) {
+            return atom != null ? atom.getDebyeTemperature() : null;
+        }
+
+        Double getProbeDepth() {
+            return getProjectedRange();
+        }
+
+        boolean isThermalCyclingEnabled() {
+            return cfg.getVoltage() != null && cfg.getCurrent() != null
+                    && cfg.getVoltage() > 0 && cfg.getCurrent() > 0;
+        }
+
+        Double getCyclePeriod() {
+            return Math.max(exposureTime / 20.0, 1e-6);
+        }
+
+        Double getDutyCycle() {
+            return 0.5;
         }
     }
 

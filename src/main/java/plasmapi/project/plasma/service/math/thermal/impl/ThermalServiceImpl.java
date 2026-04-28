@@ -12,8 +12,6 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class ThermalServiceImpl implements ThermalService {
-    //todo температура в точке скорость распространение до температуры дебая
-
     /**
      * Моделирует нагрев и охлаждение материала под действием ионного пучка.
      *
@@ -41,7 +39,12 @@ public class ThermalServiceImpl implements ThermalService {
             BoundaryCondition boundaryCondition,
             double ambientTemp,
             double h,
-            Integer N
+            Integer N,
+            Double debyeTemperature,
+            Double probeDepth,
+            boolean thermalCyclingEnabled,
+            Double cyclePeriod,
+            Double dutyCycle
     ) {
         // Теплофизические свойства
         double rho = plasmaConfig.getDensity();          // кг/м³
@@ -61,7 +64,11 @@ public class ThermalServiceImpl implements ThermalService {
         double dx = thickness / (N - 1);
 
         // Проверка устойчивости явной схемы: dt <= dx^2 / (2*alpha)
-        double dtMax = dx * dx / (2 * alpha); //todo    термоцеклироапние
+        double dtMax = dx * dx / (2 * alpha);
+        if (thermalCyclingEnabled && cyclePeriod != null && cyclePeriod > 0) {
+            // Для корректного термоциклирования держим хотя бы 25 шагов на период.
+            dtMax = Math.min(dtMax, cyclePeriod / 25.0);
+        }
         if (dt > dtMax) {
             // Можно либо уменьшить dt, либо выбросить исключение. Здесь уменьшим и выдадим предупреждение.
             dt = dtMax * 0.9;
@@ -83,6 +90,21 @@ public class ThermalServiceImpl implements ThermalService {
         // Инициализация температурного поля
         double[] T = new double[N];
         for (int i = 0; i < N; i++) T[i] = T0;
+        double debyeLimit = (debyeTemperature != null && debyeTemperature > 0)
+                ? debyeTemperature
+                : Double.POSITIVE_INFINITY;
+        double observationDepth = probeDepth != null ? probeDepth : thickness / 2.0;
+        double observationDepthClamped = Math.max(0.0, Math.min(thickness, observationDepth));
+        int observationIndex = (int) Math.round(observationDepthClamped / dx);
+        observationIndex = Math.max(0, Math.min(N - 1, observationIndex));
+
+        double[] debyeReachedAt = new double[N];
+        for (int i = 0; i < N; i++) {
+            debyeReachedAt[i] = Double.NaN;
+            if (T[i] >= debyeLimit) {
+                debyeReachedAt[i] = 0.0;
+            }
+        }
 
         // Профиль источника (объёмная плотность мощности, Вт/м³)
         double[] source = new double[N];
@@ -114,9 +136,13 @@ public class ThermalServiceImpl implements ThermalService {
             double time = (step + 1) * dt;
 
             // Внутренние узлы
+            double cyclingFactor = getCyclingFactor(time, thermalCyclingEnabled, cyclePeriod, dutyCycle);
             for (int i = 1; i < N - 1; i++) {
                 double laplacian = (T[i-1] - 2*T[i] + T[i+1]) / (dx * dx);
-                T_new[i] += dt * (alpha * laplacian + source[i] / (rho * cp));
+                T_new[i] += dt * (alpha * laplacian + (cyclingFactor * source[i]) / (rho * cp));
+                if (T_new[i] > debyeLimit) {
+                    T_new[i] = debyeLimit;
+                }
             }
 
             // Граничные условия
@@ -138,6 +164,14 @@ public class ThermalServiceImpl implements ThermalService {
             }
             // Правая граница (x = thickness) — фиксированная температура T0 (термостат)
             T_new[N-1] = T0;
+            if (T_new[0] > debyeLimit) T_new[0] = debyeLimit;
+            if (T_new[N - 1] > debyeLimit) T_new[N - 1] = debyeLimit;
+
+            for (int i = 0; i < N; i++) {
+                if (Double.isNaN(debyeReachedAt[i]) && T_new[i] >= debyeLimit) {
+                    debyeReachedAt[i] = time;
+                }
+            }
 
             T = T_new;
 
@@ -150,7 +184,47 @@ public class ThermalServiceImpl implements ThermalService {
             }
         }
 
-        return new ThermalResult(times, temperatureProfiles, T0, thickness);
+        double finalProbeTemperature = T[observationIndex];
+        double debyeReachTime = Double.NaN;
+        double debyeFrontDepth = 0.0;
+        for (int i = 0; i < N; i++) {
+            if (!Double.isNaN(debyeReachedAt[i])) {
+                double x = i * dx;
+                if (x >= debyeFrontDepth) {
+                    debyeFrontDepth = x;
+                    debyeReachTime = debyeReachedAt[i];
+                }
+            }
+        }
+        double debyeFrontSpeed = (!Double.isNaN(debyeReachTime) && debyeReachTime > 0)
+                ? debyeFrontDepth / debyeReachTime
+                : 0.0;
+
+        return new ThermalResult(
+                times,
+                temperatureProfiles,
+                T0,
+                thickness,
+                observationDepthClamped,
+                finalProbeTemperature,
+                debyeLimit,
+                debyeReachTime,
+                debyeFrontDepth,
+                debyeFrontSpeed
+        );
+    }
+
+    private double getCyclingFactor(
+            double time,
+            boolean thermalCyclingEnabled,
+            Double cyclePeriod,
+            Double dutyCycle
+    ) {
+        if (!thermalCyclingEnabled) return 1.0;
+        if (cyclePeriod == null || cyclePeriod <= 0) return 1.0;
+        double duty = (dutyCycle == null) ? 0.5 : Math.max(0.01, Math.min(0.99, dutyCycle));
+        double phase = time % cyclePeriod;
+        return phase <= cyclePeriod * duty ? 1.0 : 0.0;
     }
 
     public enum BoundaryCondition {
