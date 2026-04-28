@@ -559,6 +559,72 @@ function updateThermal3D(stats) {
         return;
     }
 
+    if (typeKey === 'sphere') {
+        const sampleSpherePoints = (xArr, yArr, zArr, maxPoints = 500) => {
+            const total = xArr.length;
+            if (total <= maxPoints) return { x: xArr, y: yArr, z: zArr };
+            const picked = new Set();
+            while (picked.size < maxPoints) {
+                picked.add(Math.floor(Math.random() * total));
+            }
+            const idx = [...picked];
+            return {
+                x: idx.map(i => xArr[i]),
+                y: idx.map(i => yArr[i]),
+                z: idx.map(i => zArr[i]),
+            };
+        };
+
+        const sampled = sampleSpherePoints(xs, ys, zs, 500);
+        const maxDepth = Math.max(...depths, 1e-12);
+        const maxTime = Math.max(...times, 1e-12);
+        const sphereX = [];
+        const sphereY = [];
+        const sphereZ = [];
+
+        for (let i = 0; i < sampled.x.length; i++) {
+            const radius = Math.max(sampled.x[i] / maxDepth, 0.03);
+            const theta = 2 * Math.PI * (sampled.y[i] / maxTime);
+            const phi = Math.acos(2 * Math.random() - 1); // равномерно по сфере
+            sphereX.push(radius * Math.sin(phi) * Math.cos(theta));
+            sphereY.push(radius * Math.sin(phi) * Math.sin(theta));
+            sphereZ.push(radius * Math.cos(phi));
+        }
+
+        window.Plotly.react(chartId, [{
+            type: 'scatter3d',
+            mode: 'markers',
+            x: sphereX,
+            y: sphereY,
+            z: sphereZ,
+            marker: {
+                size: 4,
+                opacity: 0.75,
+                color: sampled.z,
+                colorscale: 'Viridis',
+                showscale: true,
+                colorbar: {
+                    title: 'Температура (K)',
+                    tickfont: { color: '#94a3b8' },
+                    len: 0.7,
+                    thickness: 12,
+                },
+            },
+            hovertemplate: 'Температура: %{marker.color:.4g} K<extra></extra>',
+        }], {
+            ...layout,
+            title: { text: 'Сферическая проекция изотерм', font: { size: 14 } },
+            scene: {
+                ...layout.scene,
+                xaxis: thermalSceneAxis('X (норм.)'),
+                yaxis: thermalSceneAxis('Y (норм.)'),
+                zaxis: thermalSceneAxis('Z (норм.)'),
+                aspectmode: 'cube',
+            },
+        }, { responsive: true, displayModeBar: false, scrollZoom: true });
+        return;
+    }
+
     window.Plotly.react(chartId, [{
         type: 'surface',
         x: depths, y: times, z: zGrid,
