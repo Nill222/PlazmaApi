@@ -315,6 +315,22 @@ public class DiffusionServiceImpl implements DiffusionService {
         double momentumPerIon = Math.sqrt(2.0 * ion.getMass() * (collision.transferredEnergy() * EV));
         double totalMomentum = momentumPerIon * fluence;
 
+        List<Double> thermalTimes = thermal.times();
+        List<Double> thermalDepths = new ArrayList<>();
+        List<List<Double>> thermalTemperatureMap = new ArrayList<>();
+        if (thermal.temperatureProfiles() != null && !thermal.temperatureProfiles().isEmpty()) {
+            int depthNodes = thermal.temperatureProfiles().get(0).length;
+            double dxThermal = depthNodes > 1 ? thermal.thickness() / (depthNodes - 1) : 0.0;
+            for (int i = 0; i < depthNodes; i++) {
+                thermalDepths.add(i * dxThermal);
+            }
+            for (double[] row : thermal.temperatureProfiles()) {
+                List<Double> rowList = new ArrayList<>(row.length);
+                for (double tVal : row) rowList.add(tVal);
+                thermalTemperatureMap.add(rowList);
+            }
+        }
+
         PhysicsStats stats = new PhysicsStats(
                 electronDensity,
                 electronVelocity,
@@ -327,7 +343,10 @@ public class DiffusionServiceImpl implements DiffusionService {
                 totalDisplacement,
                 thermal.finalProbeTemperature(),
                 thermal.debyeFrontSpeed(),
-                thermal.debyeFrontDepth()
+                thermal.debyeFrontDepth(),
+                thermalTimes,
+                thermalDepths,
+                thermalTemperatureMap
         );
 
         return new DiffusionProfile(

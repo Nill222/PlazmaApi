@@ -1,5 +1,7 @@
 package plasmapi.project.plasma.service.math;
 
+import java.util.List;
+
 public record PhysicsStats(
     double electronDensity,       // Плотность электронов (м⁻³)
     double electronVelocity,      // Скорость электронов (м/с)
@@ -12,5 +14,8 @@ public record PhysicsStats(
     double totalDisplacement,      // Смещение атомов (м)
     double finalProbeTemperature,  // Температура в контрольной точке (K)
     double debyeFrontSpeed,        // Скорость фронта до температуры Дебая (м/с)
-    double debyeFrontDepth         // Глубина фронта Дебая (м)
+    double debyeFrontDepth,        // Глубина фронта Дебая (м)
+    List<Double> thermalTimes,     // Шкала времени для температурного поля (с)
+    List<Double> thermalDepths,    // Шкала глубины для температурного поля (м)
+    List<List<Double>> thermalTemperatureMap // T(depth, time) для 3D-графика
 ) {}

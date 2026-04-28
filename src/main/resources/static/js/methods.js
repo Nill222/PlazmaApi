@@ -5,7 +5,6 @@ let simReq = null;
 let allAtoms = [];
 let allIons = [];
 let currentPreset = 'magnetron';
-const thermal3dHistory = [];
 
 const AUTOGEN_PRESETS = {
     magnetron: { voltage:[200,800],   current:[0.2,3.0],   pressure:[0.1,5],     etemp:[11600,34800],   width:[0.1,0.4],  depth:[0.1,0.4],  time:[5,120],   angle:[0,20] },
@@ -458,24 +457,17 @@ function updateThermal3D(stats) {
     const chartId = 'thermal3dChart';
     if (!chartWrap || typeof window.Plotly === 'undefined') return;
 
-    const finalProbeTemperature = Number(stats?.finalProbeTemperature);
-    const debyeFrontSpeed = Number(stats?.debyeFrontSpeed);
-    const debyeFrontDepth = Number(stats?.debyeFrontDepth);
+    const times = Array.isArray(stats?.thermalTimes) ? stats.thermalTimes.map(Number) : [];
+    const depths = Array.isArray(stats?.thermalDepths) ? stats.thermalDepths.map(Number) : [];
+    const map = Array.isArray(stats?.thermalTemperatureMap) ? stats.thermalTemperatureMap : [];
 
-    const validPoint =
-        Number.isFinite(finalProbeTemperature) &&
-        Number.isFinite(debyeFrontSpeed) &&
-        Number.isFinite(debyeFrontDepth);
+    const validSurface =
+        times.length > 1 &&
+        depths.length > 1 &&
+        map.length === times.length &&
+        map.every(row => Array.isArray(row) && row.length === depths.length);
 
-    if (validPoint) {
-        thermal3dHistory.push({
-            x: finalProbeTemperature,
-            y: debyeFrontSpeed,
-            z: debyeFrontDepth,
-        });
-    }
-
-    if (!thermal3dHistory.length) {
+    if (!validSurface) {
         chartWrap.style.display = 'none';
         return;
     }
@@ -483,31 +475,27 @@ function updateThermal3D(stats) {
     chartWrap.style.display = 'block';
 
     window.Plotly.react(chartId, [{
-        type: 'scatter3d',
-        mode: 'markers+text',
-        x: thermal3dHistory.map(p => p.x),
-        y: thermal3dHistory.map(p => p.y),
-        z: thermal3dHistory.map(p => p.z),
-        text: thermal3dHistory.map((_, i) => `#${i + 1}`),
-        textposition: 'top center',
-        marker: {
-            size: 6,
-            color: thermal3dHistory.map((_, i) => i + 1),
-            colorscale: 'Turbo',
-            opacity: 0.9,
+        type: 'surface',
+        x: depths,
+        y: times,
+        z: map.map(row => row.map(Number)),
+        colorscale: 'Turbo',
+        contours: {
+            z: { show: true, usecolormap: true, project: { z: true } },
         },
         hovertemplate:
-            'Tfinal: %{x:.4g} K<br>' +
-            'Vdebye: %{y:.4g} м/с<br>' +
-            'Depth: %{z:.4g} м<extra></extra>',
+            'Глубина: %{x:.4g} м<br>' +
+            'Время: %{y:.4g} с<br>' +
+            'Температура: %{z:.4g} K<extra></extra>',
     }], {
         paper_bgcolor: 'rgba(0,0,0,0)',
         plot_bgcolor: 'rgba(0,0,0,0)',
         margin: { l: 0, r: 0, t: 8, b: 0 },
+        title: { text: 'Температурное поле T(depth, time)', font: { size: 14 } },
         scene: {
-            xaxis: { title: 'finalProbeTemperature (K)' },
-            yaxis: { title: 'debyeFrontSpeed (м/с)' },
-            zaxis: { title: 'debyeFrontDepth (м)' },
+            xaxis: { title: 'Глубина, м' },
+            yaxis: { title: 'Время, с' },
+            zaxis: { title: 'Температура, K' },
         },
     }, { responsive: true, displaylogo: false });
 }
@@ -654,7 +642,6 @@ function resetForm() {
         chamberWidth:'0.1', chamberDepth:'0.1', exposureTime:'1.0', angle:'0' };
     Object.entries(defaults).forEach(([id, val]) => { const el = document.getElementById(id); if (el) el.value = val; });
     curRes = null; simReq = null;
-    thermal3dHistory.length = 0;
     const chartWrap = document.getElementById('thermal3dWrap');
     if (chartWrap) chartWrap.style.display = 'none';
     if (typeof window.Plotly !== 'undefined' && document.getElementById('thermal3dChart')) {
