@@ -516,13 +516,35 @@ function updateThermal3D(stats) {
     };
 
     if (typeKey === 'scatter') {
+        const sampleScatterPoints = (xArr, yArr, zArr, maxPoints = 500) => {
+            const total = xArr.length;
+            if (total <= maxPoints) return { x: xArr, y: yArr, z: zArr };
+
+            const idx = Array.from({ length: total }, (_, i) => i);
+            for (let i = idx.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                const tmp = idx[i];
+                idx[i] = idx[j];
+                idx[j] = tmp;
+            }
+
+            const picked = idx.slice(0, maxPoints);
+            return {
+                x: picked.map(i => xArr[i]),
+                y: picked.map(i => yArr[i]),
+                z: picked.map(i => zArr[i]),
+            };
+        };
+
+        const sampled = sampleScatterPoints(xs, ys, zs, 500);
+
         window.Plotly.react(chartId, [{
             type: 'scatter3d',
             mode: 'markers',
-            x: xs, y: ys, z: zs,
+            x: sampled.x, y: sampled.y, z: sampled.z,
             marker: {
                 size: 3,
-                color: zs,
+                color: sampled.z,
                 colorscale: 'Viridis',
                 showscale: true,
                 colorbar: {
