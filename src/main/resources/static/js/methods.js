@@ -2,451 +2,582 @@
 const API = '/api/simulation';
 let curRes = null;
 let simReq = null;
+let allAtoms = [];
+let allIons = [];
+let currentPreset = 'magnetron';
+
+const AUTOGEN_PRESETS = {
+    magnetron: { voltage:[200,800],   current:[0.2,3.0],   pressure:[0.1,5],     etemp:[11600,34800],   width:[0.1,0.4],  depth:[0.1,0.4],  time:[5,120],   angle:[0,20] },
+    etching:   { voltage:[100,400],   current:[0.05,1.0],  pressure:[1,50],      etemp:[23200,69600],   width:[0.1,0.3],  depth:[0.1,0.3],  time:[10,300],  angle:[0,45] },
+    implant:   { voltage:[500,2000],  current:[0.001,0.1], pressure:[0.001,1],   etemp:[58000,116000],  width:[0.05,0.2], depth:[0.05,0.2], time:[0.1,5],   angle:[0,30] },
+    cvd:       { voltage:[50,300],    current:[0.5,5.0],   pressure:[10,200],    etemp:[5800,23200],    width:[0.15,0.5], depth:[0.15,0.5], time:[30,600],  angle:[0,10] },
+    custom:    { voltage:[100,2000],  current:[0.01,5.0],  pressure:[0.01,200],  etemp:[5800,116000],   width:[0.05,0.5], depth:[0.05,0.5], time:[0.5,120], angle:[0,60] },
+};
 
 document.addEventListener('DOMContentLoaded', () => {
     checkAuth();
     loadData();
     setupHandlers();
     addMissingElements();
+    initCompositionRows();
+    setupPresetListeners();
 });
 
-function addMissingElements() {
-    if (!document.getElementById('resIdle')) {
-        const resDisplay = document.getElementById('resDisplay');
-        if (resDisplay) {
-            const idleDiv = document.createElement('div');
-            idleDiv.id = 'resIdle';
-            idleDiv.className = 'res-state';
-            idleDiv.style.display = 'block';
-            idleDiv.innerHTML = `
-                <i class="fas fa-play-circle"></i>
-                <h4>Готов к запуску</h4>
-                <p>Задайте параметры и нажмите "Запустить"</p>
-            `;
-            resDisplay.parentNode.insertBefore(idleDiv, resDisplay);
-        }
-    }
+// ── init ─────────────────────────────────────────────────────────────────────
 
+function initCompositionRows() {
+    if (!document.getElementById('compositionList')?.children.length)    addRow();
+    if (!document.getElementById('ionCompositionList')?.children.length) addIonRow();
+}
+
+function setupPresetListeners() {
+    ['customVoltage','customCurrent','customPressure','customETemp','customWidth','customDepth','customTime','customAngle']
+        .forEach(id => document.getElementById(id)?.addEventListener('change', updateCustomPreset));
+}
+
+function updateCustomPreset() {
+    if (currentPreset !== 'custom') return;
+    const parse = str => { const p = str.split('-').map(Number); return p.length === 2 ? p : [0, 100]; };
+    AUTOGEN_PRESETS.custom = {
+        voltage:  parse(document.getElementById('customVoltage')?.value  || '100-2000'),
+        current:  parse(document.getElementById('customCurrent')?.value  || '0.01-5.0'),
+        pressure: parse(document.getElementById('customPressure')?.value || '0.01-200'),
+        etemp:    parse(document.getElementById('customETemp')?.value    || '5800-116000'),
+        width:    parse(document.getElementById('customWidth')?.value    || '0.05-0.5'),
+        depth:    parse(document.getElementById('customDepth')?.value    || '0.05-0.5'),
+        time:     parse(document.getElementById('customTime')?.value     || '0.5-120'),
+        angle:    parse(document.getElementById('customAngle')?.value    || '0-60'),
+    };
+}
+
+function addMissingElements() {
+    const resDisplay = document.getElementById('resDisplay');
+    if (!resDisplay) return;
+
+    if (!document.getElementById('resIdle')) {
+        const el = document.createElement('div');
+        el.id = 'resIdle'; el.className = 'res-state'; el.style.display = 'block';
+        el.innerHTML = `<i class="fas fa-play-circle"></i><h4>Готов к запуску</h4><p>Задайте состав атомов и ионов, затем нажмите «Запустить»</p>`;
+        resDisplay.parentNode.insertBefore(el, resDisplay);
+    }
     if (!document.getElementById('resRunning')) {
-        const resDisplay = document.getElementById('resDisplay');
-        if (resDisplay) {
-            const runningDiv = document.createElement('div');
-            runningDiv.id = 'resRunning';
-            runningDiv.className = 'res-state';
-            runningDiv.style.display = 'none';
-            runningDiv.innerHTML = `
-                <div class="spinner-lg"></div>
-                <h4>Выполняется симуляция</h4>
-                <p>Пожалуйста, подождите...</p>
-                <div class="progress-bar">
-                    <div id="progressBar" class="progress-fill" style="width: 0%;"></div>
-                </div>
-            `;
-            resDisplay.parentNode.insertBefore(runningDiv, resDisplay);
-        }
+        const el = document.createElement('div');
+        el.id = 'resRunning'; el.className = 'res-state'; el.style.display = 'none';
+        el.innerHTML = `<div class="spinner-lg"></div><h4>Выполняется симуляция</h4><p>Пожалуйста, подождите...</p><div class="progress-bar"><div id="progressBar" class="progress-fill" style="width:0%"></div></div>`;
+        resDisplay.parentNode.insertBefore(el, resDisplay);
     }
 }
+
+// ── auth ─────────────────────────────────────────────────────────────────────
 
 function checkAuth() {
-    const isAuth = window.PlasmaAuth && typeof window.PlasmaAuth.isAuthenticated === 'function'
-        ? window.PlasmaAuth.isAuthenticated()
-        : false;
-
-    const authGate = document.getElementById('authGate');
-    const simWorkspace = document.getElementById('simWorkspace');
-
-    if (authGate) authGate.style.display = isAuth ? 'none' : 'flex';
-    if (simWorkspace) simWorkspace.style.display = isAuth ? 'block' : 'none';
+    const auth = window.PlasmaAuth?.isAuthenticated?.() || false;
+    document.getElementById('authGate').style.display    = auth ? 'none'  : 'flex';
+    document.getElementById('simWorkspace').style.display = auth ? 'block' : 'none';
 }
+
+// ── data loading ─────────────────────────────────────────────────────────────
 
 async function loadData() {
     try {
-        const [atomsRes, ionsRes] = await Promise.all([
-            fetch('/atoms'),
-            fetch('/ions')
-        ]);
-
-        if (!atomsRes.ok) throw new Error('Failed to load atoms');
-        if (!ionsRes.ok) throw new Error('Failed to load ions');
-
-        const atoms = await atomsRes.json();
-        const ions = await ionsRes.json();
-
-        const as = document.getElementById('atomSel');
-        const is = document.getElementById('ionSel');
-
-        if (as) {
-            as.innerHTML = '<option value="">Выбрать...</option>' +
-                (atoms.data || []).map(x => `<option value="${x.id}">${x.atomName || x.name} - ${x.fullName || ''}</option>`).join('');
-        }
-
-        if (is) {
-            is.innerHTML = '<option value="">Выбрать...</option>' +
-                (ions.data || []).map(x => `<option value="${x.id}">${x.name} (${x.charge > 0 ? '+' : ''}${x.charge})</option>`).join('');
-        }
+        const [aRes, iRes] = await Promise.all([fetch('/atoms'), fetch('/ions')]);
+        if (!aRes.ok) throw new Error('atoms');
+        if (!iRes.ok) throw new Error('ions');
+        allAtoms = (await aRes.json()).data || [];
+        allIons  = (await iRes.json()).data || [];
+        updateAllCompositionSelects();
+        updateCompositionInfo();
+        updateIonCompositionInfo();
     } catch (e) {
-        console.error('Error loading data:', e);
+        console.error('loadData:', e);
         showMsg('Ошибка загрузки данных', 'error');
     }
 }
 
+function updateAllCompositionSelects() {
+    const aOpts = '<option value="">Выбрать атом...</option>' +
+        allAtoms.map(x => `<option value="${x.id}">${x.atomName || x.name} — ${x.fullName || ''}</option>`).join('');
+    const iOpts = '<option value="">Выбрать ион...</option>' +
+        allIons.map(x => `<option value="${x.id}">${x.name} (${x.charge > 0 ? '+' : ''}${x.charge})</option>`).join('');
+    document.querySelectorAll('.comp-atom').forEach(s => s.innerHTML = aOpts);
+    document.querySelectorAll('.comp-ion') .forEach(s => s.innerHTML = iOpts);
+}
+
+// ── event handlers ────────────────────────────────────────────────────────────
+
 function setupHandlers() {
-    const simForm = document.getElementById('simForm');
-    if (simForm) {
-        simForm.removeEventListener('submit', runSimHandler);
-        simForm.addEventListener('submit', runSimHandler);
-    }
+    const form = document.getElementById('simForm');
+    if (form) { form.removeEventListener('submit', runSimHandler); form.addEventListener('submit', runSimHandler); }
 
     document.querySelectorAll('.res-tab').forEach(t => {
         t.removeEventListener('click', tabHandler);
         t.addEventListener('click', tabHandler);
     });
+    document.getElementById('compositionList')   ?.addEventListener('change', updateCompositionInfo);
+    document.getElementById('ionCompositionList')?.addEventListener('change', updateIonCompositionInfo);
 }
 
-function runSimHandler(e) {
-    e.preventDefault();
-    runSim();
-}
+function runSimHandler(e) { e.preventDefault(); runSim(); }
 
 function tabHandler(e) {
     const tab = e.currentTarget;
-    document.querySelectorAll('.res-tab').forEach(x => x.classList.remove('active'));
+    document.querySelectorAll('.res-tab') .forEach(x => x.classList.remove('active'));
     document.querySelectorAll('.res-panel').forEach(x => x.classList.remove('active'));
     tab.classList.add('active');
-    const panel = document.querySelector(`.res-panel[data-tab="${tab.dataset.tab}"]`);
-    if (panel) panel.classList.add('active');
+    document.querySelector(`.res-panel[data-tab="${tab.dataset.tab}"]`)?.classList.add('active');
 }
 
-async function runSim() {
-    if (window.PlasmaAuth && typeof window.PlasmaAuth.isAuthenticated === 'function' && !window.PlasmaAuth.isAuthenticated()) {
-        if (window.PlasmaAuth.showMessage) {
-            window.PlasmaAuth.showMessage('Требуется авторизация', 'error');
-        } else {
-            alert('Требуется авторизация');
+// ── atom composition ──────────────────────────────────────────────────────────
+
+function makeAtomRow(atomId = null, percent = 100) {
+    const row = document.createElement('div');
+    row.className = 'composition-row';
+    const opts = '<option value="">Выбрать атом...</option>' +
+        allAtoms.map(x => `<option value="${x.id}" ${x.id === atomId ? 'selected' : ''}>${x.atomName || x.name} — ${x.fullName || ''}</option>`).join('');
+    row.innerHTML = `
+        <select class="comp-atom" style="flex:2;padding:8px;border-radius:6px;background:rgba(13,17,23,.8);border:1px solid rgba(94,234,212,.3);color:#e2e8f0">${opts}</select>
+        <input type="number" class="comp-fraction" step="0.1" placeholder="Доля, %" value="${percent}" style="flex:1;padding:8px;border-radius:6px;background:rgba(13,17,23,.8);border:1px solid rgba(94,234,212,.3);color:#e2e8f0">
+        <button type="button" onclick="removeRow(this)" style="background:none;border:none;color:#ff6b6b;cursor:pointer;font-size:18px;padding:8px"><i class="fas fa-trash"></i></button>`;
+    return row;
+}
+
+function addRow(atomId = null, percent = 100) {
+    document.getElementById('compositionList')?.appendChild(makeAtomRow(atomId, percent));
+    updateCompositionInfo();
+}
+
+function removeRow(btn) {
+    const c = document.getElementById('compositionList');
+    if (c?.children.length > 1) { btn.closest('.composition-row').remove(); updateCompositionInfo(); }
+    else showMsg('Должен быть хотя бы один компонент мишени', 'error');
+}
+
+function randomizeComposition() {
+    if (!allAtoms.length) return;
+    const c = document.getElementById('compositionList');
+    if (!c) return;
+    c.innerHTML = '';
+    const n = Math.min(Math.floor(Math.random() * 3) + 1, allAtoms.length);
+    const shuffled = [...allAtoms].sort(() => Math.random() - 0.5).slice(0, n);
+    let fracs = shuffled.map(() => Math.random());
+    const sum = fracs.reduce((a,b) => a+b, 0);
+    fracs = fracs.map(f => f / sum);
+    shuffled.forEach((atom, i) => addRow(atom.id, (fracs[i] * 100).toFixed(1)));
+}
+
+function collectComposition(showError = true) {
+    const rows = document.querySelectorAll('#compositionList .composition-row');
+    const comp = [];
+    rows.forEach(row => {
+        const id  = row.querySelector('.comp-atom')?.value;
+        const pct = row.querySelector('.comp-fraction')?.value;
+        if (id && pct && id !== '') comp.push({ atomId: parseInt(id, 10), fraction: parseFloat(pct) / 100 });
+    });
+    if (!comp.length) { if (showError) showMsg('Добавьте хотя бы один компонент мишени', 'error'); return null; }
+    const sum = comp.reduce((s, c) => s + c.fraction, 0);
+    if (Math.abs(sum - 1) > 0.01) {
+        if (showError) showMsg(`Сумма долей мишени должна быть 100% (сейчас: ${(sum*100).toFixed(1)}%)`, 'error');
+        return null;
+    }
+    return comp;
+}
+
+function updateCompositionInfo() {
+    const comp = collectComposition(false);
+    const info = document.getElementById('compositionInfo');
+    const text = document.getElementById('compositionText');
+    if (!info || !text) return;
+    if (comp?.length) {
+        const sum = comp.reduce((s,c) => s+c.fraction, 0);
+        if (Math.abs(sum-1) <= 0.01) {
+            text.innerHTML = `<strong>${comp.map(c => {
+                const a = allAtoms.find(a => a.id === c.atomId);
+                return `${a?.atomName || a?.name || '?'} ${(c.fraction*100).toFixed(1)}%`;
+            }).join(', ')}</strong> (сумма: ${(sum*100).toFixed(1)}%)`;
+            info.style.display = 'block';
+            return;
         }
+    }
+    info.style.display = 'none';
+}
+
+function formatComposition(comp) {
+    if (!comp?.length) return '—';
+    return comp.map(c => {
+        const a = allAtoms.find(a => a.id === c.atomId);
+        return `${a?.atomName || a?.name || '?'} ${(c.fraction*100).toFixed(1)}%`;
+    }).join(', ');
+}
+
+// ── ion composition ───────────────────────────────────────────────────────────
+
+function makeIonRow(ionId = null, percent = 100) {
+    const row = document.createElement('div');
+    row.className = 'composition-row';
+    const opts = '<option value="">Выбрать ион...</option>' +
+        allIons.map(x => `<option value="${x.id}" ${x.id === ionId ? 'selected' : ''}>${x.name} (${x.charge > 0 ? '+' : ''}${x.charge})</option>`).join('');
+    row.innerHTML = `
+        <select class="comp-ion" style="flex:2;padding:8px;border-radius:6px;background:rgba(13,17,23,.8);border:1px solid rgba(94,234,212,.3);color:#e2e8f0">${opts}</select>
+        <input type="number" class="comp-fraction" step="0.1" placeholder="Доля, %" value="${percent}" style="flex:1;padding:8px;border-radius:6px;background:rgba(13,17,23,.8);border:1px solid rgba(94,234,212,.3);color:#e2e8f0">
+        <button type="button" onclick="removeIonRow(this)" style="background:none;border:none;color:#ff6b6b;cursor:pointer;font-size:18px;padding:8px"><i class="fas fa-trash"></i></button>`;
+    return row;
+}
+
+function addIonRow(ionId = null, percent = 100) {
+    document.getElementById('ionCompositionList')?.appendChild(makeIonRow(ionId, percent));
+    updateIonCompositionInfo();
+}
+
+function removeIonRow(btn) {
+    const c = document.getElementById('ionCompositionList');
+    if (c?.children.length > 1) { btn.closest('.composition-row').remove(); updateIonCompositionInfo(); }
+    else showMsg('Должен быть хотя бы один ион', 'error');
+}
+
+function randomizeIonComposition() {
+    if (!allIons.length) return;
+    const c = document.getElementById('ionCompositionList');
+    if (!c) return;
+    c.innerHTML = '';
+    const n = Math.min(Math.floor(Math.random() * 3) + 1, allIons.length);
+    const shuffled = [...allIons].sort(() => Math.random() - 0.5).slice(0, n);
+    let fracs = shuffled.map(() => Math.random());
+    const sum = fracs.reduce((a,b) => a+b, 0);
+    fracs = fracs.map(f => f / sum);
+    shuffled.forEach((ion, i) => addIonRow(ion.id, (fracs[i] * 100).toFixed(1)));
+}
+
+function collectIonComposition(showError = true) {
+    const rows = document.querySelectorAll('#ionCompositionList .composition-row');
+    const comp = [];
+    rows.forEach(row => {
+        const id  = row.querySelector('.comp-ion')?.value;
+        const pct = row.querySelector('.comp-fraction')?.value;
+        if (id && pct && id !== '') {
+            const ion = allIons.find(i => i.id === parseInt(id));
+            if (ion) comp.push({ ion, fraction: parseFloat(pct) / 100 });
+        }
+    });
+    if (!comp.length && showError) { showMsg('Добавьте хотя бы один ион', 'error'); return null; }
+    const sum = comp.reduce((s, c) => s + c.fraction, 0);
+    if (Math.abs(sum - 1) > 0.01) {
+        if (showError) showMsg(`Сумма долей ионов должна быть 100% (сейчас: ${(sum*100).toFixed(1)}%)`, 'error');
+        return null;
+    }
+    return comp;
+}
+
+function updateIonCompositionInfo() {
+    const comp = collectIonComposition(false);
+    const info = document.getElementById('ionCompositionInfo');
+    const text = document.getElementById('ionCompositionText');
+    if (!info || !text) return;
+    if (comp?.length) {
+        const sum = comp.reduce((s,c) => s+c.fraction, 0);
+        if (Math.abs(sum-1) <= 0.01) {
+            text.innerHTML = `<strong>${comp.map(c => `${c.ion?.name || '?'} ${(c.fraction*100).toFixed(1)}%`).join(', ')}</strong> (сумма: ${(sum*100).toFixed(1)}%)`;
+            info.style.display = 'block';
+            return;
+        }
+    }
+    info.style.display = 'none';
+}
+
+function formatIonComposition(comp) {
+    if (!comp?.length) return '—';
+    return comp.map(c => {
+        const ion = c.ion || allIons.find(i => i.id === c.ionId);
+        return `${ion?.name || '?'} ${(c.fraction * 100).toFixed(1)}%`;
+    }).join(', ');
+}
+
+// ── parameter generation ──────────────────────────────────────────────────────
+
+function rndBetween(min, max) { return parseFloat((Math.random() * (max - min) + min).toFixed(4)); }
+
+function generateRandomParameters() {
+    const p = AUTOGEN_PRESETS[currentPreset];
+    if (!p) return;
+    document.getElementById('voltage').value       = rndBetween(...p.voltage);
+    document.getElementById('current').value       = rndBetween(...p.current);
+    document.getElementById('pressure').value      = rndBetween(...p.pressure);
+    document.getElementById('electronTemp').value  = rndBetween(...p.etemp);
+    document.getElementById('chamberWidth').value  = rndBetween(...p.width);
+    document.getElementById('chamberDepth').value  = rndBetween(...p.depth);
+    document.getElementById('exposureTime').value  = rndBetween(...p.time);
+    document.getElementById('angle').value         = rndBetween(...p.angle);
+    showMsg('Параметры сгенерированы!', 'success');
+}
+
+function randomizeParameters() { generateRandomParameters(); }
+
+function generateAndRun() {
+    if (!collectComposition(false)) randomizeComposition();
+    if (!collectIonComposition(false)) randomizeIonComposition();
+    generateRandomParameters();
+    document.getElementById('runBtn').click();
+}
+
+// ── simulation ────────────────────────────────────────────────────────────────
+
+async function runSim() {
+    if (window.PlasmaAuth && !window.PlasmaAuth.isAuthenticated?.()) {
+        window.PlasmaAuth.showMessage?.('Требуется авторизация', 'error');
         return;
     }
 
-    const form = document.getElementById('simForm');
-    if (!form) {
-        console.error('Форма не найдена');
-        return;
-    }
-
-    const formData = new FormData(form);
-
-    if (!formData.get('atomId') || !formData.get('ionId')) {
-        showMsg('Выберите атом и ион', 'error');
-        return;
-    }
+    const atomComposition = collectComposition();
+    const ionComposition  = collectIonComposition();
+    if (!atomComposition || !ionComposition) return;
 
     const req = {
-        ionId: parseInt(formData.get('ionId'), 10),
-        configId: parseInt(formData.get('configId'), 10),
-        atomId: parseInt(formData.get('atomId'), 10),
-        voltage: parseFloat(formData.get('voltage')),
-        current: parseFloat(formData.get('current')),
-        pressure: parseFloat(formData.get('pressure')),
-        electronTemp: parseFloat(formData.get('electronTemperature')),
-        chamberWidth: parseFloat(formData.get('chamberWidth')),
-        chamberDepth: parseFloat(formData.get('chamberDepth')),
-        exposureTime: parseFloat(formData.get('exposureTime')),
-        angle: parseFloat(formData.get('angle'))
+        atomId:       atomComposition[0]?.atomId,
+        ionId:        ionComposition[0]?.ion?.id,
+        composition:  atomComposition,
+        ionComposition,
+        configId:     1,
+        voltage:      parseFloat(document.getElementById('voltage').value),
+        current:      parseFloat(document.getElementById('current').value),
+        pressure:     parseFloat(document.getElementById('pressure').value),
+        electronTemp: parseFloat(document.getElementById('electronTemp').value),
+        chamberWidth: parseFloat(document.getElementById('chamberWidth').value),
+        chamberDepth: parseFloat(document.getElementById('chamberDepth').value),
+        exposureTime: parseFloat(document.getElementById('exposureTime').value),
+        angle:        parseFloat(document.getElementById('angle').value),
+        ambientTemp:  300.0,
     };
 
-    // Убираем undefined поля
-    Object.keys(req).forEach(k => req[k] === undefined && delete req[k]);
-
-    // Сохраняем запрос для использования при сохранении
+    console.log('📤 Запрос:', JSON.stringify(req, null, 2));
     simReq = req;
-
     showRunning();
 
     try {
         const token = window.PlasmaAuth?.getToken();
-
-        const response = await fetch(`${API}/run`, {
+        const res = await fetch(`${API}/run`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': token ? `Bearer ${token}` : ''
-            },
-            body: JSON.stringify(req)
+            headers: { 'Content-Type': 'application/json', Authorization: token ? `Bearer ${token}` : '' },
+            body: JSON.stringify(req),
         });
 
-        if (!response.ok) {
-            const error = await response.json().catch(() => ({ message: `HTTP error! status: ${response.status}` }));
-            throw new Error(error.message || `HTTP error! status: ${response.status}`);
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({ message: `HTTP ${res.status}` }));
+            throw new Error(err.message || `HTTP ${res.status}`);
         }
 
-        const result = await response.json();
+        const result = await res.json();
         curRes = result.data;
-
-        console.log('=== РЕЗУЛЬТАТ СИМУЛЯЦИИ ===', curRes);
+        console.log('=== RESULT ===', curRes);
         showResults(curRes);
 
     } catch (e) {
         console.error('Simulation error:', e);
         showIdle();
-
-        if (window.PlasmaAuth && window.PlasmaAuth.showMessage) {
-            window.PlasmaAuth.showMessage('Ошибка: ' + e.message, 'error');
-        } else {
-            showMsg('Ошибка: ' + e.message, 'error');
-        }
+        window.PlasmaAuth?.showMessage?.('Ошибка: ' + e.message, 'error');
     }
 }
 
-function showRunning() {
-    const resIdle = document.getElementById('resIdle');
-    const resRunning = document.getElementById('resRunning');
-    const resDisplay = document.getElementById('resDisplay');
-
-    if (resIdle) resIdle.style.display = 'none';
-    if (resRunning) resRunning.style.display = 'block';
-    if (resDisplay) resDisplay.style.display = 'none';
-
-    animProgress();
-}
-
-function showIdle() {
-    const resIdle = document.getElementById('resIdle');
-    const resRunning = document.getElementById('resRunning');
-    const resDisplay = document.getElementById('resDisplay');
-
-    if (resIdle) resIdle.style.display = 'block';
-    if (resRunning) resRunning.style.display = 'none';
-    if (resDisplay) resDisplay.style.display = 'none';
-}
-
-function animProgress() {
-    let p = 0;
-    const interval = setInterval(() => {
-        p += 10;
-        const progressBar = document.getElementById('progressBar');
-        if (progressBar) {
-            progressBar.style.width = p + '%';
-        }
-        if (p >= 100) {
-            clearInterval(interval);
-        }
-    }, 200);
-}
+// ── show results ──────────────────────────────────────────────────────────────
+// Структура ответа SimulationResult:
+//   r.profile        — DiffusionProfile
+//   r.atom           — AtomList
+//   r.ion            — Ion
+//   r.plasmaConfig   — PlasmaConfiguration
+//   r.stats          — PhysicsStats { electronDensity, electronVelocity,
+//                        currentDensity, surfaceBindingEnergy,
+//                        totalTransferredEnergy, avgTransferredPerAtom,
+//                        totalDamage, totalMomentum, totalDisplacement }
 
 function showResults(r) {
     document.getElementById('resRunning').style.display = 'none';
     document.getElementById('resDisplay').style.display = 'block';
 
-    const fmt = (n) => {
+    const fmt = n => {
         if (n === undefined || n === null) return '—';
-        const num = typeof n === 'number' ? n : parseFloat(n);
-        if (isNaN(num)) return '—';
-        if (Math.abs(num) < 1e-3 || Math.abs(num) > 1e3) return num.toExponential(3);
-        return num.toPrecision(4);
+        const v = +n;
+        if (isNaN(v)) return '—';
+        return (Math.abs(v) < 1e-3 || Math.abs(v) > 1e3) ? v.toExponential(3) : v.toPrecision(4);
     };
 
-    // MATERIAL TAB
-    setTextContent('r_atom_name', r.atom?.atomName || r.atom?.name || '—');
-    setTextContent('r_ion_name', r.ion?.name || '—');
+    const pc    = r.plasmaConfig || {};   // PlasmaConfiguration
+    const stats = r.stats        || {};   // PhysicsStats  ← ключевое исправление
 
-    // PLASMA TAB
-    const pc = r.plasmaConfig || r.plasmaParameters || {};
-    setTextContent('r_voltage',              fmt(pc.voltage              ?? simReq?.voltage));
-    setTextContent('r_current',              fmt(pc.current              ?? simReq?.current));
-    setTextContent('r_pressure',             fmt(pc.pressure             ?? simReq?.pressure));
-    setTextContent('r_electrontemp',         fmt(pc.electronTemp         ?? simReq?.electronTemp));
-    setTextContent('r_exposure_time',        fmt(pc.exposureTime         ?? simReq?.exposureTime));
-    setTextContent('r_electron_density',     fmt(pc.electronDensity      ?? simReq?.electronDensity));
-    setTextContent('r_electron_velocity',    fmt(pc.electronVelocity     ?? simReq?.electronVelocity));
-    setTextContent('r_current_density',      fmt(pc.currentDensity       ?? simReq?.currentDensity));
+    // MATERIAL
+    set('r_composition',     formatComposition(simReq?.composition));
+    set('r_ion_composition', formatIonComposition(simReq?.ionComposition));
 
-    // CHAMBER TAB
-    setTextContent('r_chamber_width', fmt(pc.chamberWidth ?? simReq?.chamberWidth));
-    setTextContent('r_chamber_depth', fmt(pc.chamberDepth ?? simReq?.chamberDepth));
+    // PLASMA
+    set('r_voltage',              fmt(pc.voltage          ?? simReq?.voltage));
+    set('r_current',              fmt(pc.current          ?? simReq?.current));
+    set('r_pressure',             fmt(pc.pressure         ?? simReq?.pressure));
+    set('r_electron_temperature', fmt(pc.electronTemperature ?? simReq?.electronTemp));
+    set('r_exposure_time',        fmt(pc.exposureTime     ?? simReq?.exposureTime));
+    // эти три поля теперь в stats, НЕ в r напрямую
+    set('r_electron_density',     fmt(stats.electronDensity  ?? 0));
+    set('r_electron_velocity',    fmt(stats.electronVelocity ?? 0));
+    set('r_current_density',      fmt(stats.currentDensity   ?? 0));
 
-    // ION IMPACT TAB
-    setTextContent('r_ion_energy_override',    fmt(pc.ionEnergyOverride));
-    setTextContent('r_ion_incidence_angle',    fmt(pc.ionIncidenceAngle  ?? simReq?.angle));
-    setTextContent('r_target_temperature',     fmt(pc.targetTemperature));
-    setTextContent('r_surface_binding_energy', fmt(pc.surfaceBindingEnergy));
+    // CHAMBER
+    set('r_chamber_width', fmt(pc.chamberWidth ?? simReq?.chamberWidth));
+    set('r_chamber_depth', fmt(pc.chamberDepth ?? simReq?.chamberDepth));
 
-    // THERMAL TAB
-    setTextContent('r_thermal_conductivity', fmt(pc.thermalConductivity));
-    setTextContent('r_heat_capacity',        fmt(pc.heatCapacity));
-    setTextContent('r_density',              fmt(pc.density));
+    // ION IMPACT
+    set('r_ion_energy',            fmt(pc.ionEnergyOverride   ?? 0));
+    set('r_ion_incidence_angle',   fmt(pc.ionIncidenceAngle   ?? simReq?.angle));
+    set('r_target_temperature',    fmt(pc.targetTemperature));
+    set('r_surface_binding_energy', fmt(stats.surfaceBindingEnergy ?? pc.surfaceBindingEnergy ?? 0));
 
-    // DAMAGE TAB
-    setTextContent('r_total_transferred_energy', fmt(r.totalTransferredEnergy ?? 0));
-    setTextContent('r_avg_transferred_per_atom', fmt(r.avgTransferredPerAtom ?? 0));
-    setTextContent('r_total_damage', fmt(r.totalDamage ?? 0));
-    setTextContent('r_total_momentum', fmt(r.totalMomentum ?? 0));
-    setTextContent('r_total_displacement', fmt(r.totalDisplacement ?? 0));
+    // THERMAL
+    set('r_thermal_conductivity', fmt(pc.thermalConductivity));
+    set('r_heat_capacity',        fmt(pc.heatCapacity));
+    set('r_density',              fmt(pc.density));
+
+    // DAMAGE / PHYSICS STATS — всё из r.stats
+    set('r_total_transferred_energy', fmt(stats.totalTransferredEnergy ?? 0));
+    set('r_avg_transferred_per_atom', fmt(stats.avgTransferredPerAtom  ?? 0));
+    set('r_total_damage',             fmt(stats.totalDamage            ?? 0));
+    set('r_total_momentum',           fmt(stats.totalMomentum          ?? 0));
+    set('r_total_displacement',       fmt(stats.totalDisplacement      ?? 0));
 
     // DIFFUSION PROFILE
     if (r.profile) {
-        setTextContent('r_d1', fmt(r.profile.d1));
-        setTextContent('r_d2', fmt(r.profile.d2));
-        setTextContent('r_q1', fmt(r.profile.q1_ev));
-        setTextContent('r_q2', fmt(r.profile.q2_ev));
-        setTextContent('r_d_thermal', fmt(r.profile.d_thermal));
-        setTextContent('r_d_effective', fmt(r.profile.d_effective));
-        setTextContent('r_mean_depth', fmt(r.profile.meanDepth));
-    }
-
-}
-
-function setTextContent(elementId, value) {
-    const element = document.getElementById(elementId);
-    if (element) {
-        element.textContent = value;
+        set('r_d1',          fmt(r.profile.d1));
+        set('r_d2',          fmt(r.profile.d2));
+        set('r_q1',          fmt(r.profile.q1_ev));
+        set('r_q2',          fmt(r.profile.q2_ev));
+        set('r_d_thermal',   fmt(r.profile.d_thermal));
+        set('r_d_effective', fmt(r.profile.d_effective));
+        set('r_mean_depth',  fmt(r.profile.meanDepth));
     }
 }
+
+function set(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+}
+
+// ── save ──────────────────────────────────────────────────────────────────────
 
 async function saveRes() {
-    if (!curRes || !simReq) {
-        showMsg('Нет результатов для сохранения', 'error');
-        return;
-    }
+    if (!curRes || !simReq) { showMsg('Нет результатов для сохранения', 'error'); return; }
 
+    const stats = curRes.stats || {};
     try {
         const token = window.PlasmaAuth?.getToken();
-
-        // Payload по структуре SimulationResultDto
-        const pc = curRes.plasmaConfig || {};
-        const pr = curRes.profile     || {};
-        const electronTemp = pc.electronTemp ?? simReq.electronTemp ?? 0;
-
-        // PlasmaResultDto — точные имена полей как в Java record
-        const plasmaParameters = {
-            voltage:         pc.voltage          ?? simReq.voltage   ?? 0,
-            pressure:        pc.pressure         ?? simReq.pressure  ?? 0,
-            electronTemp:    electronTemp,                               // маппер читает electronTemp
-            ionEnergy:       pc.ionEnergyOverride ?? 0,                 // маппер читает ionEnergy
-            electronDensity: curRes.electronDensity ?? pc.electronDensity ?? 0,
-            electronVelocity: curRes.electronVelocity ?? pc.electronVelocity ?? 0,
-            currentDensity:  curRes.currentDensity ?? pc.currentDensity ?? 0,
-            ionFlux:         pc.ionFlux           ?? 0
-        };
-
-        // DiffusionProfileDto — точные имена полей как в Java record
-        const diffusionProfile = {
-            D1:          pr.d1          ?? 0,
-            D2:          pr.d2          ?? 0,
-            Q1:          pr.q1_ev       ?? 0,
-            Q2:          pr.q2_ev       ?? 0,
-            D_thermal:   pr.d_thermal   ?? 0,
-            D_effective: pr.d_effective ?? 0,
-            depth:       pr.meanDepth   ?? 0
-        };
-
-        const payload = {
-            atomId:   curRes.atom?.id ?? simReq.atomId,
-            ionId:    curRes.ion?.id  ?? simReq.ionId,
-            configId: simReq.configId,
-
-            atomName: curRes.atom?.atomName || curRes.atom?.name || '',
-            s:        curRes.ion?.name      || '',
-
-            totalTransferredEnergy: curRes.totalTransferredEnergy ?? 0,
-            avgTransferredPerAtom:  curRes.avgTransferredPerAtom  ?? 0,
-
-            // avgT/minT/maxT = температура электронов
-            avgT: electronTemp,
-            minT: electronTemp,
-            maxT: electronTemp,
-
-            diffusionCoefficient1: pr.d1 ?? 0,
-            diffusionCoefficient2: pr.d2 ?? 0,
-
-            totalMomentum:     curRes.totalMomentum     ?? 0,
-            totalDamage:       curRes.totalDamage       ?? 0,
-            totalDisplacement: curRes.totalDisplacement ?? 0,
-
-            plasmaParameters,
-            diffusionProfile,
-            perAtomTransferredEnergies: curRes.perAtomTransferredEnergies || [],
-            coolingProfile:             curRes.coolingProfile             || []
-        };
-
-        console.log('Сохранение payload:', payload);
-
-        const response = await fetch(`${API}/create`, {
+        const res = await fetch(`${API}/create`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': token ? `Bearer ${token}` : ''
-            },
-            body: JSON.stringify(payload)
+            headers: { 'Content-Type': 'application/json', Authorization: token ? `Bearer ${token}` : '' },
+            body: JSON.stringify({
+                ionComposition:       simReq.ionComposition,
+                composition:          simReq.composition,
+                configId:             simReq.configId,
+                voltage:              simReq.voltage,
+                current:              simReq.current,
+                pressure:             simReq.pressure,
+                electronTemp:         simReq.electronTemp,
+                chamberWidth:         simReq.chamberWidth,
+                chamberDepth:         simReq.chamberDepth,
+                exposureTime:         simReq.exposureTime,
+                angle:                simReq.angle,
+                // данные из stats
+                totalTransferredEnergy: stats.totalTransferredEnergy,
+                avgTransferredPerAtom:  stats.avgTransferredPerAtom,
+                totalDamage:            stats.totalDamage,
+                totalMomentum:          stats.totalMomentum,
+                totalDisplacement:      stats.totalDisplacement,
+                // остальное
+                profile:     curRes.profile,
+                plasmaConfig: curRes.plasmaConfig,
+            }),
         });
 
-        if (!response.ok) {
-            const errBody = await response.json().catch(() => ({ message: `HTTP ${response.status}` }));
-            console.error('Save 400 body:', errBody);
-            throw new Error(errBody.message || JSON.stringify(errBody) || `HTTP ${response.status}`);
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({ message: `HTTP ${res.status}` }));
+            throw new Error(err.message || `HTTP ${res.status}`);
         }
 
-        const msg = 'Результаты сохранены!';
-        if (window.PlasmaAuth && window.PlasmaAuth.showMessage) {
-            window.PlasmaAuth.showMessage(msg, 'success');
-        } else {
-            showMsg(msg, 'success');
-        }
+        window.PlasmaAuth?.showMessage?.('Результаты сохранены!', 'success');
+        showMsg('Результаты сохранены!', 'success');
+
     } catch (e) {
         console.error('Save error:', e);
-        const msg = 'Ошибка сохранения: ' + e.message;
-        if (window.PlasmaAuth && window.PlasmaAuth.showMessage) {
-            window.PlasmaAuth.showMessage(msg, 'error');
-        } else {
-            showMsg(msg, 'error');
-        }
+        window.PlasmaAuth?.showMessage?.('Ошибка сохранения: ' + e.message, 'error');
     }
+}
+
+// ── ui helpers ────────────────────────────────────────────────────────────────
+
+function showRunning() {
+    document.getElementById('resIdle')   ?.setAttribute('style', 'display:none');
+    document.getElementById('resRunning')?.setAttribute('style', 'display:block');
+    document.getElementById('resDisplay')?.setAttribute('style', 'display:none');
+    animProgress();
+}
+
+function showIdle() {
+    document.getElementById('resIdle')   ?.setAttribute('style', 'display:block');
+    document.getElementById('resRunning')?.setAttribute('style', 'display:none');
+    document.getElementById('resDisplay')?.setAttribute('style', 'display:none');
+}
+
+function animProgress() {
+    let p = 0;
+    const bar = document.getElementById('progressBar');
+    if (!bar) return;
+    const t = setInterval(() => { bar.style.width = (p += 10) + '%'; if (p >= 100) clearInterval(t); }, 200);
 }
 
 function resetForm() {
-    const form = document.getElementById('simForm');
-    if (form) form.reset();
-    curRes = null;
-    simReq = null;
+    ['compositionList', 'ionCompositionList'].forEach(id => {
+        const c = document.getElementById(id);
+        if (c) { c.innerHTML = ''; id === 'compositionList' ? addRow() : addIonRow(); }
+    });
+    const defaults = { voltage:'500', current:'0.5', pressure:'10', electronTemp:'11600',
+        chamberWidth:'0.1', chamberDepth:'0.1', exposureTime:'1.0', angle:'0' };
+    Object.entries(defaults).forEach(([id, val]) => { const el = document.getElementById(id); if (el) el.value = val; });
+    curRes = null; simReq = null;
     showIdle();
+    updateCompositionInfo();
+    updateIonCompositionInfo();
 }
 
 function showMsg(msg, type) {
     const m = document.getElementById('formMsg');
     if (m) {
         m.textContent = msg;
-        m.style.color = type === 'error' ? '#ff6b6b' : '#28a745';
+        m.style.color   = type === 'error' ? '#ff6b6b' : '#28a745';
         m.style.display = 'block';
         setTimeout(() => { m.style.display = 'none'; }, 5000);
-    } else {
-        alert(msg);
-    }
+    } else { alert(msg); }
 }
 
-// Глобальные функции для вызова из HTML
-window.saveRes = saveRes;
-window.resetForm = resetForm;
-window.showAuthModal = () => {
-    if (window.PlasmaAuth && window.PlasmaAuth.showModal) {
-        window.PlasmaAuth.showModal();
-    } else {
-        alert('Функция авторизации недоступна');
-    }
-};
-window.hideAuthModal = () => {
-    if (window.PlasmaAuth && window.PlasmaAuth.hideModal) {
-        window.PlasmaAuth.hideModal();
-    }
-};
-window.logout = () => {
-    if (window.PlasmaAuth && window.PlasmaAuth.logout) {
-        window.PlasmaAuth.logout();
-    }
-    checkAuth();
-};
-window.newSim = () => {
-    resetForm();
-    showIdle();
-};
+function toggleAutogen() {
+    document.querySelector('.autogen-header')?.classList.toggle('open');
+    document.getElementById('autogenBody')    ?.classList.toggle('open');
+}
 
+function selectPreset(el) {
+    document.querySelectorAll('.preset-chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    currentPreset = el.dataset.preset;
+    const cr = document.getElementById('customRanges');
+    if (cr) cr.style.display = currentPreset === 'custom' ? 'block' : 'none';
+    if (currentPreset !== 'custom') generateRandomParameters();
+}
 
-//
+function changeCount(delta) {
+    const s = document.getElementById('genCount');
+    if (s) s.textContent = Math.max(1, Math.min(100, parseInt(s.textContent) + delta));
+}
+
+// ── globals ───────────────────────────────────────────────────────────────────
+
+Object.assign(window, {
+    addRow, removeRow, randomizeComposition,
+    addIonRow, removeIonRow, randomizeIonComposition,
+    randomizeParameters, generateAndRun,
+    saveRes, resetForm, toggleAutogen, selectPreset, changeCount,
+    newSim: () => { resetForm(); showIdle(); },
+    showAuthModal: () => window.PlasmaAuth?.showModal?.() || alert('Функция авторизации недоступна'),
+    hideAuthModal: () => window.PlasmaAuth?.hideModal?.(),
+    logout: () => { window.PlasmaAuth?.logout?.(); checkAuth(); },
+});

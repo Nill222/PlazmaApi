@@ -8,9 +8,202 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/methods.css">
+    <style>
+        /* ── Auto-gen panel ── */
+        .autogen-panel {
+            margin-top: 16px;
+            border: 1px solid rgba(94,234,212,0.25);
+            border-radius: 10px;
+            overflow: hidden;
+            background: rgba(13,17,23,0.6);
+        }
+        .autogen-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            color: #5eead4;
+            user-select: none;
+            transition: background 0.2s;
+        }
+        .autogen-header:hover { background: rgba(94,234,212,0.05); }
+        .autogen-header i { font-size: 12px; transition: transform 0.2s; }
+        .autogen-header.open i.fa-chevron-down { transform: rotate(180deg); }
+
+        .autogen-body {
+            display: none;
+            padding: 14px 16px 16px;
+            border-top: 1px solid rgba(94,234,212,0.15);
+        }
+        .autogen-body.open { display: block; }
+
+        .autogen-presets {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-bottom: 14px;
+        }
+        .preset-chip {
+            font-size: 11px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(148,163,184,0.3);
+            background: transparent;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .preset-chip:hover { border-color: #5eead4; color: #5eead4; }
+        .preset-chip.active {
+            border-color: #5eead4;
+            background: rgba(94,234,212,0.12);
+            color: #5eead4;
+        }
+
+        .autogen-count-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            font-size: 12px;
+        }
+        .autogen-label { color: #94a3b8; white-space: nowrap; }
+        .autogen-counter {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            border: 1px solid rgba(94,234,212,0.3);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .autogen-counter button {
+            width: 28px;
+            height: 28px;
+            background: rgba(94,234,212,0.08);
+            border: none;
+            color: #5eead4;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.15s;
+            line-height: 1;
+        }
+        .autogen-counter button:hover { background: rgba(94,234,212,0.18); }
+        .autogen-counter span {
+            min-width: 36px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 700;
+            color: #e2e8f0;
+            padding: 0 4px;
+        }
+
+        .autogen-progress {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        .autogen-bar-track {
+            flex: 1;
+            height: 5px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .autogen-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2dd4bf, #38bdf8);
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .autogen-progress span {
+            font-size: 11px;
+            color: #94a3b8;
+            white-space: nowrap;
+            min-width: 50px;
+            text-align: right;
+        }
+
+        .autogen-actions { display: flex; gap: 10px; }
+
+        /* Composition rows styling */
+        .composition-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+        .comp-atom {
+            flex: 2;
+            padding: 8px;
+            border-radius: 6px;
+            background: rgba(13,17,23,0.8);
+            border: 1px solid rgba(94,234,212,0.3);
+            color: #e2e8f0;
+        }
+        .comp-fraction {
+            flex: 1;
+            padding: 8px;
+            border-radius: 6px;
+            background: rgba(13,17,23,0.8);
+            border: 1px solid rgba(94,234,212,0.3);
+            color: #e2e8f0;
+        }
+        .remove-row-btn {
+            background: none;
+            border: none;
+            color: #ff6b6b;
+            cursor: pointer;
+            font-size: 18px;
+            padding: 8px;
+            transition: color 0.2s;
+        }
+        .remove-row-btn:hover {
+            color: #ff4444;
+        }
+
+        /* Composition info display */
+        .composition-info {
+            margin-top: 12px;
+            padding: 12px;
+            background: rgba(94,234,212,0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(94,234,212,0.2);
+        }
+        .composition-info h5 {
+            margin: 0 0 8px 0;
+            color: #5eead4;
+            font-size: 12px;
+        }
+        .composition-info p {
+            margin: 0;
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        /* Add button styling */
+        .btn-secondary {
+            margin-top: 4px;
+        }
+
+        /* Randomize button */
+        .btn-random {
+            background: rgba(94,234,212,0.1);
+            border: 1px solid rgba(94,234,212,0.3);
+            color: #5eead4;
+        }
+        .btn-random:hover {
+            background: rgba(94,234,212,0.2);
+        }
+    </style>
 </head>
 <body>
-<!-- AUTH MODAL (REUSE FROM OTHER PAGES) -->
+<!-- AUTH MODAL -->
 <div class="auth-overlay" id="authOverlay">
     <div class="auth-modal">
         <div class="auth-header">
@@ -81,7 +274,7 @@
 <section class="sim-hero">
     <div class="container">
         <h1><i class="fas fa-cogs"></i> Плазменная симуляция</h1>
-        <p>Численное моделирование взаимодействия ионов с атомами мишени</p>
+        <p>Численное моделирование взаимодействия ионов с мишенью из сплава</p>
     </div>
 </section>
 
@@ -109,18 +302,37 @@
                     <form id="simForm">
                         <!-- IDs -->
                         <div class="param-group">
-                            <h4>Идентификаторы</h4>
-                            <div class="param-row">
-                                <div class="param-field">
-                                    <label>Атом</label>
-                                    <select name="atomId" required id="atomSel"></select>
-                                </div>
-                                <div class="param-field">
-                                    <label>Ион</label>
-                                    <select name="ionId" required id="ionSel"></select>
-                                </div>
+                            <h4>Состав ионов</h4>
+                            <div id="ionCompositionList"></div>
+                            <div style="display: flex; gap: 8px; margin-top: 8px;">
+                                <button type="button" class="btn btn-secondary" onclick="addIonRow()">
+                                    <i class="fas fa-plus"></i> Добавить ион
+                                </button>
+                                <button type="button" class="btn btn-random" onclick="randomizeIonComposition()">
+                                    <i class="fas fa-dice"></i> Случайный состав
+                                </button>
                             </div>
-                            <input type="hidden" name="configId" value="1">
+                            <div id="ionCompositionInfo" class="composition-info" style="display:none;">
+                                <h5><i class="fas fa-chart-pie"></i> Состав ионов</h5>
+                                <p id="ionCompositionText">—</p>
+                            </div>
+                        </div>
+
+                        <div class="param-group">
+                            <h4>Состав сплава</h4>
+                            <div id="compositionList"></div>
+                            <div style="display: flex; gap: 8px; margin-top: 8px;">
+                                <button type="button" class="btn btn-secondary" onclick="addRow()">
+                                    <i class="fas fa-plus"></i> Добавить компонент
+                                </button>
+                                <button type="button" class="btn btn-random" onclick="randomizeComposition()">
+                                    <i class="fas fa-dice"></i> Случайный сплав
+                                </button>
+                            </div>
+                            <div id="compositionInfo" class="composition-info" style="display:none;">
+                                <h5><i class="fas fa-chart-pie"></i> Состав сплава</h5>
+                                <p id="compositionText">—</p>
+                            </div>
                         </div>
 
                         <!-- Plasma -->
@@ -129,21 +341,21 @@
                             <div class="param-row">
                                 <div class="param-field">
                                     <label>Напряжение, В</label>
-                                    <input type="number" name="voltage" value="500" step="any" min="0" required>
+                                    <input type="number" name="voltage" id="voltage" value="500" step="any" min="0" required>
                                 </div>
                                 <div class="param-field">
                                     <label>Ток, А</label>
-                                    <input type="number" name="current" value="0.5" step="any" min="0" required>
+                                    <input type="number" name="current" id="current" value="0.5" step="any" min="0" required>
                                 </div>
                             </div>
                             <div class="param-row">
                                 <div class="param-field">
                                     <label>Давление, Па</label>
-                                    <input type="number" name="pressure" value="10" step="any" min="0" required>
+                                    <input type="number" name="pressure" id="pressure" value="10" step="any" min="0" required>
                                 </div>
                                 <div class="param-field">
                                     <label>Температура электронов, K</label>
-                                    <input type="number" name="electronTemperature" value="11600" step="any" min="0" required>
+                                    <input type="number" name="electronTemperature" id="electronTemp" value="11600" step="any" min="0" required>
                                 </div>
                             </div>
                         </div>
@@ -154,11 +366,11 @@
                             <div class="param-row">
                                 <div class="param-field">
                                     <label>Анод, м</label>
-                                    <input type="number" name="chamberWidth" value="0.1" step="any" min="0" required>
+                                    <input type="number" name="chamberWidth" id="chamberWidth" value="0.1" step="any" min="0" required>
                                 </div>
                                 <div class="param-field">
                                     <label>Катод, м</label>
-                                    <input type="number" name="chamberDepth" value="0.1" step="any" min="0" required>
+                                    <input type="number" name="chamberDepth" id="chamberDepth" value="0.1" step="any" min="0" required>
                                 </div>
                             </div>
                         </div>
@@ -169,11 +381,11 @@
                             <div class="param-row">
                                 <div class="param-field">
                                     <label>Время облучения, с</label>
-                                    <input type="number" name="exposureTime" value="1.0" step="any" min="0" required>
+                                    <input type="number" name="exposureTime" id="exposureTime" value="1.0" step="any" min="0" required>
                                 </div>
                                 <div class="param-field">
                                     <label>Угол, °</label>
-                                    <input type="number" name="angle" value="0" step="any" min="0" max="90" required>
+                                    <input type="number" name="angle" id="angle" value="0" step="any" min="0" max="90" required>
                                 </div>
                             </div>
                         </div>
@@ -188,6 +400,85 @@
                                 <i class="fas fa-play"></i> Запустить
                             </button>
                         </div>
+
+                        <!-- AUTO-GEN PANEL -->
+                        <div class="autogen-panel" id="autogenPanel">
+                            <div class="autogen-header" onclick="toggleAutogen()">
+                                <span><i class="fas fa-robot"></i> Авто-генерация параметров</span>
+                                <i class="fas fa-chevron-down" id="autogenChevron"></i>
+                            </div>
+                            <div class="autogen-body" id="autogenBody">
+                                <div class="autogen-presets">
+                                    <button class="preset-chip active" data-preset="magnetron" onclick="selectPreset(this)">Магнетрон</button>
+                                    <button class="preset-chip" data-preset="etching" onclick="selectPreset(this)">Травление</button>
+                                    <button class="preset-chip" data-preset="implant" onclick="selectPreset(this)">Имплантация</button>
+                                    <button class="preset-chip" data-preset="cvd" onclick="selectPreset(this)">CVD</button>
+                                    <button class="preset-chip" data-preset="custom" onclick="selectPreset(this)">Свои</button>
+                                </div>
+
+                                <!-- Custom preset ranges -->
+                                <div id="customRanges" style="display:none; margin-bottom: 12px; padding: 10px; background: rgba(13,17,23,0.5); border-radius: 8px;">
+                                    <div class="param-row" style="margin-bottom: 8px;">
+                                        <div class="param-field">
+                                            <label>Напряжение, В</label>
+                                            <input type="text" id="customVoltage" value="100-2000" placeholder="мин-макс">
+                                        </div>
+                                        <div class="param-field">
+                                            <label>Ток, А</label>
+                                            <input type="text" id="customCurrent" value="0.01-5.0" placeholder="мин-макс">
+                                        </div>
+                                    </div>
+                                    <div class="param-row" style="margin-bottom: 8px;">
+                                        <div class="param-field">
+                                            <label>Давление, Па</label>
+                                            <input type="text" id="customPressure" value="0.01-200" placeholder="мин-макс">
+                                        </div>
+                                        <div class="param-field">
+                                            <label>Температура электронов, K</label>
+                                            <input type="text" id="customETemp" value="5800-116000" placeholder="мин-макс">
+                                        </div>
+                                    </div>
+                                    <div class="param-row">
+                                        <div class="param-field">
+                                            <label>Анод, м</label>
+                                            <input type="text" id="customWidth" value="0.05-0.5" placeholder="мин-макс">
+                                        </div>
+                                        <div class="param-field">
+                                            <label>Катод, м</label>
+                                            <input type="text" id="customDepth" value="0.05-0.5" placeholder="мин-макс">
+                                        </div>
+                                    </div>
+                                    <div class="param-row">
+                                        <div class="param-field">
+                                            <label>Время, с</label>
+                                            <input type="text" id="customTime" value="0.5-120" placeholder="мин-макс">
+                                        </div>
+                                        <div class="param-field">
+                                            <label>Угол, °</label>
+                                            <input type="text" id="customAngle" value="0-60" placeholder="мин-макс">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="autogen-count-row">
+                                    <span class="autogen-label">Симуляций:</span>
+                                    <div class="autogen-counter">
+                                        <button onclick="changeCount(-5)">−</button>
+                                        <span id="genCount">1</span>
+                                        <button onclick="changeCount(5)">+</button>
+                                    </div>
+                                    <button class="btn-random" onclick="randomizeParameters()" style="margin-left: auto; padding: 4px 12px; font-size: 12px;">
+                                        <i class="fas fa-random"></i> Случайные параметры
+                                    </button>
+                                </div>
+
+                                <div class="autogen-actions">
+                                    <button class="btn btn-primary" id="autoRunBtn" onclick="generateAndRun()">
+                                        <i class="fas fa-play"></i> Сгенерировать и запустить
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
                     </form>
                 </div>
 
@@ -196,11 +487,11 @@
                     <div class="res-tabs">
                         <button class="res-tab active" data-tab="material">Материалы</button>
                         <button class="res-tab" data-tab="plasma">Плазма</button>
-                        <button class="res-tab" data-tab="chamber">Геометрия камеры</button>
-                        <button class="res-tab" data-tab="ion">Параметры удара иона</button>
-                        <button class="res-tab" data-tab="thermal">Материал для тепла и диффузии</button>
+                        <button class="res-tab" data-tab="chamber">Геометрия</button>
+                        <button class="res-tab" data-tab="ion">Параметры удара</button>
+                        <button class="res-tab" data-tab="thermal">Теплофизика</button>
                         <button class="res-tab" data-tab="diffusion">Диффузия</button>
-<!--                        <button class="res-tab" data-tab="damage">Повреждения и энергия</button>-->
+                        <button class="res-tab" data-tab="damage">Повреждения</button>
                     </div>
 
                     <div class="res-content">
@@ -209,12 +500,12 @@
                             <h4 class="res-section-title">Материалы симуляции</h4>
                             <div class="res-cards">
                                 <div class="res-card">
-                                    <span class="res-label">Атом</span>
-                                    <span class="res-value" id="r_atom_name">—</span>
+                                    <span class="res-label">Атомы (сплав)</span>
+                                    <span class="res-value" id="r_composition">—</span>
                                 </div>
                                 <div class="res-card">
-                                    <span class="res-label">Ион</span>
-                                    <span class="res-value" id="r_ion_name">—</span>
+                                    <span class="res-label">Ионы (сплав)</span>
+                                    <span class="res-value" id="r_ion_composition">—</span>
                                 </div>
                             </div>
                         </div>
@@ -240,7 +531,7 @@
                                 </div>
                                 <div class="res-card">
                                     <span class="res-label">Температура электронов</span>
-                                    <span class="res-value" id="r_electrontemp">—</span>
+                                    <span class="res-value" id="r_electron_temperature">—</span>
                                     <span class="res-unit">K</span>
                                 </div>
                                 <div class="res-card">
@@ -248,21 +539,21 @@
                                     <span class="res-value" id="r_exposure_time">—</span>
                                     <span class="res-unit">с</span>
                                 </div>
-<!--                                <div class="res-card">-->
-<!--                                    <span class="res-label">Плотность электронов</span>-->
-<!--                                    <span class="res-value" id="r_electron_density">—</span>-->
-<!--                                    <span class="res-unit">м⁻³</span>-->
-<!--                                </div>-->
-<!--                                <div class="res-card">-->
-<!--                                    <span class="res-label">Скорость электронов</span>-->
-<!--                                    <span class="res-value" id="r_electron_velocity">—</span>-->
-<!--                                    <span class="res-unit">м/с</span>-->
-<!--                                </div>-->
-<!--                                <div class="res-card">-->
-<!--                                    <span class="res-label">Плотность тока</span>-->
-<!--                                    <span class="res-value" id="r_current_density">—</span>-->
-<!--                                    <span class="res-unit">А/м²</span>-->
-<!--                                </div>-->
+                                <div class="res-card">
+                                    <span class="res-label">Плотность электронов</span>
+                                    <span class="res-value" id="r_electron_density">—</span>
+                                    <span class="res-unit">м⁻³</span>
+                                </div>
+                                <div class="res-card">
+                                    <span class="res-label">Скорость электронов</span>
+                                    <span class="res-value" id="r_electron_velocity">—</span>
+                                    <span class="res-unit">м/с</span>
+                                </div>
+                                <div class="res-card">
+                                    <span class="res-label">Плотность тока</span>
+                                    <span class="res-value" id="r_current_density">—</span>
+                                    <span class="res-unit">А/м²</span>
+                                </div>
                             </div>
                         </div>
 
@@ -288,22 +579,22 @@
                             <h4 class="res-section-title">Параметры удара иона</h4>
                             <div class="res-cards">
                                 <div class="res-card">
-                                    <span class="res-label">Энергия иона (переопределение)</span>
-                                    <span class="res-value" id="r_ion_energy_override">—</span>
+                                    <span class="res-label">Энергия иона</span>
+                                    <span class="res-value" id="r_ion_energy">—</span>
                                     <span class="res-unit">эВ</span>
                                 </div>
                                 <div class="res-card">
-                                    <span class="res-label">Угол падения иона</span>
+                                    <span class="res-label">Угол падения</span>
                                     <span class="res-value" id="r_ion_incidence_angle">—</span>
                                     <span class="res-unit">°</span>
                                 </div>
                                 <div class="res-card">
-                                    <span class="res-label">Целевая температура</span>
+                                    <span class="res-label">Температура мишени</span>
                                     <span class="res-value" id="r_target_temperature">—</span>
                                     <span class="res-unit">K</span>
                                 </div>
                                 <div class="res-card">
-                                    <span class="res-label">Энергия связи поверхности</span>
+                                    <span class="res-label">Энергия связи</span>
                                     <span class="res-value" id="r_surface_binding_energy">—</span>
                                     <span class="res-unit">эВ</span>
                                 </div>
@@ -337,73 +628,74 @@
                             <h4 class="res-section-title">Диффузионный профиль</h4>
                             <div class="res-cards">
                                 <div class="res-card">
-                                    <span class="res-label">D₁ (предэкспонента первого канала)</span>
+                                    <span class="res-label">D₁ (предэкспонента)</span>
                                     <span class="res-value" id="r_d1">—</span>
                                     <span class="res-unit">м²/с</span>
                                 </div>
                                 <div class="res-card">
-                                    <span class="res-label">D₂ (предэкспонента второго канала)</span>
+                                    <span class="res-label">D₂ (предэкспонента)</span>
                                     <span class="res-value" id="r_d2">—</span>
                                     <span class="res-unit">м²/с</span>
                                 </div>
                                 <div class="res-card">
-                                    <span class="res-label">Q₁ (энергия активации первого канала)</span>
+                                    <span class="res-label">Q₁ (энергия активации)</span>
                                     <span class="res-value" id="r_q1">—</span>
                                     <span class="res-unit">эВ</span>
                                 </div>
                                 <div class="res-card">
-                                    <span class="res-label">Q₂ (энергия активации второго канала)</span>
+                                    <span class="res-label">Q₂ (энергия активации)</span>
                                     <span class="res-value" id="r_q2">—</span>
                                     <span class="res-unit">эВ</span>
                                 </div>
                                 <div class="res-card">
-                                    <span class="res-label">D термический коэффициент диффузии</span>
+                                    <span class="res-label">D термический</span>
                                     <span class="res-value" id="r_d_thermal">—</span>
                                     <span class="res-unit">м²/с</span>
                                 </div>
                                 <div class="res-card">
-                                    <span class="res-label">D эффективный коэффициент диффузии (с учётом облучения)</span>
+                                    <span class="res-label">D эффективный</span>
                                     <span class="res-value" id="r_d_effective">—</span>
                                     <span class="res-unit">м²/с</span>
                                 </div>
                                 <div class="res-card">
-                                    <span class="res-label">Средняя глубина проникновения</span>
+                                    <span class="res-label">Глубина проникновения</span>
                                     <span class="res-value" id="r_mean_depth">—</span>
                                     <span class="res-unit">м</span>
                                 </div>
                             </div>
                         </div>
-<!--                        &lt;!&ndash; DAMAGE TAB &ndash;&gt;-->
-<!--                        <div class="res-panel" data-tab="damage">-->
-<!--                            <h4 class="res-section-title">Повреждения и энергия</h4>-->
-<!--                            <div class="res-cards">-->
-<!--                                <div class="res-card">-->
-<!--                                    <span class="res-label">Полная переданная энергия</span>-->
-<!--                                    <span class="res-value" id="r_total_transferred_energy">—</span>-->
-<!--                                    <span class="res-unit">эВ</span>-->
-<!--                                </div>-->
-<!--                                <div class="res-card">-->
-<!--                                    <span class="res-label">Средняя энергия на атом</span>-->
-<!--                                    <span class="res-value" id="r_avg_transferred_per_atom">—</span>-->
-<!--                                    <span class="res-unit">эВ</span>-->
-<!--                                </div>-->
-<!--                                <div class="res-card">-->
-<!--                                    <span class="res-label">Полные повреждения</span>-->
-<!--                                    <span class="res-value" id="r_total_damage">—</span>-->
-<!--                                    <span class="res-unit">эВ</span>-->
-<!--                                </div>-->
-<!--                                <div class="res-card">-->
-<!--                                    <span class="res-label">Полный импульс</span>-->
-<!--                                    <span class="res-value" id="r_total_momentum">—</span>-->
-<!--                                    <span class="res-unit">кг·м/с</span>-->
-<!--                                </div>-->
-<!--                                <div class="res-card">-->
-<!--                                    <span class="res-label">Полное смещение</span>-->
-<!--                                    <span class="res-value" id="r_total_displacement">—</span>-->
-<!--                                    <span class="res-unit">смещ.</span>-->
-<!--                                </div>-->
-<!--                            </div>-->
-<!--                        </div>-->
+
+                        <!-- DAMAGE TAB -->
+                        <div class="res-panel" data-tab="damage">
+                            <h4 class="res-section-title">Повреждения и энергия</h4>
+                            <div class="res-cards">
+                                <div class="res-card">
+                                    <span class="res-label">Полная переданная энергия</span>
+                                    <span class="res-value" id="r_total_transferred_energy">—</span>
+                                    <span class="res-unit">эВ</span>
+                                </div>
+                                <div class="res-card">
+                                    <span class="res-label">Средняя энергия на атом</span>
+                                    <span class="res-value" id="r_avg_transferred_per_atom">—</span>
+                                    <span class="res-unit">эВ</span>
+                                </div>
+                                <div class="res-card">
+                                    <span class="res-label">Полные повреждения</span>
+                                    <span class="res-value" id="r_total_damage">—</span>
+                                    <span class="res-unit">эВ</span>
+                                </div>
+                                <div class="res-card">
+                                    <span class="res-label">Полный импульс</span>
+                                    <span class="res-value" id="r_total_momentum">—</span>
+                                    <span class="res-unit">кг·м/с</span>
+                                </div>
+                                <div class="res-card">
+                                    <span class="res-label">Полное смещение</span>
+                                    <span class="res-value" id="r_total_displacement">—</span>
+                                    <span class="res-unit">смещ.</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="res-actions">

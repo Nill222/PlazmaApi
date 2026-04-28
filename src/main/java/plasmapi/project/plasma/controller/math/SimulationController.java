@@ -2,7 +2,6 @@ package plasmapi.project.plasma.controller.math;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,7 +16,6 @@ import plasmapi.project.plasma.service.math.simulation.SimulationResult;
 import java.util.Optional;
 
 
-@Slf4j
 @RestController
 @RequestMapping("/api/simulation")
 @RequiredArgsConstructor
@@ -35,7 +33,6 @@ public class SimulationController {
             @Valid @RequestBody SimulationRequest request) {
 
         SimulationResult result = simulationService.runSimulation(request);
-        log.info(result.toString());
         ApiResponse<SimulationResult> resp = new ApiResponse<>(
                 result,
                 "Симуляция выполнена",

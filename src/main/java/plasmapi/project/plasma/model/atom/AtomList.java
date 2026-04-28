@@ -80,4 +80,6 @@ public class AtomList {
 
     @Column(name = "packing_factor2")
     private Double packingFactor2;
+
+
 }

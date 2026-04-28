@@ -13,10 +13,12 @@ import plasmapi.project.plasma.service.math.ion.IonComposition;
 @RequiredArgsConstructor
 public class PlasmaServiceImpl implements PlasmaService {
 
-    private static final double DEFAULT_GAS_TEMP = 300.0; // K
-    private static final double EFFECTIVE_DIAMETER = 3e-10; // м (эффективный диаметр газа)
-    private static final double MIN_LAMBDA = 1e-9;
-
+    /**
+     * Расчёт энергии и потока ионов.
+     * Поддерживает:
+     * - одиночный ион (fallback)
+     * - IonComposition (сплав ионов)
+     */
     @Override
     public PlasmaResult calculate(
             PlasmaConfiguration cfg,
@@ -29,43 +31,48 @@ public class PlasmaServiceImpl implements PlasmaService {
         double ionFlux;
 
         // =========================
-        // 1️⃣ ЭНЕРГИЯ (идеальная)
+        // 1️⃣ ЭНЕРГИЯ ИОНОВ
         // =========================
         if (cfg.getIonEnergyOverride() != null) {
             ionEnergyEv = cfg.getIonEnergyOverride();
         } else {
 
             if (cfg.getVoltage() == null) {
-                throw new IllegalArgumentException("Voltage must be set");
+                throw new IllegalArgumentException("Voltage must be set when ionEnergyOverride is not provided");
             }
 
+            // 👉 СПЛАВ ИОНОВ
             if (ionComp != null && !ionComp.getComponents().isEmpty()) {
 
-                double sum = 0.0;
+                double energySum = 0.0;
 
                 for (var ic : ionComp.getComponents()) {
+
                     Ion i = ic.getIon();
                     double xi = ic.getFraction();
 
-                    if (i.getCharge() == null)
+                    if (i.getCharge() == null) {
                         throw new IllegalArgumentException("Ion charge must be set");
+                    }
 
-                    sum += xi * cfg.getVoltage() * i.getCharge();
+                    energySum += xi * (cfg.getVoltage() * i.getCharge());
+
                 }
 
-                ionEnergyEv = sum;
+                ionEnergyEv = energySum;
 
             } else {
 
-                if (ion.getCharge() == null)
+                if (ion.getCharge() == null) {
                     throw new IllegalArgumentException("Ion charge must be set");
+                }
 
                 ionEnergyEv = cfg.getVoltage() * ion.getCharge();
             }
         }
 
         // =========================
-        // 2️⃣ ПОТОК (идеальный)
+        // 2️⃣ ПОТОК ИОНОВ
         // =========================
         if (ionFluxOverride != null) {
             ionFlux = ionFluxOverride;
@@ -74,66 +81,46 @@ public class PlasmaServiceImpl implements PlasmaService {
             if (cfg.getCurrent() == null ||
                     cfg.getChamberWidth() == null ||
                     cfg.getChamberDepth() == null) {
-                throw new IllegalArgumentException("Current and chamber size must be set");
+                throw new IllegalArgumentException(
+                        "Current, chamberWidth and chamberDepth must be set when flux is not overridden"
+                );
             }
 
             double area = cfg.getChamberWidth() * cfg.getChamberDepth();
             double currentDensity = cfg.getCurrent() / area;
 
+            // 👉 СПЛАВ ИОНОВ
             if (ionComp != null && !ionComp.getComponents().isEmpty()) {
 
-                double sum = 0.0;
+                double fluxSum = 0.0;
 
                 for (var ic : ionComp.getComponents()) {
+
                     Ion i = ic.getIon();
                     double xi = ic.getFraction();
 
-                    double q = i.getCharge() * PhysicalConstants.E_CHARGE;
-                    sum += xi * (currentDensity / q);
+                    if (i.getCharge() == null) {
+                        throw new IllegalArgumentException("Ion charge must be set");
+                    }
+
+                    double ionChargeCoulombs = i.getCharge() * PhysicalConstants.E_CHARGE;
+
+                    fluxSum += xi * (currentDensity / ionChargeCoulombs);
                 }
 
-                ionFlux = sum;
+                ionFlux = fluxSum;
 
             } else {
 
-                double q = ion.getCharge() * PhysicalConstants.E_CHARGE;
-                ionFlux = currentDensity / q;
+                if (ion.getCharge() == null) {
+                    throw new IllegalArgumentException("Ion charge must be set");
+                }
+
+                double ionChargeCoulombs = ion.getCharge() * PhysicalConstants.E_CHARGE;
+
+                ionFlux = currentDensity / ionChargeCoulombs;
             }
         }
-
-
-        if (cfg.getPressure() != null && cfg.getPressure() > 0) {
-
-            double P = cfg.getPressure();
-            double T = DEFAULT_GAS_TEMP;
-
-            // используем уже существующее поле
-            double L = cfg.getElectrodeDistance() != null
-                    ? cfg.getElectrodeDistance()
-                    : 0.01; // 1 см
-
-            double k = PhysicalConstants.KB;
-
-            double lambda = k * T /
-                    (Math.sqrt(2) * Math.PI * EFFECTIVE_DIAMETER * EFFECTIVE_DIAMETER * P);
-
-            lambda = Math.max(lambda, MIN_LAMBDA);
-
-            double attenuation = Math.exp(-L / lambda);
-
-            // 🔻 энергия и поток уменьшаются
-            ionEnergyEv *= attenuation;
-            ionFlux *= attenuation;
-        }
-
-        // =========================
-        // 4️⃣ ЗАЩИТА
-        // =========================
-        if (Double.isNaN(ionEnergyEv) || ionEnergyEv < 1e-3)
-            ionEnergyEv = 1e-3;
-
-        if (Double.isNaN(ionFlux) || ionFlux < 1e5)
-            ionFlux = 1e5;
 
         return new PlasmaResult(ionEnergyEv, ionFlux);
     }

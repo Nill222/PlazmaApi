@@ -12,6 +12,7 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class ThermalServiceImpl implements ThermalService {
+    //todo температура в точке скорость распространение до температуры дебая
 
     /**
      * Моделирует нагрев и охлаждение материала под действием ионного пучка.
@@ -60,7 +61,7 @@ public class ThermalServiceImpl implements ThermalService {
         double dx = thickness / (N - 1);
 
         // Проверка устойчивости явной схемы: dt <= dx^2 / (2*alpha)
-        double dtMax = dx * dx / (2 * alpha);
+        double dtMax = dx * dx / (2 * alpha); //todo    термоцеклироапние
         if (dt > dtMax) {
             // Можно либо уменьшить dt, либо выбросить исключение. Здесь уменьшим и выдадим предупреждение.
             dt = dtMax * 0.9;
