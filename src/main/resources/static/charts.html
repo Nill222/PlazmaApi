@@ -48,6 +48,36 @@
     </div>
 </div>
 
+<!-- CHART MODAL -->
+<div id="chartModal" class="chart-modal">
+    <div class="chart-modal-content">
+        <div class="chart-modal-header">
+            <h2 id="modalTitle">График</h2>
+            <div class="modal-controls">
+                <button id="modalScatterBtn" class="modal-mode-btn active">Точки</button>
+                <button id="modalSurfaceBtn" class="modal-mode-btn">Поверхность</button>
+                <button id="modalCloseBtn" class="modal-close-btn"><i class="fas fa-times"></i></button>
+            </div>
+        </div>
+        <div class="chart-modal-body">
+            <div id="modalChart" class="modal-plotly-chart"></div>
+        </div>
+        <div class="chart-modal-footer">
+            <p id="modalFormula" class="formula"></p>
+
+            <div style="display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;">
+                <button id="modalExportWordBtn" class="export-btn">
+                    <i class="fas fa-file-word"></i> Word
+                </button>
+
+                <button id="modalExportBtn" class="export-btn">
+                    <i class="fas fa-download"></i> Экспорт PNG
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- HEADER -->
 <header class="header">
     <div class="container header-inner">
@@ -74,7 +104,7 @@
 <section class="charts-hero">
     <div class="container">
         <h1><i class="fas fa-chart-line"></i> Физические зависимости</h1>
-        <p>Полный анализ параметров плазмы: 24 графика + 3D визуализация</p>
+        <p>Полный анализ параметров плазмы: 28 интерактивных 3D-графиков</p>
     </div>
 </section>
 
@@ -92,13 +122,11 @@
 
         <div id="chartsWorkspace" style="display:none;">
 
-            <!-- Stats -->
-
             <div class="stats-grid">
                 <div class="stat-card"><i class="fas fa-database"></i><h3 id="totalSimulations">0</h3><p>Симуляций</p></div>
                 <div class="stat-card"><i class="fas fa-atom"></i><h3 id="uniqueAtoms">0</h3><p>Атомов</p></div>
                 <div class="stat-card"><i class="fas fa-bolt"></i><h3 id="uniqueIons">0</h3><p>Ионов</p></div>
-                <div class="stat-card"><i class="fas fa-chart-line"></i><h3>28</h3><p>Графиков</p></div>
+                <div class="stat-card"><i class="fas fa-cube"></i><h3>28</h3><p>3D графиков</p></div>
             </div>
 
             <div class="export-all-bar">
@@ -107,96 +135,320 @@
                 </button>
             </div>
 
-            <!-- Macro для chart-box: используем одинаковую структуру -->
-
-            <!-- PLASMA PHYSICS (1-5) -->
+            <!-- ═══════════════════════════════════════════
+                 ПАРАМЕТРЫ ПЛАЗМЫ (1–4)
+            ════════════════════════════════════════════ -->
             <div class="chart-category">
-                <h2><i class="fas fa-bolt"></i> Параметры плазмы (5)</h2>
+                <h2><i class="fas fa-bolt"></i> Параметры плазмы (4)</h2>
                 <div class="charts-grid">
-                    <div class="chart-box"><h3>1. Плотность электронов от давления</h3><select id="filter1" class="chart-filter"><option value="all">Все</option></select><canvas id="chart1"></canvas><p class="formula">n_e ~ P</p></div>
-                    <div class="chart-box"><h3>2. Скорость электронов от напряжения</h3><select id="filter2" class="chart-filter"><option value="all">Все</option></select><canvas id="chart2"></canvas><p class="formula">v_e ~ √V</p></div>
-                    <div class="chart-box"><h3>3. Плотность тока от напряжения (ВАХ)</h3><select id="filter3" class="chart-filter"><option value="all">Все</option></select><canvas id="chart3"></canvas><p class="formula">I-V curve</p></div>
-                    <div class="chart-box"><h3>4. Энергия ионов от напряжения</h3><select id="filter4" class="chart-filter"><option value="all">Все</option></select><canvas id="chart4"></canvas><p class="formula">E = q·V</p></div>
-                    <div class="chart-box"><h3>5. Температура электронов от напряжения</h3><select id="filter5" class="chart-filter"><option value="all">Все</option></select><canvas id="chart5"></canvas><p class="formula">T_e ~ E_field</p></div>
+
+                    <div class="chart-card" data-chart="1"
+                         data-title="Плотность электронов от давления"
+                         data-formula="X: P (Па) · Y: nₑ (м⁻³) · Z: V (В)">
+                        <div class="chart-card-preview" id="preview1"></div>
+                        <h3>1. Плотность электронов от давления</h3>
+                        <p class="formula">X: P · Y: nₑ · Z: V</p>
+                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
+                    </div>
+
+                    <div class="chart-card" data-chart="2"
+                         data-title="Скорость электронов от напряжения"
+                         data-formula="X: V (В) · Y: vₑ (м/с) · Z: j (А/м²)">
+                        <div class="chart-card-preview" id="preview2"></div>
+                        <h3>2. Скорость электронов от напряжения</h3>
+                        <p class="formula">X: V · Y: vₑ · Z: j</p>
+                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
+                    </div>
+
+                    <div class="chart-card" data-chart="3"
+                         data-title="Плотность тока от напряжения"
+                         data-formula="X: V (В) · Y: j (А/м²) · Z: P (Па)">
+                        <div class="chart-card-preview" id="preview3"></div>
+                        <h3>3. Плотность тока от напряжения</h3>
+                        <p class="formula">X: V · Y: j · Z: P</p>
+                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
+                    </div>
+
+                    <div class="chart-card" data-chart="4"
+                         data-title="Температура электронов"
+                         data-formula="X: V (В) · Y: Tₑ (эВ) · Z: j (А/м²)">
+                        <div class="chart-card-preview" id="preview4"></div>
+                        <h3>4. Температура электронов</h3>
+                        <p class="formula">X: V · Y: Tₑ · Z: j</p>
+                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
+                    </div>
+
                 </div>
             </div>
 
-            <!-- THERMAL (6-10) -->
+            <!-- ═══════════════════════════════════════════
+                 ТЕМПЕРАТУРА (5–8)
+            ════════════════════════════════════════════ -->
             <div class="chart-category">
-                <h2><i class="fas fa-thermometer-half"></i> Температура (5)</h2>
+                <h2><i class="fas fa-thermometer-half"></i> Температура (4)</h2>
                 <div class="charts-grid">
-                    <div class="chart-box"><h3>6. Средняя T от переданной энергии</h3><select id="filter6" class="chart-filter"><option value="all">Все</option></select><canvas id="chart6"></canvas><p class="formula">Thermalization</p></div>
-                    <div class="chart-box"><h3>7. Средняя T от напряжения</h3><select id="filter7" class="chart-filter"><option value="all">Все</option></select><canvas id="chart7"></canvas><p class="formula">T ~ V²</p></div>
-                    <div class="chart-box"><h3>8. Диапазон температур (Min/Avg/Max)</h3><select id="filter8" class="chart-filter"><option value="all">Все</option></select><canvas id="chart8"></canvas><p class="formula">Min/Avg/Max</p></div>
-                    <div class="chart-box"><h3>9. Средняя T от давления</h3><select id="filter9" class="chart-filter"><option value="all">Все</option></select><canvas id="chart9"></canvas><p class="formula">T ~ P</p></div>
-                    <div class="chart-box"><h3>10. Средняя T от плотности тока</h3><select id="filter10" class="chart-filter"><option value="all">Все</option></select><canvas id="chart10"></canvas><p class="formula">T ~ j</p></div>
+
+                    <div class="chart-card" data-chart="5"
+                         data-title="Температура от энергии и глубины"
+                         data-formula="X: E_total (эВ) · Y: depth (м) · Z: T_avg (K)">
+                        <div class="chart-card-preview" id="preview5"></div>
+                        <h3>5. Температура от энергии и глубины</h3>
+                        <p class="formula">X: E_total · Y: depth · Z: T_avg</p>
+                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
+                    </div>
+
+                    <div class="chart-card" data-chart="6"
+                         data-title="Температура от напряжения и глубины"
+                         data-formula="X: V (В) · Y: depth (м) · Z: T_avg (K)">
+                        <div class="chart-card-preview" id="preview6"></div>
+                        <h3>6. Температура от напряжения и глубины</h3>
+                        <p class="formula">X: V · Y: depth · Z: T_avg</p>
+                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
+                    </div>
+
+                    <div class="chart-card" data-chart="7"
+                         data-title="Температура от давления и глубины"
+                         data-formula="X: P (Па) · Y: depth (м) · Z: T_avg (K)">
+                        <div class="chart-card-preview" id="preview7"></div>
+                        <h3>7. Температура от давления и глубины</h3>
+                        <p class="formula">X: P · Y: depth · Z: T_avg</p>
+                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
+                    </div>
+
+                    <div class="chart-card" data-chart="8"
+                         data-title="Температура от плотности тока и глубины"
+                         data-formula="X: j (А/м²) · Y: depth (м) · Z: T_avg (K)">
+                        <div class="chart-card-preview" id="preview8"></div>
+                        <h3>8. Температура от плотности тока и глубины</h3>
+                        <p class="formula">X: j · Y: depth · Z: T_avg</p>
+                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
+                    </div>
+
                 </div>
             </div>
 
-            <!-- ENERGY (11-15) -->
+            <!-- ═══════════════════════════════════════════
+                 ЭНЕРГИЯ (9–15)
+            ════════════════════════════════════════════ -->
             <div class="chart-category">
-                <h2><i class="fas fa-fire"></i> Энергия (5)</h2>
+                <h2><i class="fas fa-fire"></i> Энергия (7)</h2>
                 <div class="charts-grid">
-                    <div class="chart-box"><h3>11. Полная энергия от напряжения</h3><select id="filter11" class="chart-filter"><option value="all">Все</option></select><canvas id="chart11"></canvas><p class="formula">E ~ V</p></div>
-                    <div class="chart-box"><h3>12. Энергия на атом от напряжения</h3><select id="filter12" class="chart-filter"><option value="all">Все</option></select><canvas id="chart12"></canvas><p class="formula">E/N ~ V</p></div>
-                    <div class="chart-box"><h3>13. Распределение энергии</h3><select id="filter13" class="chart-filter"><option value="all">Все</option></select><canvas id="chart13"></canvas><p class="formula">Histogram</p></div>
-                    <div class="chart-box"><h3>14. Энергия от температуры</h3><select id="filter14" class="chart-filter"><option value="all">Все</option></select><canvas id="chart14"></canvas><p class="formula">E ~ kT</p></div>
-                    <div class="chart-box"><h3>15. Энергия от давления</h3><select id="filter15" class="chart-filter"><option value="all">Все</option></select><canvas id="chart15"></canvas><p class="formula">E ~ P</p></div>
+
+                    <div class="chart-card" data-chart="9"
+                         data-title="Полная энергия от напряжения и плотности тока"
+                         data-formula="X: V (В) · Y: j (А/м²) · Z: E_total (эВ)">
+                        <div class="chart-card-preview" id="preview9"></div>
+                        <h3>9. Полная энергия от напряжения и плотности тока</h3>
+                        <p class="formula">X: V · Y: j · Z: E_total</p>
+                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
+                    </div>
+
+                    <div class="chart-card" data-chart="10"
+                         data-title="Энергия на атом от напряжения и температуры"
+                         data-formula="X: V (В) · Y: E_atom (эВ/атом) · Z: T_avg (K)">
+                        <div class="chart-card-preview" id="preview10"></div>
+                        <h3>10. Энергия на атом от напряжения и конентрации</h3>
+                        <p class="formula">X: V · Y: E_atom · Z: T_avg</p>
+                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
+                    </div>
+
+                    <div class="chart-card" data-chart="11"
+                         data-title="Энергия иона от напряжения и концентрации"
+                         data-formula="X: V (В) · Y: E_ion (эВ) · Z: n (м⁻³)">
+                        <div class="chart-card-preview" id="preview11"></div>
+                        <h3>11. Энергия иона от напряжения и концентрации</h3>
+                        <p class="formula">X: V · Y: E_ion · Z: n</p>
+                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
+                    </div>
+
+                    <div class="chart-card" data-chart="12"
+                         data-title="Термическая диффузия от температуры и энергии"
+                         data-formula="X: T_avg (K) · Y: D_thermal (м²/с) · Z: E_total (эВ)">
+                        <div class="chart-card-preview" id="preview12"></div>
+                        <h3>12. Термическая диффузия от температуры и энергии</h3>
+                        <p class="formula">X: T_avg · Y: D_thermal · Z: E_total</p>
+                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
+                    </div>
+
+                    <div class="chart-card" data-chart="13"
+                         data-title="Энергия → Повреждения при разных температурах"
+                         data-formula="X: E_total (эВ) · Y: damage (м⁻²) · Z: T_avg (K)">
+                        <div class="chart-card-preview" id="preview13"></div>
+                        <h3>13. Энергия → Повреждения при разных температурах</h3>
+                        <p class="formula">X: E_total · Y: damage · Z: T_avg</p>
+                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
+                    </div>
+
+                    <div class="chart-card" data-chart="14"
+                         data-title="Энергия от температуры и давления"
+                         data-formula="X: T_avg (K) · Y: E_total (эВ) · Z: P (Па)">
+                        <div class="chart-card-preview" id="preview14"></div>
+                        <h3>14. Энергия от температуры и давления</h3>
+                        <p class="formula">X: T_avg · Y: E_total · Z: P</p>
+                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
+                    </div>
+
+                    <div class="chart-card" data-chart="15"
+                         data-title="Энергия от давления и температуры"
+                         data-formula="X: P (Па) · Y: E_total (эВ) · Z: T_avg (K)">
+                        <div class="chart-card-preview" id="preview15"></div>
+                        <h3>15. Энергия от давления и температуры</h3>
+                        <p class="formula">X: P · Y: E_total · Z: T_avg</p>
+                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
+                    </div>
+
                 </div>
             </div>
 
-            <!-- DIFFUSION (16-20) -->
+            <!-- ═══════════════════════════════════════════
+                 ДИФФУЗИЯ (16–20)
+            ════════════════════════════════════════════ -->
             <div class="chart-category">
                 <h2><i class="fas fa-wave-square"></i> Диффузия (5)</h2>
                 <div class="charts-grid">
-                    <div class="chart-box"><h3>16. Объёмная диффузия от T (Arrhenius)</h3><select id="filter16" class="chart-filter"><option value="all">Все</option></select><canvas id="chart16"></canvas><p class="formula">Arrhenius</p></div>
-                    <div class="chart-box"><h3>17. Граничная диффузия от T</h3><select id="filter17" class="chart-filter"><option value="all">Все</option></select><canvas id="chart17"></canvas><p class="formula">D=D₀exp(-Q/RT)</p></div>
-                    <div class="chart-box"><h3>18. Сравнение коэффициентов D₁/D₂</h3><select id="filter18" class="chart-filter"><option value="all">Все</option></select><canvas id="chart18"></canvas><p class="formula">Comparison</p></div>
-                    <div class="chart-box"><h3>19. Диффузия от напряжения</h3><select id="filter19" class="chart-filter"><option value="all">Все</option></select><canvas id="chart19"></canvas><p class="formula">D ~ T ~ V</p></div>
-                    <div class="chart-box"><h3>20. D₁ vs D₂ после SLR</h3><select id="filter20" class="chart-filter"><option value="all">Все</option></select><canvas id="chart20"></canvas><p class="formula">Корреляция D₁ и D₂</p></div>
+
+                    <div class="chart-card" data-chart="16"
+                         data-title="D₁ от температуры и напряжения"
+                         data-formula="X: T_avg (K) · Y: D₁ (м²/с) · Z: V (В)">
+                        <div class="chart-card-preview" id="preview16"></div>
+                        <h3>16. D₁ от температуры и напряжения</h3>
+                        <p class="formula">X: T_avg · Y: D₁ · Z: V</p>
+                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
+                    </div>
+
+                    <div class="chart-card" data-chart="17"
+                         data-title="D₂ от температуры и напряжения"
+                         data-formula="X: T_avg (K) · Y: D₂ (м²/с) · Z: V (В)">
+                        <div class="chart-card-preview" id="preview17"></div>
+                        <h3>17. D₂ от температуры и напряжения</h3>
+                        <p class="formula">X: T_avg · Y: D₂ · Z: V</p>
+                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
+                    </div>
+
+                    <div class="chart-card" data-chart="18"
+                         data-title="Сравнение D₁ и D₂ при разных температурах"
+                         data-formula="X: D₁ (м²/с) · Y: D₂ (м²/с) · Z: T_avg (K)">
+                        <div class="chart-card-preview" id="preview18"></div>
+                        <h3>18. Сравнение D₁ и D₂</h3>
+                        <p class="formula">X: D₁ · Y: D₂ · Z: T_avg</p>
+                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
+                    </div>
+
+                    <div class="chart-card" data-chart="19"
+                         data-title="Диффузия D₁ от напряжения и температуры"
+                         data-formula="X: V (В) · Y: D₁ (м²/с) · Z: T_avg (K)">
+                        <div class="chart-card-preview" id="preview19"></div>
+                        <h3>19. Диффузия D₁ от напряжения</h3>
+                        <p class="formula">X: V · Y: D₁ · Z: T_avg</p>
+                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
+                    </div>
+
+                    <div class="chart-card" data-chart="20"
+                         data-title="Термическая vs эффективная диффузия"
+                         data-formula="X: D_thermal (м²/с) · Y: D₁ (м²/с) · Z: T_avg (K)">
+                        <div class="chart-card-preview" id="preview20"></div>
+                        <h3>20. Термическая vs эффективная диффузия</h3>
+                        <p class="formula">X: D_thermal · Y: D₁ · Z: T_avg</p>
+                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
+                    </div>
+
                 </div>
             </div>
 
-            <!-- DAMAGE (21-24) -->
+            <!-- ═══════════════════════════════════════════
+                 ПОВРЕЖДЕНИЯ (21–24)
+            ════════════════════════════════════════════ -->
             <div class="chart-category">
                 <h2><i class="fas fa-exclamation-triangle"></i> Повреждения (4)</h2>
                 <div class="charts-grid">
-                    <div class="chart-box"><h3>21. Повреждения от энергии</h3><select id="filter21" class="chart-filter"><option value="all">Все</option></select><canvas id="chart21"></canvas><p class="formula">E_damage ~ E</p></div>
-                    <div class="chart-box"><h3>22. Импульс от энергии</h3><select id="filter22" class="chart-filter"><option value="all">Все</option></select><canvas id="chart22"></canvas><p class="formula">Momentum</p></div>
-                    <div class="chart-box"><h3>23. Смещение от импульса</h3><select id="filter23" class="chart-filter"><option value="all">Все</option></select><canvas id="chart23"></canvas><p class="formula">p = mΔv</p></div>
-                    <div class="chart-box"><h3>24. Повреждения от температуры</h3><select id="filter24" class="chart-filter"><option value="all">Все</option></select><canvas id="chart24"></canvas><p class="formula">Thermal damage</p></div>
+
+                    <div class="chart-card" data-chart="21"
+                         data-title="Повреждения от энергии и температуры"
+                         data-formula="X: E_total (эВ) · Y: damage (м⁻²) · Z: T_avg (K)">
+                        <div class="chart-card-preview" id="preview21"></div>
+                        <h3>21. Повреждения от энергии и температуры</h3>
+                        <p class="formula">X: E_total · Y: damage · Z: T_avg</p>
+                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
+                    </div>
+
+                    <div class="chart-card" data-chart="22"
+                         data-title="Импульс от энергии и повреждений"
+                         data-formula="X: E_total (эВ) · Y: p (кг·м/с) · Z: damage (м⁻²)">
+                        <div class="chart-card-preview" id="preview22"></div>
+                        <h3>22. Импульс от энергии и повреждений</h3>
+                        <p class="formula">X: E_total · Y: p · Z: damage</p>
+                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
+                    </div>
+
+                    <div class="chart-card" data-chart="23"
+                         data-title="Смещение от импульса и повреждений"
+                         data-formula="X: p (кг·м/с) · Y: Δx (м) · Z: damage (м⁻²)">
+                        <div class="chart-card-preview" id="preview23"></div>
+                        <h3>23. Смещение от импульса и повреждений</h3>
+                        <p class="formula">X: p · Y: Δx · Z: damage</p>
+                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
+                    </div>
+
+                    <div class="chart-card" data-chart="24"
+                         data-title="Повреждения от температуры и напряжения"
+                         data-formula="X: T_avg (K) · Y: damage (м⁻²) · Z: V (В)">
+                        <div class="chart-card-preview" id="preview24"></div>
+                        <h3>24. Повреждения от температуры и напряжения</h3>
+                        <p class="formula">X: T_avg · Y: damage · Z: V</p>
+                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
+                    </div>
+
                 </div>
             </div>
 
-            <!-- 3D CHARTS (25-28) -->
+            <!-- ═══════════════════════════════════════════
+                 КОМПЛЕКСНЫЕ SURFACE 3D (25–28)
+            ════════════════════════════════════════════ -->
             <div class="chart-category">
-                <h2><i class="fas fa-cube"></i> 3D зависимости</h2>
-                <div class="chart-3d-controls">
-                    <div class="chart-3d-control-group">
-                        <label for="chart3dMode">Зависимость</label>
-                        <select id="chart3dMode" class="chart-filter">
-                            <option value="depth">25. Напряжение · Ток → Глубина слоя</option>
-                            <option value="ionEnergy">26. Напряжение · Ток → Энергия ионов</option>
-                            <option value="diffusion">27. Температура · Давление → Диффузия D₁</option>
-                            <option value="damage">28. Температура · Напряжение → Повреждения</option>
-                        </select>
+                <h2><i class="fas fa-cube"></i> Комплексные 3D зависимости (4)</h2>
+                <div class="charts-grid">
+
+                    <div class="chart-card" data-chart="25"
+                         data-title="V · j → Глубина проникновения ионов"
+                         data-formula="X: V (В) · Y: j (А/м²) · Z: depth (м)">
+                        <div class="chart-card-preview" id="preview25"></div>
+                        <h3>25. V · j → Глубина проникновения</h3>
+                        <p class="formula">Surface 3D · X: V · Y: j · Z: depth</p>
+                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
                     </div>
-                    <div class="chart-3d-control-group">
-                        <label for="chart3dType">Тип визуализации</label>
-                        <select id="chart3dType" class="chart-filter">
-                            <option value="scatter">Точечный (scatter)</option>
-                            <option value="surface">Поверхность (surface)</option>
-                        </select>
+
+                    <div class="chart-card" data-chart="26"
+                         data-title="V · j → Суммарная переданная энергия"
+                         data-formula="X: V (В) · Y: j (А/м²) · Z: E_total (эВ)">
+                        <div class="chart-card-preview" id="preview26"></div>
+                        <h3>26. V · j → Суммарная переданная энергия</h3>
+                        <p class="formula">Surface 3D · X: V · Y: j · Z: E_total</p>
+                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
                     </div>
-                </div>
-                <div class="chart-box chart-box--3d">
-                    <div id="chart3d" style="width:100%;height:480px;"></div>
-                    <p class="formula chart-3d-hint"><i class="fas fa-arrows-alt"></i> Перетащите для вращения · Скролл для зума · ПКМ для перемещения</p>
+
+                    <div class="chart-card" data-chart="27"
+                         data-title="T · P → Диффузия D₁"
+                         data-formula="X: T_avg (K) · Y: P (Па) · Z: D₁ (м²/с)">
+                        <div class="chart-card-preview" id="preview27"></div>
+                        <h3>27. T · P → Диффузия D₁</h3>
+                        <p class="formula">Surface 3D · X: T_avg · Y: P · Z: D₁</p>
+                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
+                    </div>
+
+                    <div class="chart-card" data-chart="28"
+                         data-title="T · V → Суммарные повреждения"
+                         data-formula="X: T_avg (K) · Y: V (В) · Z: damage (м⁻²)">
+                        <div class="chart-card-preview" id="preview28"></div>
+                        <h3>28. T · V → Суммарные повреждения</h3>
+                        <p class="formula">Surface 3D · X: T_avg · Y: V · Z: damage</p>
+                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
+                    </div>
+
                 </div>
             </div>
 
-        </div>
-    </div>
+        </div><!-- /chartsWorkspace -->
+    </div><!-- /container -->
 </main>
 
 <footer class="footer">
@@ -211,6 +463,7 @@
 <script src="js/docx.iife.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/main-ui.js"></script>
-<script type="module" src="js/charts.js"></script>
+<script type="module" src="js/charts-modal.js"></script>
+
 </body>
 </html>

@@ -85,8 +85,229 @@
 /* Charts Grid - 3 columns */
 .charts-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+    margin-bottom: 40px;
+}
+
+.chart-card {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(94, 234, 212, 0.2);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.chart-card:hover {
+    border-color: rgba(94, 234, 212, 0.5);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+}
+
+.chart-card-preview {
+    height: 200px;
+    background: rgba(0, 0, 0, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.chart-card h3 {
+    padding: 16px 16px 8px;
+    font-size: 16px;
+    font-weight: 600;
+    color: #f8fafc;
+    margin: 0;
+}
+
+.chart-card .formula {
+    padding: 0 16px;
+    font-size: 12px;
+    color: #5eead4;
+    font-family: monospace;
+    margin: 0 0 16px 0;
+}
+
+.view-chart-btn {
+    display: block;
+    width: calc(100% - 32px);
+    margin: 0 16px 16px 16px;
+    padding: 10px;
+    background: rgba(94, 234, 212, 0.1);
+    border: 1px solid rgba(94, 234, 212, 0.3);
+    border-radius: 8px;
+    color: #5eead4;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.view-chart-btn:hover {
+    background: rgba(94, 234, 212, 0.2);
+    border-color: #5eead4;
+}
+
+/* ==================== МОДАЛЬНОЕ ОКНО ==================== */
+.chart-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.92);
+    z-index: 2000;
+    align-items: center;
+    justify-content: center;
+}
+
+.chart-modal-content {
+    width: 92vw;
+    height: 88vh;
+    background: rgba(15, 23, 42, 0.97);
+    border-radius: 20px;
+    border: 1px solid rgba(94, 234, 212, 0.3);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.chart-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px;
+    border-bottom: 1px solid rgba(94, 234, 212, 0.2);
+    flex-shrink: 0;
+}
+
+.chart-modal-header h2 {
+    margin: 0;
+    font-size: 18px;
+    color: #f8fafc;
+}
+
+.modal-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.modal-mode-btn {
+    padding: 7px 18px;
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(94, 234, 212, 0.3);
+    border-radius: 8px;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+}
+
+.modal-mode-btn.active {
+    background: rgba(94, 234, 212, 0.2);
+    border-color: #5eead4;
+    color: #5eead4;
+}
+
+.modal-mode-btn:hover {
+    background: rgba(94, 234, 212, 0.15);
+}
+
+.modal-close-btn {
+    background: none;
+    border: none;
+    color: #94a3b8;
+    font-size: 22px;
+    cursor: pointer;
+    padding: 0 6px;
+    transition: color 0.2s;
+    line-height: 1;
+}
+
+.modal-close-btn:hover {
+    color: #ef4444;
+}
+
+/* ключевые правила — тело модалки и контейнер Plotly */
+.chart-modal-body {
+    flex: 1 1 0;
+    min-height: 0;          /* обязательно! иначе flex не ужмёт */
+    padding: 0;             /* убираем padding полностью */
+    position: relative;
+    overflow: hidden;
+}
+
+.modal-plotly-chart {
+    position: absolute;
+    inset: 0;               /* растягиваем на весь родитель */
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 0;
+}
+
+/* Plotly svg/canvas тоже должны быть 100% */
+.modal-plotly-chart .plotly,
+.modal-plotly-chart .js-plotly-plot,
+.modal-plotly-chart .plot-container,
+.modal-plotly-chart .svg-container,
+.modal-plotly-chart .main-svg {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+.chart-modal-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 20px;
+    border-top: 1px solid rgba(94, 234, 212, 0.2);
+    flex-shrink: 0;
+}
+
+.chart-modal-footer .formula {
+    margin: 0;
+    font-size: 12px;
+    color: #5eead4;
+    font-family: monospace;
+}
+
+.chart-modal-footer .export-btn {
+    padding: 7px 14px;
+    background: rgba(94, 234, 212, 0.1);
+    border: 1px solid rgba(94, 234, 212, 0.3);
+    border-radius: 8px;
+    color: #5eead4;
+    cursor: pointer;
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    transition: all 0.2s;
+}
+
+.chart-modal-footer .export-btn:hover {
+    background: rgba(94, 234, 212, 0.2);
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .chart-modal-content {
+        width: 98vw;
+        height: 92vh;
+    }
+
+    .chart-modal-header h2 {
+        font-size: 14px;
+    }
+
+    .modal-mode-btn {
+        padding: 5px 10px;
+        font-size: 11px;
+    }
 }
 
 .chart-box {
@@ -131,7 +352,7 @@
 
 .chart-box canvas {
     width: 100% !important;
-    height: 350px !important;  /* Increased from 220px */
+    height: 350px !important;
 }
 
 .formula {
@@ -175,7 +396,7 @@
     }
 
     .chart-box canvas {
-        height: 380px !important;  /* Even larger on tablet */
+        height: 380px !important;
     }
 }
 
@@ -189,6 +410,36 @@
     }
 
     .chart-box canvas {
-        height: 420px !important;  /* Maximum height on mobile */
+        height: 420px !important;
     }
+}
+
+.chart-controls {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.view-mode-btn {
+    padding: 4px 12px;
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(94, 234, 212, 0.3);
+    border-radius: 6px;
+    color: #94a3b8;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+
+.view-mode-btn:hover {
+    background: rgba(94, 234, 212, 0.2);
+    border-color: #5eead4;
+    color: #5eead4;
+}
+
+.view-mode-btn.active {
+    background: rgba(94, 234, 212, 0.3);
+    border-color: #5eead4;
+    color: #5eead4;
 }

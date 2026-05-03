@@ -55,6 +55,22 @@
 
 .res-actions{padding:1.5rem;border-top:1px solid var(--border);text-align:center}
 
+.btn-danger {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+}
+
+.btn-danger:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: #ef4444;
+}
+
+.btn-danger:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 @media(max-width:1024px){.sim-grid{grid-template-columns:1fr}.res-cards{grid-template-columns:1fr}}
 @media(max-width:768px){.sim-hero h1{font-size:2rem}.param-row{grid-template-columns:1fr}}
 
