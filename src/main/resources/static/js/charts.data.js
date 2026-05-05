@@ -1,19 +1,22 @@
-// charts.data.js — загрузка, обогащение, фильтрация данных
+// charts.data.js — загрузка, нормализация и подготовка 3D-данных
 
 export let allResults = [];
 export const atomsMap = new Map();
-export const ionsMap  = new Map();
+export const ionsMap = new Map();
 
 async function fetchJSON(url, headers = {}) {
     try {
-        const r = await fetch(url, { headers });
-        const d = await r.json();
-        return d.data || [];
-    } catch { return []; }
+        const res = await fetch(url, { headers });
+        const json = await res.json();
+        return json.data || [];
+    } catch {
+        return [];
+    }
 }
 
 export async function loadAll(token) {
     const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
     const [atoms, ions, results] = await Promise.all([
         fetchJSON('/atoms'),
         fetchJSON('/ions'),
@@ -23,81 +26,116 @@ export async function loadAll(token) {
     atoms.forEach(a => a?.id && atomsMap.set(a.id, a));
     ions.forEach(i => i?.id && ionsMap.set(i.id, i));
 
-    allResults = results.map(enrich);
-
     if (!atomsMap.size && results.length) await loadMissing(results, 'atom');
-    if (!ionsMap.size  && results.length) await loadMissing(results, 'ion');
+    if (!ionsMap.size && results.length) await loadMissing(results, 'ion');
 
     allResults = results.map(enrich);
 }
 
 async function loadMissing(results, type) {
-    const map   = type === 'atom' ? atomsMap : ionsMap;
-    const idKey = type === 'atom' ? 'atomId'  : 'ionId';
-    const url   = type === 'atom' ? '/atoms'  : '/ions';
-    const ids   = [...new Set(results.map(r => r[idKey]).filter(Boolean))];
-    await Promise.all(ids.filter(id => !map.has(id)).map(async id => {
+    const map = type === 'atom' ? atomsMap : ionsMap;
+    const idKey = type === 'atom' ? 'atomId' : 'ionId';
+    const endpoint = type === 'atom' ? '/atoms' : '/ions';
+
+    const ids = [...new Set(results.map(r => r[idKey]).filter(Boolean))];
+
+    await Promise.all(ids.map(async id => {
+        if (map.has(id)) return;
+
         try {
-            const r = await fetch(`${url}/${id}`);
-            if (r.ok) { const d = await r.json(); if (d.data) map.set(id, d.data); }
-        } catch { /* skip */ }
+            const res = await fetch(`${endpoint}/${id}`);
+            if (!res.ok) return;
+            const json = await res.json();
+            if (json.data) map.set(id, json.data);
+        } catch {}
     }));
 }
 
 function enrich(r) {
     if (!r) return r;
-    const atom = r.atomId && atomsMap.has(r.atomId) ? atomsMap.get(r.atomId) : r.atom ?? null;
-    const ion  = r.ionId  && ionsMap.has(r.ionId)   ? ionsMap.get(r.ionId)   : r.ion  ?? null;
-    if (atom?.id) atomsMap.set(atom.id, atom);
-    if (ion?.id)  ionsMap.set(ion.id, ion);
+
+    const atom = atomsMap.get(r.atomId) || r.atom || null;
+    const ion = ionsMap.get(r.ionId) || r.ion || null;
+
     return {
         ...r,
-        atomId:   r.atomId || r.atom?.id,
+        atomId: r.atomId || atom?.id,
+        ionId: r.ionId || ion?.id,
         atomName: atom?.atomName || atom?.name || atom?.symbol || 'Unknown',
-        ionId:    r.ionId  || r.ion?.id,
-        ionName:  ion?.name || 'Unknown',
+        ionName: ion?.name || 'Unknown',
         ionCharge: ion?.charge || 0,
-        // plasma
-        voltage:             r.voltage || 0,
-        pressure:            r.pressure || 0,
-        electronDensity:     r.electronDensity || 0,
-        electronVelocity:    r.electronVelocity || 0,
-        electronTemperature: r.electronTemperature || r.electronTemp || 0,
-        currentDensity:      r.currentDensity || 0,
-        ionEnergy:           r.ionEnergy || r.totalTransferredEnergy || 0,
-        // thermal
-        avgT: r.avgT || 0, minT: r.minT || 0, maxT: r.maxT || 0,
-        // energy
-        totalTransferredEnergy: r.totalTransferredEnergy || 0,
-        avgTransferredPerAtom:  r.avgTransferredPerAtom  || 0,
-        // diffusion
-        diffusionCoefficient1: r.diffusionCoefficient1 || 0,
-        diffusionCoefficient2: r.diffusionCoefficient2 || 0,
-        // mechanics
-        depths:            r.depths            || 0,
-        concentration:     r.concentration     || 0,
-        dThermal:          r.dThermal          || 0,
-        totalMomentum:     r.totalMomentum     || 0,
-        totalDamage:       r.totalDamage       || 0,
-        totalDisplacement: r.totalDisplacement || 0,
+
+        voltage: Number(r.voltage || 0),
+        pressure: Number(r.pressure || 0),
+        electronDensity: Number(r.electronDensity || 0),
+        electronVelocity: Number(r.electronVelocity || 0),
+        electronTemperature: Number(r.electronTemperature || r.electronTemp || 0),
+        currentDensity: Number(r.currentDensity || 0),
+        ionEnergy: Number(r.ionEnergy || r.totalTransferredEnergy || 0),
+
+        avgT: Number(r.avgT || 0),
+        minT: Number(r.minT || 0),
+        maxT: Number(r.maxT || 0),
+
+        totalTransferredEnergy: Number(r.totalTransferredEnergy || 0),
+        avgTransferredPerAtom: Number(r.avgTransferredPerAtom || 0),
+
+        diffusionCoefficient1: Number(r.diffusionCoefficient1 || 0),
+        diffusionCoefficient2: Number(r.diffusionCoefficient2 || 0),
+
+        depths: Number(r.depths || 0),
+        concentration: Number(r.concentration || 0),
+        dThermal: Number(r.dThermal || 0),
+        totalMomentum: Number(r.totalMomentum || 0),
+        totalDamage: Number(r.totalDamage || 0),
+        totalDisplacement: Number(r.totalDisplacement || 0),
+
         createdAt: r.createdAt || new Date().toISOString(),
+        timeIndex: new Date(r.createdAt || Date.now()).getTime(),
     };
 }
 
 export function byAtom(name) {
     if (!name || name === 'all') return allResults;
-    return allResults.filter(r => {
-        if (r.atomName === name) return true;
-        const m = name.match(/Атом (\d+)/);
-        return m && r.atomId === +m[1];
-    });
+
+    return allResults.filter(r =>
+        r.atomName === name ||
+        (name.match(/Атом (\d+)/)?.[1] && r.atomId === +name.match(/Атом (\d+)/)[1])
+    );
 }
 
 export function byIon(name) {
     if (!name || name === 'all') return allResults;
-    return allResults.filter(r => {
-        if (r.ionName === name) return true;
-        const m = name.match(/Ион (\d+)/);
-        return m && r.ionId === +m[1];
-    });
+
+    return allResults.filter(r =>
+        r.ionName === name ||
+        (name.match(/Ион (\d+)/)?.[1] && r.ionId === +name.match(/Ион (\d+)/)[1])
+    );
+}
+
+// Универсальная подготовка данных для 3D-графиков
+export function to3DScatter(data, xKey, yKey, zKey = null) {
+    return data.map((row, i) => ({
+        x: row[xKey] || 0,
+        y: row[yKey] || 0,
+        z: zKey ? (row[zKey] || 0) : i,
+        meta: row,
+    }));
+}
+
+export function to3DLine(data, xKey, yKey) {
+    return data.map((row, i, arr) => ({
+        x: row[xKey] || 0,
+        y: row[yKey] || 0,
+        z: i === 0 ? 0 : (row[yKey] - arr[i - 1][yKey]),
+    }));
+}
+
+export function to3DBar(data, categoryKey, valueKey, depthKey = null) {
+    return data.map((row, i) => ({
+        x: i,
+        y: row[valueKey] || 0,
+        z: depthKey ? row[depthKey] || 0 : row[categoryKey] || i,
+        label: row[categoryKey],
+    }));
 }

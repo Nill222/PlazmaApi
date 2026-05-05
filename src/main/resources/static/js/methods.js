@@ -451,12 +451,6 @@ function showResults(r) {
     set('r_total_damage',             fmt(stats.totalDamage            ?? 0));
     set('r_total_momentum',           fmt(stats.totalMomentum          ?? 0));
     set('r_total_displacement',       fmt(stats.totalDisplacement      ?? 0));
-    set('r_fluence',                  fmt(stats.fluence                ?? 0));
-    set('r_fluence_eff',              fmt(stats.fluenceEff             ?? 0));
-    set('r_ion_flux',                 fmt(stats.ionFlux                ?? 0));
-    set('r_resonance_xi',             fmt(stats.resonanceXi            ?? 0));
-    set('r_d_slr',                    fmt(stats.dSlr                   ?? 0));
-    set('r_d_res',                    fmt(stats.dRes                   ?? 0));
 
     // DIFFUSION PROFILE
     if (r.profile) {
@@ -751,12 +745,6 @@ async function saveRes() {
                 totalDamage:            Number(stats.totalDamage ?? 0),
                 totalMomentum:          Number(stats.totalMomentum ?? 0),
                 totalDisplacement:      Number(stats.totalDisplacement ?? 0),
-                fluence:                Number(stats.fluence ?? 0),
-                fluenceEff:             Number(stats.fluenceEff ?? 0),
-                ionFlux:                Number(stats.ionFlux ?? 0),
-                resonanceXi:            Number(stats.resonanceXi ?? 0),
-                dSlr:                   Number(stats.dSlr ?? 0),
-                dRes:                   Number(stats.dRes ?? 0),
             }),
         });
 
