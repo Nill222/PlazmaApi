@@ -15,6 +15,12 @@ public record PhysicsStats(
     double finalProbeTemperature,  // Температура в контрольной точке (K)
     double debyeFrontSpeed,        // Скорость фронта до температуры Дебая (м/с)
     double debyeFrontDepth,        // Глубина фронта Дебая (м)
+    double fluence,                // Интегральный поток ионов (1/м²)
+    double fluenceEff,             // Эффективный флюенс с учётом усиления
+    double ionFlux,                // Поток ионов (1/(м²·с))
+    double resonanceXi,            // Резонансный коэффициент усиления
+    double dSlr,                   // Вклад SLR в D (м²/с)
+    double dRes,                   // Резонансный вклад в D (м²/с)
     List<Double> thermalTimes,     // Шкала времени для температурного поля (с)
     List<Double> thermalDepths,    // Шкала глубины для температурного поля (м)
     List<List<Double>> thermalTemperatureMap // T(depth, time) для 3D-графика

@@ -4,12 +4,9 @@ import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import plasmapi.project.plasma.dto.mathDto.diffusion.DiffusionProfileDto;
-import plasmapi.project.plasma.dto.mathDto.plasma.PlasmaResultDto;
 import plasmapi.project.plasma.model.atom.AtomList;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
 @Data
@@ -103,6 +100,24 @@ public class Result {
 
         @Column(name = "total_displacement")
         private Double totalDisplacement;
+
+        @Column(name = "fluence")
+        private Double fluence;
+
+        @Column(name = "fluence_eff")
+        private Double fluenceEff;
+
+        @Column(name = "ion_flux")
+        private Double ionFlux;
+
+        @Column(name = "resonance_xi")
+        private Double resonanceXi;
+
+        @Column(name = "d_slr")
+        private Double dSlr;
+
+        @Column(name = "d_res")
+        private Double dRes;
 
         @Column(name = "created_at")
         private LocalDateTime createdAt = LocalDateTime.now();

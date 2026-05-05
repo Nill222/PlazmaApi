@@ -31,6 +31,12 @@ public record ResultDTO(
         double totalMomentum,
         double totalDamage,
         double totalDisplacement,
+        double fluence,
+        double fluenceEff,
+        double ionFlux,
+        double resonanceXi,
+        double dSlr,
+        double dRes,
         LocalDateTime createdAt
 ) {}
 
