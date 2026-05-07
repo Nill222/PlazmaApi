@@ -1,28 +1,63 @@
+/**
+ * ==============================================================
+ * PlasmaLab Authentication Client v3.0
+ * Clean, modern authentication system with proper error handling
+ * ==============================================================
+ */
+
+'use strict';
+
 // ==============================================================
-// PlasmaLab Authentication Client v2.2
+// Configuration
 // ==============================================================
 
-const API_ROOT       = "/auth";
-const TOKEN_COOKIE   = "authToken";
-const USERNAME_COOKIE = "username";
-const USER_ID_COOKIE = "userId";
-const USER_ROLE_COOKIE = "userRole";
+const CONFIG = {
+    API_ROOT: '/auth',
+    COOKIES: {
+        TOKEN: 'authToken',
+        USERNAME: 'username',
+        USER_ID: 'userId',
+        USER_ROLE: 'userRole',
+    },
+    COOKIE_EXPIRY_DAYS: 7,
+};
 
 // ==============================================================
 // Cookie Manager
 // ==============================================================
 
-const Cookie = {
-    set(name, value, days = 7) {
+const CookieManager = {
+    /**
+     * Set a cookie
+     * @param {string} name - Cookie name
+     * @param {string} value - Cookie value
+     * @param {number} days - Expiration in days
+     */
+    set(name, value, days = CONFIG.COOKIE_EXPIRY_DAYS) {
         const date = new Date();
-        date.setTime(date.getTime() + days * 24 * 3600 * 1000);
+        date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
+
         const secure = location.protocol === 'https:' ? '; Secure' : '';
-        document.cookie = `${name}=${encodeURIComponent(String(value))}; expires=${date.toUTCString()}; path=/; SameSite=Lax${secure}`;
+        const cookie = `${name}=${encodeURIComponent(String(value))}; expires=${date.toUTCString()}; path=/; SameSite=Lax${secure}`;
+
+        document.cookie = cookie;
     },
+
+    /**
+     * Get a cookie value
+     * @param {string} name - Cookie name
+     * @returns {string|null} Cookie value or null
+     */
     get(name) {
-        const m = document.cookie.match(new RegExp('(^| )' + name + '=([^;]+)'));
-        return m ? decodeURIComponent(m[2]) : null;
+        const regex = new RegExp(`(^| )${name}=([^;]+)`);
+        const match = document.cookie.match(regex);
+        return match ? decodeURIComponent(match[2]) : null;
     },
+
+    /**
+     * Remove a cookie
+     * @param {string} name - Cookie name
+     */
     remove(name) {
         const secure = location.protocol === 'https:' ? '; Secure' : '';
         document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:01 GMT; path=/; SameSite=Lax${secure}`;
@@ -30,292 +65,624 @@ const Cookie = {
 };
 
 // ==============================================================
-// UI Helpers
+// UI Message System
 // ==============================================================
 
-function showMessage(message, type = 'error', targetId = null) {
-    const colors = { error: '#ff6b6b', success: '#28a745', info: '#00aaff' };
-    const el =
-        (targetId && document.getElementById(targetId)) ||
-        document.getElementById('login_msg') ||
-        document.getElementById('signup_msg') ||
-        document.getElementById('auth_msg');
+const UIMessages = {
+    /**
+     * Show a message to the user
+     * @param {string} message - Message text
+     * @param {string} type - Message type: 'error', 'success', 'info'
+     * @param {string|null} targetId - Specific element ID to show message in
+     */
+    show(message, type = 'error', targetId = null) {
+        const colors = {
+            error: '#ef4444',
+            success: '#10b981',
+            info: '#3b82f6',
+        };
 
-    if (el) {
-        el.textContent    = message;
-        el.style.color    = colors[type] || colors.error;
-        el.style.display  = 'block';
-        if (type !== 'error') setTimeout(() => { el.style.display = 'none'; }, 5000);
-    } else {
-        alert(message);
-    }
-}
+        const element = this._getMessageElement(targetId);
 
-function clearMessages() {
-    ['login_msg', 'signup_msg', 'auth_msg'].forEach(id => {
-        const el = document.getElementById(id);
-        if (el) { el.textContent = ''; el.style.display = 'none'; }
-    });
-}
+        if (element) {
+            element.textContent = message;
+            element.style.color = colors[type] || colors.error;
+            element.style.display = 'block';
 
-function updateAuthUI(authenticated) {
-    // authenticated может быть true/false или undefined (тогда смотрим на cookie)
-    const loggedIn = authenticated !== undefined ? authenticated : !!Cookie.get(TOKEN_COOKIE);
+            // Auto-hide success and info messages after 5 seconds
+            if (type !== 'error') {
+                setTimeout(() => {
+                    element.style.display = 'none';
+                }, 5000);
+            }
+        } else {
+            // Fallback to alert
+            alert(message);
+        }
+    },
 
-    const authButtons  = document.querySelector('.auth-buttons');
-    const userMenu     = document.querySelector('.user-menu');
-    const usernameEl   = document.getElementById('usernameDisplay');
+    /**
+     * Clear all messages
+     */
+    clear() {
+        const messageIds = ['login_msg', 'signup_msg', 'auth_msg'];
 
-    if (loggedIn) {
-        authButtons?.setAttribute('style', 'display:none');
-        userMenu?.setAttribute('style', 'display:flex');
-        if (usernameEl) usernameEl.textContent = Cookie.get(USERNAME_COOKIE) || '';
-        document.body.classList.add('logged-in');
-    } else {
-        authButtons?.setAttribute('style', 'display:flex');
-        userMenu?.setAttribute('style', 'display:none');
-        if (usernameEl) usernameEl.textContent = '';
-        document.body.classList.remove('logged-in');
-    }
-}
+        messageIds.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = '';
+                element.style.display = 'none';
+            }
+        });
+    },
 
-function clearSession() {
-    Cookie.remove(TOKEN_COOKIE);
-    Cookie.remove(USERNAME_COOKIE);
-    Cookie.remove(USER_ID_COOKIE);
-    Cookie.remove(USER_ROLE_COOKIE);
-}
-
-// ==============================================================
-// API Helper
-// ==============================================================
-
-async function apiRequest(url, body = null, useAuth = false) {
-    const options = {
-        method: body ? 'POST' : 'GET',
-        headers: { 'Content-Type': 'application/json' },
-    };
-    if (useAuth) {
-        const token = Cookie.get(TOKEN_COOKIE);
-        if (token) options.headers['Authorization'] = `Bearer ${token}`;
-    }
-    if (body) options.body = JSON.stringify(body);
-
-    try {
-        const res  = await fetch(url, options);
-        const ct   = res.headers.get('content-type') || '';
-        const data = ct.includes('application/json')
-            ? await res.json()
-            : await res.text().then(t => { try { return JSON.parse(t); } catch { return { message: t }; } });
-
-        if (res.status === 401 && useAuth) {
-            console.warn('[Auth] 401 — clearing session');
-            clearSession();
-            updateAuthUI(false);
-            throw new Error('Сессия истекла');
+    /**
+     * Get the appropriate message element
+     * @private
+     */
+    _getMessageElement(targetId) {
+        if (targetId) {
+            return document.getElementById(targetId);
         }
 
-        return { ok: res.ok, status: res.status, data };
-    } catch (err) {
-        console.error('[API]', err);
-        return { ok: false, status: 0, data: { message: err.message || 'Ошибка сети' } };
-    }
-}
-
-// ==============================================================
-// Token verification (silent — без сообщений пользователю)
-// ==============================================================
-
-async function verifyToken() {
-    const token = Cookie.get(TOKEN_COOKIE);
-    if (!token) return false;
-
-    try {
-        // Декодируем exp из JWT без запроса — быстрая локальная проверка
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        const expMs   = payload.exp * 1000;
-
-        if (Date.now() >= expMs) {
-            // Токен уже истёк локально — не тратим запрос
-            console.log('[Auth] Token expired locally, clearing session');
-            clearSession();
-            return false;
+        // Try to find the first visible message element
+        const messageIds = ['login_msg', 'signup_msg', 'auth_msg'];
+        for (const id of messageIds) {
+            const element = document.getElementById(id);
+            if (element) {
+                return element;
+            }
         }
 
-        // Если до истечения < 5 минут — проверяем на сервере (можно расширить до refresh)
-        const msLeft = expMs - Date.now();
-        if (msLeft < 5 * 60 * 1000) {
-            console.log('[Auth] Token expires soon, verifying with server...');
-            const res = await apiRequest(`${API_ROOT}/me`, null, true);
-            if (!res.ok) { clearSession(); return false; }
+        return null;
+    },
+};
+
+// ==============================================================
+// Authentication UI Manager
+// ==============================================================
+
+const AuthUI = {
+    /**
+     * Update UI based on authentication state
+     * @param {boolean} isAuthenticated - User authentication status
+     */
+    update(isAuthenticated) {
+        const authButtons = document.querySelector('.auth-buttons');
+        const userMenu = document.querySelector('.user-menu');
+        const usernameDisplay = document.getElementById('usernameDisplay');
+
+        if (isAuthenticated) {
+            // User is logged in
+            if (authButtons) authButtons.style.display = 'none';
+            if (userMenu) userMenu.style.display = 'flex';
+
+            const username = CookieManager.get(CONFIG.COOKIES.USERNAME);
+            if (usernameDisplay && username) {
+                usernameDisplay.textContent = username;
+            }
+
+            document.body.classList.add('logged-in');
+        } else {
+            // User is logged out
+            if (authButtons) authButtons.style.display = 'flex';
+            if (userMenu) userMenu.style.display = 'none';
+
+            if (usernameDisplay) {
+                usernameDisplay.textContent = '';
+            }
+
+            document.body.classList.remove('logged-in');
+        }
+    },
+};
+
+// ==============================================================
+// Session Manager
+// ==============================================================
+
+const SessionManager = {
+    /**
+     * Clear all session data
+     */
+    clear() {
+        Object.values(CONFIG.COOKIES).forEach(cookieName => {
+            CookieManager.remove(cookieName);
+        });
+    },
+
+    /**
+     * Check if user is authenticated
+     * @returns {boolean}
+     */
+    isAuthenticated() {
+        return !!CookieManager.get(CONFIG.COOKIES.TOKEN);
+    },
+
+    /**
+     * Get current username
+     * @returns {string|null}
+     */
+    getUsername() {
+        return CookieManager.get(CONFIG.COOKIES.USERNAME);
+    },
+
+    /**
+     * Get current user ID
+     * @returns {string|null}
+     */
+    getUserId() {
+        return CookieManager.get(CONFIG.COOKIES.USER_ID);
+    },
+
+    /**
+     * Get current user role
+     * @returns {string|null}
+     */
+    getUserRole() {
+        return CookieManager.get(CONFIG.COOKIES.USER_ROLE);
+    },
+
+    /**
+     * Get auth token
+     * @returns {string|null}
+     */
+    getToken() {
+        return CookieManager.get(CONFIG.COOKIES.TOKEN);
+    },
+};
+
+// ==============================================================
+// API Client
+// ==============================================================
+
+const APIClient = {
+    /**
+     * Make an API request
+     * @param {string} url - API endpoint
+     * @param {Object|null} body - Request body
+     * @param {boolean} useAuth - Include authentication header
+     * @returns {Promise<{ok: boolean, status: number, data: any}>}
+     */
+    async request(url, body = null, useAuth = false) {
+        const options = {
+            method: body ? 'POST' : 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        };
+
+        // Add authentication header if needed
+        if (useAuth) {
+            const token = SessionManager.getToken();
+            if (token) {
+                options.headers['Authorization'] = `Bearer ${token}`;
+            }
         }
 
-        return true;
+        // Add request body
+        if (body) {
+            options.body = JSON.stringify(body);
+        }
 
-    } catch (e) {
-        // Не смогли декодировать — проверяем через сервер
-        console.warn('[Auth] JWT decode failed, falling back to /me check');
-        const res = await apiRequest(`${API_ROOT}/me`, null, true);
-        if (!res.ok) { clearSession(); return false; }
-        return true;
-    }
-}
+        try {
+            const response = await fetch(url, options);
+            const contentType = response.headers.get('content-type') || '';
 
-// Полная серверная проверка (используется явно, например при входе на защищённую страницу)
-async function verifyAuth() {
-    const token = Cookie.get(TOKEN_COOKIE);
-    if (!token) return false;
+            let data;
+            if (contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                const text = await response.text();
+                try {
+                    data = JSON.parse(text);
+                } catch {
+                    data = { message: text };
+                }
+            }
 
-    const res = await apiRequest(`${API_ROOT}/me`, null, true);
-    if (!res.ok) { clearSession(); updateAuthUI(false); return false; }
+            // Handle 401 Unauthorized
+            if (response.status === 401 && useAuth) {
+                console.warn('[Auth] 401 Unauthorized - clearing session');
+                SessionManager.clear();
+                AuthUI.update(false);
+            }
 
-    if (res.data?.data) {
-        const u = res.data.data;
-        Cookie.set(USERNAME_COOKIE, u.username, 7);
-        if (u.id)   Cookie.set(USER_ID_COOKIE,   String(u.id), 7);
-        if (u.role) Cookie.set(USER_ROLE_COOKIE,  u.role, 7);
-    }
-    return true;
-}
+            return {
+                ok: response.ok,
+                status: response.status,
+                data,
+            };
+        } catch (error) {
+            console.error('[API Error]', error);
+            return {
+                ok: false,
+                status: 0,
+                data: { message: error.message || 'Network error' },
+            };
+        }
+    },
+};
 
 // ==============================================================
 // Validation
 // ==============================================================
 
-function validateSignup(username, email, password) {
-    if (!username || username.length < 5 || username.length > 50)
-        return { valid: false, message: 'Имя пользователя: от 5 до 50 символов' };
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 255)
-        return { valid: false, message: 'Некорректный email' };
-    if (!password || password.length < 8 || password.length > 255)
-        return { valid: false, message: 'Пароль: минимум 8 символов' };
-    if (!/(?=.*[0-9])(?=.*[a-zA-Z])/.test(password))
-        return { valid: false, message: 'Пароль должен содержать минимум одну цифру и одну букву' };
-    return { valid: true };
-}
+const Validator = {
+    /**
+     * Validate signup form data
+     * @param {string} username
+     * @param {string} email
+     * @param {string} password
+     * @returns {{valid: boolean, message?: string}}
+     */
+    validateSignup(username, email, password) {
+        if (!username || username.length < 5 || username.length > 50) {
+            return {
+                valid: false,
+                message: 'Имя пользователя должно содержать от 5 до 50 символов',
+            };
+        }
 
-function validateSignin(username, password) {
-    if (!username || username.length < 5 || username.length > 50)
-        return { valid: false, message: 'Имя пользователя: от 5 до 50 символов' };
-    if (!password || password.length < 8 || password.length > 255)
-        return { valid: false, message: 'Пароль: от 8 до 255 символов' };
-    return { valid: true };
-}
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!email || !emailRegex.test(email) || email.length > 255) {
+            return {
+                valid: false,
+                message: 'Некорректный email адрес',
+            };
+        }
+
+        if (!password || password.length < 8 || password.length > 255) {
+            return {
+                valid: false,
+                message: 'Пароль должен содержать минимум 8 символов',
+            };
+        }
+
+        const passwordRegex = /(?=.*[0-9])(?=.*[a-zA-Z])/;
+        if (!passwordRegex.test(password)) {
+            return {
+                valid: false,
+                message: 'Пароль должен содержать минимум одну цифру и одну букву',
+            };
+        }
+
+        return { valid: true };
+    },
+
+    /**
+     * Validate signin form data
+     * @param {string} username
+     * @param {string} password
+     * @returns {{valid: boolean, message?: string}}
+     */
+    validateSignin(username, password) {
+        if (!username || username.length < 5 || username.length > 50) {
+            return {
+                valid: false,
+                message: 'Имя пользователя должно содержать от 5 до 50 символов',
+            };
+        }
+
+        if (!password || password.length < 8 || password.length > 255) {
+            return {
+                valid: false,
+                message: 'Пароль должен содержать от 8 до 255 символов',
+            };
+        }
+
+        return { valid: true };
+    },
+};
 
 // ==============================================================
-// Auth actions
+// Token Manager
 // ==============================================================
 
-async function signin() {
-    clearMessages();
-    const form     = document.getElementById('loginForm');
-    const username = form.username.value.trim();
-    const password = form.password.value.trim();
+const TokenManager = {
+    /**
+     * Verify token validity (client-side check)
+     * @returns {Promise<boolean>}
+     */
+    async verify() {
+        const token = SessionManager.getToken();
+        if (!token) {
+            return false;
+        }
 
-    const v = validateSignin(username, password);
-    if (!v.valid) return showMessage(v.message, 'error');
+        try {
+            // Decode JWT payload
+            const payload = this._decodeJWT(token);
+            if (!payload) {
+                return await this._verifyWithServer();
+            }
 
-    showMessage('⏳ Вход в систему...', 'info');
+            const expiryMs = payload.exp * 1000;
+            const now = Date.now();
 
-    const res = await apiRequest(`${API_ROOT}/signin`, { username, password });
-    if (!res.ok) return showMessage(res.data?.message || 'Неверное имя или пароль', 'error');
+            // Token has expired
+            if (now >= expiryMs) {
+                console.log('[Auth] Token expired locally, clearing session');
+                SessionManager.clear();
+                return false;
+            }
 
-    const token = res.data?.data;
-    if (!token || typeof token !== 'string') return showMessage('Ошибка: токен не получен', 'error');
+            // Token expires soon (< 5 minutes), verify with server
+            const timeLeft = expiryMs - now;
+            if (timeLeft < 5 * 60 * 1000) {
+                console.log('[Auth] Token expires soon, verifying with server...');
+                return await this._verifyWithServer();
+            }
 
-    let userData = null;
-    try {
-        const p = JSON.parse(atob(token.split('.')[1]));
-        userData = { id: p.id, username: p.sub, email: p.email, role: p.role };
-    } catch { /* игнорируем */ }
+            return true;
+        } catch (error) {
+            console.warn('[Auth] JWT decode failed, falling back to server verification', error);
+            return await this._verifyWithServer();
+        }
+    },
 
-    Cookie.set(TOKEN_COOKIE,    token, 7);
-    Cookie.set(USERNAME_COOKIE, userData?.username || username, 7);
-    if (userData?.id)   Cookie.set(USER_ID_COOKIE,   String(userData.id), 7);
-    if (userData?.role) Cookie.set(USER_ROLE_COOKIE,  userData.role, 7);
+    /**
+     * Verify token with server
+     * @private
+     * @returns {Promise<boolean>}
+     */
+    async _verifyWithServer() {
+        const response = await APIClient.request(`${CONFIG.API_ROOT}/me`, null, true);
 
-    form.reset();
-    updateAuthUI(true);
-    showMessage('✔ Успешный вход!', 'success');
+        if (!response.ok) {
+            SessionManager.clear();
+            AuthUI.update(false);
+            return false;
+        }
 
-    setTimeout(() => {
-        document.getElementById('authOverlay').style.display = 'none';
-        clearMessages();
-    }, 800);
-}
+        // Update user data from server response
+        if (response.data?.data) {
+            const userData = response.data.data;
+            CookieManager.set(CONFIG.COOKIES.USERNAME, userData.username);
+            if (userData.id) {
+                CookieManager.set(CONFIG.COOKIES.USER_ID, String(userData.id));
+            }
+            if (userData.role) {
+                CookieManager.set(CONFIG.COOKIES.USER_ROLE, userData.role);
+            }
+        }
 
-async function signup() {
-    clearMessages();
-    const form     = document.getElementById('registerForm');
-    const username = form.username.value.trim();
-    const email    = form.email.value.trim();
-    const password = form.password.value.trim();
+        return true;
+    },
 
-    const v = validateSignup(username, email, password);
-    if (!v.valid) return showMessage(v.message, 'error');
+    /**
+     * Decode JWT payload
+     * @private
+     * @param {string} token
+     * @returns {Object|null}
+     */
+    _decodeJWT(token) {
+        try {
+            const parts = token.split('.');
+            if (parts.length !== 3) {
+                return null;
+            }
+            const payload = JSON.parse(atob(parts[1]));
+            return payload;
+        } catch {
+            return null;
+        }
+    },
+};
 
-    showMessage('⏳ Регистрация...', 'info');
+// ==============================================================
+// Authentication Actions
+// ==============================================================
 
-    const res = await apiRequest(`${API_ROOT}/signup`, { username, email, password });
-    if (!res.ok) {
-        let msg = res.data?.message || 'Ошибка регистрации';
-        if (msg.includes('Username already'))  msg = 'Это имя пользователя уже занято';
-        if (msg.includes('Email already'))     msg = 'Этот email уже используется';
-        return showMessage(msg, 'error');
-    }
+const Auth = {
+    /**
+     * Sign in user
+     * @returns {Promise<void>}
+     */
+    async signin() {
+        UIMessages.clear();
 
-    showMessage('✔ Регистрация завершена! Теперь войдите.', 'success');
-    form.reset();
-    setTimeout(() => document.querySelector('.auth-tab[data-tab="login"]')?.click(), 1200);
-}
+        const form = document.getElementById('loginForm');
+        const username = form.username.value.trim();
+        const password = form.password.value.trim();
 
-function logout(silent = false) {
-    clearSession();
-    if (!silent) showMessage('✔ Вы вышли из системы', 'success');
-    updateAuthUI(false);
-    if (!silent) {
+        // Validate input
+        const validation = Validator.validateSignin(username, password);
+        if (!validation.valid) {
+            UIMessages.show(validation.message, 'error');
+            return;
+        }
+
+        UIMessages.show('⏳ Вход в систему...', 'info');
+
+        // Make API request
+        const response = await APIClient.request(`${CONFIG.API_ROOT}/signin`, {
+            username,
+            password,
+        });
+
+        if (!response.ok) {
+            const message = response.data?.message || 'Неверное имя пользователя или пароль';
+            UIMessages.show(message, 'error');
+            return;
+        }
+
+        // Get token from response
+        const token = response.data?.data;
+        if (!token || typeof token !== 'string') {
+            UIMessages.show('Ошибка: токен не получен', 'error');
+            return;
+        }
+
+        // Extract user data from JWT
+        let userData = null;
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            userData = {
+                id: payload.id,
+                username: payload.sub,
+                email: payload.email,
+                role: payload.role,
+            };
+        } catch (error) {
+            console.warn('[Auth] Could not decode JWT payload', error);
+        }
+
+        // Store authentication data
+        CookieManager.set(CONFIG.COOKIES.TOKEN, token);
+        CookieManager.set(CONFIG.COOKIES.USERNAME, userData?.username || username);
+        if (userData?.id) {
+            CookieManager.set(CONFIG.COOKIES.USER_ID, String(userData.id));
+        }
+        if (userData?.role) {
+            CookieManager.set(CONFIG.COOKIES.USER_ROLE, userData.role);
+        }
+
+        // Update UI
+        form.reset();
+        AuthUI.update(true);
+        UIMessages.show('✔ Успешный вход!', 'success');
+
+        // Close modal after delay
         setTimeout(() => {
-            const p = window.location.pathname;
-            if (p !== '/' && p !== '/index.html') window.location.href = '/';
-        }, 500);
-    }
-}
+            const authOverlay = document.getElementById('authOverlay');
+            if (authOverlay) {
+                authOverlay.style.display = 'none';
+            }
+            UIMessages.clear();
+        }, 800);
+    },
 
-function requireAuth() {
-    if (!Cookie.get(TOKEN_COOKIE)) {
-        showMessage('⚠ Необходима авторизация', 'error');
-        setTimeout(() => { window.location.href = '/'; }, 1000);
-        return false;
-    }
-    return true;
-}
+    /**
+     * Sign up user
+     * @returns {Promise<void>}
+     */
+    async signup() {
+        UIMessages.clear();
+
+        const form = document.getElementById('registerForm');
+        const username = form.username.value.trim();
+        const email = form.email.value.trim();
+        const password = form.password.value.trim();
+
+        // Validate input
+        const validation = Validator.validateSignup(username, email, password);
+        if (!validation.valid) {
+            UIMessages.show(validation.message, 'error');
+            return;
+        }
+
+        UIMessages.show('⏳ Регистрация...', 'info');
+
+        // Make API request
+        const response = await APIClient.request(`${CONFIG.API_ROOT}/signup`, {
+            username,
+            email,
+            password,
+        });
+
+        if (!response.ok) {
+            let message = response.data?.message || 'Ошибка регистрации';
+
+            // Localize common errors
+            if (message.includes('Username already')) {
+                message = 'Это имя пользователя уже занято';
+            } else if (message.includes('Email already')) {
+                message = 'Этот email уже используется';
+            }
+
+            UIMessages.show(message, 'error');
+            return;
+        }
+
+        UIMessages.show('✔ Регистрация завершена! Теперь войдите.', 'success');
+        form.reset();
+
+        // Switch to login tab
+        setTimeout(() => {
+            const loginTab = document.querySelector('.auth-tab[data-tab="login"]');
+            if (loginTab) {
+                loginTab.click();
+            }
+        }, 1200);
+    },
+
+    /**
+     * Log out user
+     * @param {boolean} silent - Don't show messages or redirect
+     */
+    logout(silent = false) {
+        SessionManager.clear();
+        AuthUI.update(false);
+
+        if (!silent) {
+            UIMessages.show('✔ Вы вышли из системы', 'success');
+
+            setTimeout(() => {
+                const currentPath = window.location.pathname;
+                if (currentPath !== '/' && currentPath !== '/index.html') {
+                    window.location.href = '/';
+                }
+            }, 500);
+        }
+    },
+
+    /**
+     * Require authentication (redirect if not authenticated)
+     * @returns {boolean}
+     */
+    requireAuth() {
+        if (!SessionManager.isAuthenticated()) {
+            UIMessages.show('⚠ Необходима авторизация', 'error');
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 1000);
+            return false;
+        }
+        return true;
+    },
+};
 
 // ==============================================================
-// Bootstrap — ключевая правка: тихая проверка токена при загрузке
+// Bootstrap & Initialization
 // ==============================================================
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const hasToken = !!Cookie.get(TOKEN_COOKIE);
+    const hasToken = SessionManager.isAuthenticated();
 
     if (hasToken) {
-        // Сначала рисуем UI "по cookie" — страница не мигает
-        updateAuthUI(true);
+        // Show UI as logged in immediately (prevents flash)
+        AuthUI.update(true);
 
-        // Тихо проверяем токен в фоне
-        const valid = await verifyToken();
-        if (!valid) {
-            // Токен протух — обновляем UI без перезагрузки
-            updateAuthUI(false);
+        // Verify token in background
+        const isValid = await TokenManager.verify();
+        if (!isValid) {
+            // Token is invalid, update UI
+            AuthUI.update(false);
             console.log('[Auth] Session expired, switched to logged-out state');
         }
-        // Если valid — ничего не делаем, UI уже верный
     } else {
-        updateAuthUI(false);
+        AuthUI.update(false);
     }
 
-    // Формы
-    document.getElementById('loginForm')   ?.addEventListener('submit', e => { e.preventDefault(); signin(); });
-    document.getElementById('registerForm')?.addEventListener('submit', e => { e.preventDefault(); signup(); });
+    // Setup form handlers
+    const loginForm = document.getElementById('loginForm');
+    if (loginForm) {
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            Auth.signin();
+        });
+    }
+
+    const registerForm = document.getElementById('registerForm');
+    if (registerForm) {
+        registerForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            Auth.signup();
+        });
+    }
+
+    console.log('[Auth] v3.0 initialized');
 });
 
 // ==============================================================
@@ -323,21 +690,34 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ==============================================================
 
 window.PlasmaAuth = {
-    signin, signup, logout, verifyAuth,
-    getToken:        () => Cookie.get(TOKEN_COOKIE),
-    getUsername:     () => Cookie.get(USERNAME_COOKIE),
-    getUserId:       () => Cookie.get(USER_ID_COOKIE),
-    getUserRole:     () => Cookie.get(USER_ROLE_COOKIE),
-    isAuthenticated: () => !!Cookie.get(TOKEN_COOKIE),
-    isAdmin:         () => Cookie.get(USER_ROLE_COOKIE) === 'ROLE_ADMIN',
-    hasRole:         role => Cookie.get(USER_ROLE_COOKIE) === role,
-    requireAuth, apiRequest, showMessage, clearMessages,
+    // Actions
+    signin: () => Auth.signin(),
+    signup: () => Auth.signup(),
+    logout: (silent = false) => Auth.logout(silent),
+    requireAuth: () => Auth.requireAuth(),
+    verifyAuth: () => TokenManager.verify(),
+
+    // Session info
+    getToken: () => SessionManager.getToken(),
+    getUsername: () => SessionManager.getUsername(),
+    getUserId: () => SessionManager.getUserId(),
+    getUserRole: () => SessionManager.getUserRole(),
+    isAuthenticated: () => SessionManager.isAuthenticated(),
+
+    // Role checking
+    isAdmin: () => SessionManager.getUserRole() === 'ROLE_ADMIN',
+    hasRole: (role) => SessionManager.getUserRole() === role,
+
+    // Utilities
+    apiRequest: (url, body, useAuth) => APIClient.request(url, body, useAuth),
+    showMessage: (msg, type, target) => UIMessages.show(msg, type, target),
+    clearMessages: () => UIMessages.clear(),
 };
 
-// обратная совместимость
-window.signin  = signin;
-window.signup  = signup;
-window.logout  = logout;
-window.getToken = () => Cookie.get(TOKEN_COOKIE);
+// Backward compatibility
+window.signin = () => Auth.signin();
+window.signup = () => Auth.signup();
+window.logout = (silent) => Auth.logout(silent);
+window.getToken = () => SessionManager.getToken();
 
-console.log('[Auth] v2.2 loaded');
+console.log('[PlasmaAuth] v3.0 loaded');

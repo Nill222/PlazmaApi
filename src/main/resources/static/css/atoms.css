@@ -1,496 +1,601 @@
-/* ==================== ATOMS PAGE STYLES ==================== */
+/**
+ * ==============================================================
+ * PlasmaLab Atoms Page Styles v3.0
+ * Professional design for atoms database management
+ * ==============================================================
+ */
 
-.main-content {
-    min-height: calc(100vh - 200px);
-    padding: 3rem 0;
-}
+/* ==============================================================
+   Page Header
+   ============================================================== */
 
-/* ==================== PAGE HEADER ==================== */
 .page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 3rem;
-    padding-bottom: 2rem;
-    border-bottom: 1px solid var(--border);
+    padding: var(--spacing-3xl) 0 var(--spacing-2xl);
+    background: linear-gradient(to bottom, var(--gray-50), var(--bg-primary));
+    border-bottom: 1px solid var(--gray-200);
 }
 
-.page-header h1 {
-    font-size: 2.5rem;
+.page-title {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-2xl);
+}
+
+.title-icon {
+    width: 4rem;
+    height: 4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gradient-primary);
+    border-radius: var(--radius-xl);
+    color: white;
+    font-size: 2rem;
+    box-shadow: var(--shadow-lg);
+}
+
+.page-title h1 {
+    font-size: clamp(2rem, 4vw, 2.5rem);
+    margin: 0;
+}
+
+.page-title p {
+    font-size: 1.125rem;
+    color: var(--text-secondary);
+    margin: var(--spacing-sm) 0 0;
+}
+
+/* ==============================================================
+   Stats Grid
+   ============================================================== */
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    background: var(--bg-primary);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-base);
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary-300);
+}
+
+.stat-icon {
+    flex-shrink: 0;
+    width: 3rem;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-50);
+    border-radius: var(--radius-md);
+    color: var(--primary-600);
+    font-size: 1.5rem;
+}
+
+.stat-content {
+    flex-grow: 1;
+}
+
+.stat-value {
+    font-size: 1.75rem;
     font-weight: 800;
-    background: var(--gradient-primary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-top: var(--spacing-xs);
+}
+
+/* ==============================================================
+   Toolbar
+   ============================================================== */
+
+.toolbar {
+    padding: var(--spacing-xl) 0;
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--gray-200);
+    position: sticky;
+    top: 73px;
+    z-index: var(--z-sticky);
+    backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.toolbar-inner {
     display: flex;
     align-items: center;
-    gap: 1rem;
-}
-
-.page-header h1 i {
-    background: var(--gradient-primary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: spin 20s linear infinite;
-}
-
-.page-header p {
-    color: var(--text-muted);
-    font-size: 1.1rem;
-}
-
-/* ==================== CONTROLS ==================== */
-.controls {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 2rem;
-    flex-wrap: wrap;
-    align-items: center;
+    gap: var(--spacing-md);
+    justify-content: space-between;
 }
 
 .search-box {
-    flex: 1;
-    min-width: 300px;
     position: relative;
+    flex: 1;
+    max-width: 500px;
 }
 
-.search-box i {
+.search-box i.fa-search {
     position: absolute;
-    left: 1.2rem;
+    left: 1rem;
     top: 50%;
     transform: translateY(-50%);
-    color: var(--text-muted);
+    color: var(--text-tertiary);
+    font-size: 1rem;
 }
 
 .search-box input {
     width: 100%;
-    padding: 1rem 1rem 1rem 3rem;
-    background: var(--bg-surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--text-main);
+    padding: 0.875rem 3rem 0.875rem 3rem;
     font-size: 1rem;
-    transition: all 0.3s ease;
+    color: var(--text-primary);
+    background: var(--gray-100);
+    border: 2px solid var(--gray-300);
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-base);
+}
+
+.search-box input::placeholder {
+    color: var(--text-tertiary);
 }
 
 .search-box input:focus {
     outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(94,234,212,0.1);
+    border-color: var(--primary-500);
+    background: var(--bg-primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.filter-group {
+.search-clear {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2rem;
+    height: 2rem;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-}
-
-.filter-group label {
-    color: var(--text-muted);
-    font-weight: 500;
-    white-space: nowrap;
-}
-
-.filter-group select {
-    padding: 0.8rem 1.2rem;
-    background: var(--bg-surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--text-main);
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-md);
+    color: var(--text-tertiary);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all var(--transition-base);
 }
 
-.filter-group select:focus {
-    outline: none;
-    border-color: var(--primary);
+.search-clear:hover {
+    background: var(--gray-200);
+    color: var(--text-primary);
 }
 
-/* ==================== LOADING & EMPTY STATES ==================== */
+/* ==============================================================
+   Atoms Section
+   ============================================================== */
+
+.atoms-section {
+    padding: var(--spacing-3xl) 0;
+    min-height: 50vh;
+}
+
+/* ==============================================================
+   Loading State
+   ============================================================== */
+
 .loading-state {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 5rem 2rem;
+    padding: var(--spacing-3xl);
+    text-align: center;
 }
 
 .spinner {
     width: 50px;
     height: 50px;
-    border: 4px solid var(--border);
-    border-top-color: var(--primary);
+    border: 4px solid var(--gray-200);
+    border-top-color: var(--primary-600);
     border-radius: 50%;
-    animation: spin 1s linear infinite;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: var(--spacing-lg);
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 
 .loading-state p {
-    margin-top: 1.5rem;
-    color: var(--text-muted);
-    font-size: 1.1rem;
+    font-size: 1rem;
+    color: var(--text-secondary);
 }
+
+/* ==============================================================
+   Empty State
+   ============================================================== */
 
 .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-3xl);
     text-align: center;
-    padding: 5rem 2rem;
 }
 
-.empty-state i {
-    font-size: 4rem;
-    color: var(--text-dark);
-    margin-bottom: 1.5rem;
+.empty-icon {
+    width: 6rem;
+    height: 6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gray-100);
+    border-radius: var(--radius-2xl);
+    color: var(--text-tertiary);
+    font-size: 3rem;
+    margin-bottom: var(--spacing-lg);
 }
 
 .empty-state h3 {
-    font-size: 1.8rem;
-    color: var(--text-main);
-    margin-bottom: 0.5rem;
+    font-size: 1.5rem;
+    margin-bottom: var(--spacing-md);
+    color: var(--text-primary);
 }
 
 .empty-state p {
-    color: var(--text-muted);
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-xl);
 }
 
-/* ==================== ATOMS GRID ==================== */
+/* ==============================================================
+   Atoms Grid
+   ============================================================== */
+
 .atoms-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 1.5rem;
-    animation: fadeIn 0.5s ease-out;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: var(--spacing-lg);
+    animation: fadeIn var(--transition-base);
 }
 
-/* ==================== ATOM CARD ==================== */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
 .atom-card {
-    background: var(--bg-card);
-    backdrop-filter: blur(20px);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1.8rem;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
+    padding: var(--spacing-xl);
+    background: var(--bg-primary);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-base);
     overflow: hidden;
 }
 
 .atom-card::before {
-    content: "";
+    content: '';
     position: absolute;
-    inset: 0;
-    background: var(--gradient-glow);
-    opacity: 0;
-    transition: opacity 0.4s ease;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--gradient-primary);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--transition-base);
 }
 
 .atom-card:hover {
-    transform: translateY(-8px);
-    box-shadow: var(--shadow), var(--shadow-glow);
-    border-color: var(--primary);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary-200);
 }
 
 .atom-card:hover::before {
-    opacity: 1;
+    transform: scaleX(1);
 }
 
-.atom-card > * {
-    position: relative;
-    z-index: 1;
-}
-
-/* Card Header */
 .atom-card-header {
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1.5rem;
+    margin-bottom: var(--spacing-lg);
 }
 
 .atom-symbol {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.atom-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    background: rgba(94,234,212,0.15);
+    width: 4rem;
+    height: 4rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.8rem;
+    background: var(--gradient-primary);
+    border-radius: var(--radius-lg);
+    color: white;
+    font-size: 1.75rem;
     font-weight: 800;
-    color: var(--primary);
-    transition: all 0.4s ease;
-    box-shadow: 0 0 20px rgba(94,234,212,0.2);
-}
-
-.atom-card:hover .atom-icon {
-    transform: scale(1.1) rotate(10deg);
-    box-shadow: 0 0 30px rgba(94,234,212,0.4);
-}
-
-.atom-name h3 {
-    font-size: 1.4rem;
-    font-weight: 700;
-    color: var(--text-main);
-    margin-bottom: 0.2rem;
-}
-
-.atom-name p {
-    color: var(--text-muted);
-    font-size: 0.9rem;
+    box-shadow: var(--shadow-md);
 }
 
 .atom-actions {
     display: flex;
-    gap: 0.5rem;
+    gap: var(--spacing-xs);
 }
 
-.atom-actions button {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text-muted);
-    cursor: pointer;
-    transition: all 0.3s ease;
+.atom-btn {
+    width: 2rem;
+    height: 2rem;
     display: flex;
     align-items: center;
     justify-content: center;
+    background: var(--gray-100);
+    border: none;
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-base);
 }
 
-.atom-actions button:hover {
-    background: rgba(94,234,212,0.1);
-    border-color: var(--primary);
-    color: var(--primary);
-    transform: scale(1.1);
+.atom-btn:hover {
+    background: var(--gray-200);
+    color: var(--text-primary);
 }
 
-.atom-actions button.delete:hover {
-    background: rgba(244,67,54,0.1);
-    border-color: #f44336;
-    color: #f44336;
+.atom-btn.delete:hover {
+    background: var(--accent-error);
+    color: white;
 }
 
-/* Card Body */
+.atom-card-body h3 {
+    font-size: 1.25rem;
+    margin-bottom: var(--spacing-md);
+    color: var(--text-primary);
+}
+
 .atom-properties {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-    margin-bottom: 1.5rem;
-}
-
-.property {
     display: flex;
     flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.atom-property {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--gray-50);
+    border-radius: var(--radius-md);
 }
 
 .property-label {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--text-dark);
-    margin-bottom: 0.3rem;
-    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.property-label i {
+    color: var(--primary-600);
 }
 
 .property-value {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 600;
-    color: var(--text-main);
+    color: var(--text-primary);
 }
 
-.property-value.highlight {
-    color: var(--primary);
+.property-unit {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    margin-left: var(--spacing-xs);
 }
 
-/* Structure Badge */
-.structure-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1rem;
-    border-radius: 999px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    margin-top: 0.5rem;
-}
+/* ==============================================================
+   Atom Modal
+   ============================================================== */
 
-.structure-badge.SC {
-    background: rgba(94,234,212,0.15);
-    color: var(--primary);
-    border: 1px solid rgba(94,234,212,0.3);
-}
-
-.structure-badge.BCC {
-    background: rgba(129,140,248,0.15);
-    color: var(--secondary);
-    border: 1px solid rgba(129,140,248,0.3);
-}
-
-.structure-badge.FCC {
-    background: rgba(244,114,182,0.15);
-    color: var(--accent);
-    border: 1px solid rgba(244,114,182,0.3);
-}
-
-.structure-badge.HCP {
-    background: rgba(251,191,36,0.15);
-    color: #fbbf24;
-    border: 1px solid rgba(251,191,36,0.3);
-}
-
-/* ==================== MODAL ==================== */
-.modal-overlay {
+.atom-modal-overlay {
     position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.85);
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(8px);
     display: none;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
-    animation: fadeIn 0.3s ease-out;
+    z-index: var(--z-modal);
+    padding: var(--spacing-lg);
+    animation: fadeIn var(--transition-base);
 }
 
-.modal {
-    background: var(--bg-surface);
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow);
-    width: 600px;
-    max-width: 90%;
-    max-height: 90vh;
+.atom-modal {
+    background: var(--bg-primary);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-2xl);
+    width: 100%;
+    max-width: 600px;
     overflow: hidden;
-    animation: scaleIn 0.3s ease-out;
+    animation: slideUp var(--transition-slow);
 }
 
-.modal-header {
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.atom-modal-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 1.5rem 2rem;
-    border-bottom: 1px solid var(--border);
+    justify-content: space-between;
+    padding: var(--spacing-lg) var(--spacing-xl);
+    border-bottom: 1px solid var(--gray-200);
+    background: var(--gray-50);
 }
 
-.modal-header h3 {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-main);
+.atom-modal-header h3 {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 1.25rem;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.atom-modal-header h3 i {
+    color: var(--primary-600);
 }
 
 .modal-close {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: none;
-    background: transparent;
-    color: var(--text-muted);
-    font-size: 1.5rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
+    width: 2.5rem;
+    height: 2.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-base);
 }
 
 .modal-close:hover {
-    background: rgba(255,255,255,0.1);
-    color: var(--text-main);
-    transform: rotate(90deg);
+    background: var(--gray-200);
+    color: var(--accent-error);
 }
 
-.modal-body {
-    padding: 2rem;
-    overflow-y: auto;
-    max-height: calc(90vh - 100px);
+/* ==============================================================
+   Atom Form
+   ============================================================== */
+
+.atom-form {
+    padding: var(--spacing-xl);
 }
 
-/* ==================== FORM ==================== */
 .form-row {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-    margin-bottom: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
 }
 
-.form-field {
+.form-group {
     display: flex;
     flex-direction: column;
-    margin-bottom: 1rem;
 }
 
-.form-field label {
-    margin-bottom: 0.5rem;
-    color: var(--text-muted);
-    font-weight: 500;
-    font-size: 0.9rem;
+.form-group label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
 }
 
-.form-field input,
-.form-field select {
-    padding: 0.9rem 1rem;
-    background: var(--bg-main);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--text-main);
+.form-group label i {
+    color: var(--primary-600);
+}
+
+.form-group small {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+}
+
+.form-group input,
+.form-group select {
+    padding: 0.875rem 1rem;
     font-size: 1rem;
-    transition: all 0.3s ease;
+    color: var(--text-primary);
+    background: var(--bg-secondary);
+    border: 2px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-base);
 }
 
-.form-field input:focus,
-.form-field select:focus {
+.form-group input::placeholder {
+    color: var(--text-tertiary);
+}
+
+.form-group input:focus,
+.form-group select:focus {
     outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(94,234,212,0.1);
+    border-color: var(--primary-500);
+    background: var(--bg-primary);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.form-field small {
-    margin-top: 0.3rem;
-    color: var(--text-dark);
-    font-size: 0.8rem;
-}
-
-.form-message {
-    padding: 0.8rem;
-    border-radius: var(--radius-sm);
-    margin: 1rem 0;
-    text-align: center;
-    font-weight: 500;
-    display: none;
+.form-group select {
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M10.293 3.293L6 7.586 1.707 3.293A1 1 0 00.293 4.707l5 5a1 1 0 001.414 0l5-5a1 1 0 10-1.414-1.414z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    padding-right: 2.5rem;
 }
 
 .form-actions {
     display: flex;
-    gap: 1rem;
+    gap: var(--spacing-md);
     justify-content: flex-end;
-    margin-top: 2rem;
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--gray-200);
 }
 
-/* ==================== RESPONSIVE ==================== */
+/* ==============================================================
+   Responsive Design
+   ============================================================== */
+
 @media (max-width: 768px) {
-    .page-header {
+    .page-title {
         flex-direction: column;
-        gap: 1.5rem;
         align-items: flex-start;
     }
 
-    .controls {
+    .toolbar-inner {
         flex-direction: column;
         align-items: stretch;
     }
 
     .search-box {
-        min-width: 100%;
+        max-width: 100%;
     }
 
-    .filter-group {
-        width: 100%;
-    }
-
-    .filter-group select {
-        flex: 1;
+    .stats-grid {
+        grid-template-columns: 1fr;
     }
 
     .atoms-grid {
@@ -501,29 +606,53 @@
         grid-template-columns: 1fr;
     }
 
-    .atom-properties {
-        grid-template-columns: 1fr;
+    .form-actions {
+        flex-direction: column-reverse;
+    }
+
+    .form-actions .btn {
+        width: 100%;
     }
 }
 
-/* ==================== ANIMATIONS ==================== */
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+@media (max-width: 480px) {
+    .page-header {
+        padding: var(--spacing-xl) 0;
+    }
+
+    .page-title h1 {
+        font-size: 1.75rem;
+    }
+
+    .atom-modal {
+        max-width: 100%;
+        margin: var(--spacing-md);
+    }
+
+    .atom-form {
+        padding: var(--spacing-md);
+    }
 }
 
-@keyframes scaleIn {
+/* ==============================================================
+   Animation Classes
+   ============================================================== */
+
+.fade-in {
+    animation: fadeIn 0.3s ease;
+}
+
+.slide-in {
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
     from {
-        transform: scale(0.9);
+        transform: translateX(-20px);
         opacity: 0;
     }
     to {
-        transform: scale(1);
+        transform: translateX(0);
         opacity: 1;
     }
-}
-
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
 }

@@ -2,468 +2,308 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>PlasmaLab | Графики</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <title>Графики результатов | PlasmaLab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer"/>
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/charts.css">
-    <link rel="stylesheet" href="css/charts.export.css">
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script src="https://unpkg.com/docx@7.8.2/build/index.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </head>
 <body>
-
-<!-- AUTH MODAL -->
+<!-- Auth Modal -->
 <div class="auth-overlay" id="authOverlay">
     <div class="auth-modal">
         <div class="auth-header">
-            <button class="auth-tab active" data-tab="login">Вход</button>
-            <button class="auth-tab" data-tab="register">Регистрация</button>
-            <button class="auth-close" onclick="hideAuthModal()">×</button>
+            <button class="auth-tab active" data-tab="login"><i class="fas fa-sign-in-alt"></i> Вход</button>
+            <button class="auth-tab" data-tab="register"><i class="fas fa-user-plus"></i> Регистрация</button>
+            <button class="auth-close" onclick="hideAuthModal()"><i class="fas fa-times"></i></button>
         </div>
         <div class="auth-body">
             <form id="loginForm" class="auth-form active" data-form="login">
                 <div class="auth-field">
-                    <label>Имя пользователя<input type="text" name="username" required autocomplete="username"></label>
+                    <label for="login-username"><i class="fas fa-user"></i> Имя пользователя</label>
+                    <input type="text" id="login-username" name="username" required autocomplete="username" placeholder="Введите имя пользователя">
                 </div>
                 <div class="auth-field">
-                    <label>Пароль<input type="password" name="password" required autocomplete="current-password"></label>
+                    <label for="login-password"><i class="fas fa-lock"></i> Пароль</label>
+                    <input type="password" id="login-password" name="password" required autocomplete="current-password" placeholder="Введите пароль">
                 </div>
-                <div id="login_msg" class="auth-message"></div>
-                <button type="submit" class="btn btn-primary full">Войти</button>
+                <div id="login_msg" class="auth-message" role="alert"></div>
+                <button type="submit" class="btn btn-primary full"><i class="fas fa-sign-in-alt"></i> Войти</button>
             </form>
             <form id="registerForm" class="auth-form" data-form="register">
                 <div class="auth-field">
-                    <label>Имя пользователя<input type="text" name="username" required autocomplete="username"></label>
+                    <label for="register-username"><i class="fas fa-user"></i> Имя пользователя</label>
+                    <input type="text" id="register-username" name="username" required autocomplete="username" placeholder="Минимум 5 символов">
                 </div>
                 <div class="auth-field">
-                    <label>Email<input type="email" name="email" required autocomplete="email"></label>
+                    <label for="register-email"><i class="fas fa-envelope"></i> Email</label>
+                    <input type="email" id="register-email" name="email" required autocomplete="email" placeholder="your@email.com">
                 </div>
                 <div class="auth-field">
-                    <label>Пароль<input type="password" name="password" required autocomplete="new-password"></label>
+                    <label for="register-password"><i class="fas fa-lock"></i> Пароль</label>
+                    <input type="password" id="register-password" name="password" required autocomplete="new-password" placeholder="Минимум 8 символов">
                 </div>
-                <div id="signup_msg" class="auth-message"></div>
-                <button type="submit" class="btn btn-primary full">Создать аккаунт</button>
+                <div id="signup_msg" class="auth-message" role="alert"></div>
+                <button type="submit" class="btn btn-primary full"><i class="fas fa-user-plus"></i> Создать аккаунт</button>
             </form>
         </div>
     </div>
 </div>
 
-<!-- CHART MODAL -->
-<div id="chartModal" class="chart-modal">
-    <div class="chart-modal-content">
-        <div class="chart-modal-header">
-            <h2 id="modalTitle">График</h2>
-            <div class="modal-controls">
-                <button id="modalScatterBtn" class="modal-mode-btn active">Точки</button>
-                <button id="modalSurfaceBtn" class="modal-mode-btn">Поверхность</button>
-                <button id="modalCloseBtn" class="modal-close-btn"><i class="fas fa-times"></i></button>
-            </div>
-        </div>
-        <div class="chart-modal-body">
-            <div id="modalChart" class="modal-plotly-chart"></div>
-        </div>
-        <div class="chart-modal-footer">
-            <p id="modalFormula" class="formula"></p>
-
-            <div style="display:flex; gap:10px; justify-content:flex-end; flex-wrap:wrap;">
-                <button id="modalExportWordBtn" class="export-btn">
-                    <i class="fas fa-file-word"></i> Word
-                </button>
-
-                <button id="modalExportBtn" class="export-btn">
-                    <i class="fas fa-download"></i> Экспорт PNG
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- HEADER -->
+<!-- Header -->
 <header class="header">
     <div class="container header-inner">
         <a href="index.html" class="logo"><i class="fas fa-atom"></i><span>PlasmaLab</span></a>
-        <nav class="nav">
-            <a class="nav-link" href="index.html">Главная</a>
-            <a class="nav-link" href="array.html">Атомы</a>
-            <a class="nav-link" href="chain.html">Ионы</a>
-            <a class="nav-link" href="methods.html">Методы</a>
-            <a class="nav-link active" href="charts.html">Графики</a>
+        <nav class="nav" id="mainNav">
+            <a class="nav-link" href="index.html"><i class="fas fa-home"></i> Главная</a>
+            <a class="nav-link" href="atoms.html"><i class="fas fa-atom"></i> Атомы</a>
+            <a class="nav-link" href="ions.html"><i class="fas fa-bolt"></i> Ионы</a>
+            <a class="nav-link" href="simulation.html"><i class="fas fa-rocket"></i> Симуляция</a>
+            <a class="nav-link active" href="charts.html"><i class="fas fa-chart-line"></i> Графики</a>
         </nav>
         <div class="auth">
             <div class="auth-buttons">
-                <button class="btn btn-primary" onclick="showAuthModal()">Войти</button>
+                <button class="btn btn-primary" onclick="showAuthModal()"><i class="fas fa-sign-in-alt"></i> Войти</button>
             </div>
             <div class="user-menu" style="display:none;">
-                <span class="user-name" id="usernameDisplay"></span>
-                <button class="btn btn-secondary" onclick="logout()">Выйти</button>
+                <div class="user-info"><i class="fas fa-user-circle"></i><span class="user-name" id="usernameDisplay"></span></div>
+                <button class="btn btn-secondary" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Выйти</button>
             </div>
         </div>
     </div>
 </header>
 
-<section class="charts-hero">
+<!-- Page Header -->
+<section class="page-header">
     <div class="container">
-        <h1><i class="fas fa-chart-line"></i> Физические зависимости</h1>
-        <p>Полный анализ параметров плазмы: 28 интерактивных 3D-графиков</p>
+        <div class="page-title">
+            <div class="title-icon"><i class="fas fa-chart-line"></i></div>
+            <div>
+                <h1>Анализ результатов симуляции</h1>
+                <p>Интерактивные 3D графики с трендовыми индикаторами (85 графиков)</p>
+            </div>
+        </div>
+        <div id="chartsCounter" class="charts-counter" style="display:none;">
+            <i class="fas fa-chart-area"></i>
+            <span>Загружено графиков: <strong id="loadedCount">0</strong> / <strong id="totalCount">85</strong></span>
+        </div>
     </div>
 </section>
 
-<main class="charts-main">
+<!-- Main Content -->
+<section class="charts-section">
     <div class="container">
-
-        <div id="authGate" class="auth-gate">
-            <i class="fas fa-lock"></i>
-            <h2>Требуется авторизация</h2>
-            <p>Войдите в систему для просмотра графиков</p>
-            <button class="btn btn-primary" onclick="showAuthModal()">
-                <i class="fas fa-sign-in-alt"></i> Войти
-            </button>
-        </div>
-
-        <div id="chartsWorkspace" style="display:none;">
-
-            <div class="stats-grid">
-                <div class="stat-card"><i class="fas fa-database"></i><h3 id="totalSimulations">0</h3><p>Симуляций</p></div>
-                <div class="stat-card"><i class="fas fa-atom"></i><h3 id="uniqueAtoms">0</h3><p>Атомов</p></div>
-                <div class="stat-card"><i class="fas fa-bolt"></i><h3 id="uniqueIons">0</h3><p>Ионов</p></div>
-                <div class="stat-card"><i class="fas fa-cube"></i><h3>28</h3><p>3D графиков</p></div>
+        <!-- Export Actions -->
+        <div id="exportActions" class="export-actions" style="display:none;">
+            <div class="export-header">
+                <div class="export-title">
+                    <i class="fas fa-file-export"></i>
+                    <h3>Экспорт графиков в Word</h3>
+                </div>
+                <div class="export-subtitle">Выберите категорию или экспортируйте все графики сразу</div>
             </div>
 
-            <div class="export-all-bar">
-                <button class="export-all-btn" id="exportAllWordBtn">
-                    <i class="fas fa-file-word"></i> Скачать всё (Word)
+            <div class="export-tabs">
+                <button class="export-tab active" data-category="all" onclick="setExportCategory('all')">
+                    <i class="fas fa-layer-group"></i>
+                    <span>Все графики</span>
+                    <span class="tab-count" id="count-all">85</span>
+                </button>
+                <button class="export-tab" data-category="plasma" onclick="setExportCategory('plasma')">
+                    <i class="fas fa-atom"></i>
+                    <span>Плазма</span>
+                    <span class="tab-count" id="count-plasma">0</span>
+                </button>
+                <button class="export-tab" data-category="energy" onclick="setExportCategory('energy')">
+                    <i class="fas fa-fire"></i>
+                    <span>Энергия</span>
+                    <span class="tab-count" id="count-energy">0</span>
+                </button>
+                <button class="export-tab" data-category="thermal" onclick="setExportCategory('thermal')">
+                    <i class="fas fa-thermometer-half"></i>
+                    <span>Температура</span>
+                    <span class="tab-count" id="count-thermal">0</span>
+                </button>
+                <button class="export-tab" data-category="diffusion" onclick="setExportCategory('diffusion')">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Диффузия</span>
+                    <span class="tab-count" id="count-diffusion">0</span>
+                </button>
+                <button class="export-tab" data-category="damage" onclick="setExportCategory('damage')">
+                    <i class="fas fa-radiation-alt"></i>
+                    <span>Повреждения</span>
+                    <span class="tab-count" id="count-damage">0</span>
+                </button>
+                <button class="export-tab" data-category="fluence" onclick="setExportCategory('fluence')">
+                    <i class="fas fa-clock"></i>
+                    <span>Флюенс</span>
+                    <span class="tab-count" id="count-fluence">0</span>
+                </button>
+                <button class="export-tab" data-category="resonance" onclick="setExportCategory('resonance')">
+                    <i class="fas fa-wave-square"></i>
+                    <span>Резонанс</span>
+                    <span class="tab-count" id="count-resonance">0</span>
+                </button>
+                <button class="export-tab" data-category="slr" onclick="setExportCategory('slr')">
+                    <i class="fas fa-sync-alt"></i>
+                    <span>SLR</span>
+                    <span class="tab-count" id="count-slr">0</span>
+                </button>
+                <button class="export-tab" data-category="rad_diffusion" onclick="setExportCategory('rad_diffusion')">
+                    <i class="fas fa-bezier-curve"></i>
+                    <span>Рад. диффузия</span>
+                    <span class="tab-count" id="count-rad_diffusion">0</span>
+                </button>
+                <button class="export-tab" data-category="flux" onclick="setExportCategory('flux')">
+                    <i class="fas fa-wind"></i>
+                    <span>Поток</span>
+                    <span class="tab-count" id="count-flux">0</span>
                 </button>
             </div>
 
-            <!-- ═══════════════════════════════════════════
-                 ПАРАМЕТРЫ ПЛАЗМЫ (1–4)
-            ════════════════════════════════════════════ -->
-            <div class="chart-category">
-                <h2><i class="fas fa-bolt"></i> Параметры плазмы (4)</h2>
-                <div class="charts-grid">
-
-                    <div class="chart-card" data-chart="1"
-                         data-title="Плотность электронов от давления"
-                         data-formula="X: P (Па) · Y: nₑ (м⁻³) · Z: V (В)">
-                        <div class="chart-card-preview" id="preview1"></div>
-                        <h3>1. Плотность электронов от давления</h3>
-                        <p class="formula">X: P · Y: nₑ · Z: V</p>
-                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
-                    </div>
-
-                    <div class="chart-card" data-chart="2"
-                         data-title="Скорость электронов от напряжения"
-                         data-formula="X: V (В) · Y: vₑ (м/с) · Z: j (А/м²)">
-                        <div class="chart-card-preview" id="preview2"></div>
-                        <h3>2. Скорость электронов от напряжения</h3>
-                        <p class="formula">X: V · Y: vₑ · Z: j</p>
-                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
-                    </div>
-
-                    <div class="chart-card" data-chart="3"
-                         data-title="Плотность тока от напряжения"
-                         data-formula="X: V (В) · Y: j (А/м²) · Z: P (Па)">
-                        <div class="chart-card-preview" id="preview3"></div>
-                        <h3>3. Плотность тока от напряжения</h3>
-                        <p class="formula">X: V · Y: j · Z: P</p>
-                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
-                    </div>
-
-                    <div class="chart-card" data-chart="4"
-                         data-title="Температура электронов"
-                         data-formula="X: V (В) · Y: Tₑ (эВ) · Z: j (А/м²)">
-                        <div class="chart-card-preview" id="preview4"></div>
-                        <h3>4. Температура электронов</h3>
-                        <p class="formula">X: V · Y: Tₑ · Z: j</p>
-                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
-                    </div>
-
-                </div>
+            <div class="export-actions-buttons">
+                <button class="btn-export btn-export-primary" onclick="exportCategoryToWord()">
+                    <i class="fas fa-file-word"></i>
+                    <span>Экспорт выбранной категории</span>
+                </button>
+                <button class="btn-export btn-export-secondary" onclick="exportVisibleToWord()">
+                    <i class="fas fa-eye"></i>
+                    <span>Экспорт загруженных графиков</span>
+                </button>
             </div>
 
-            <!-- ═══════════════════════════════════════════
-                 ТЕМПЕРАТУРА (5–8)
-            ════════════════════════════════════════════ -->
-            <div class="chart-category">
-                <h2><i class="fas fa-thermometer-half"></i> Температура (4)</h2>
-                <div class="charts-grid">
-
-                    <div class="chart-card" data-chart="5"
-                         data-title="Температура от энергии и глубины"
-                         data-formula="X: E_total (эВ) · Y: depth (м) · Z: T_avg (K)">
-                        <div class="chart-card-preview" id="preview5"></div>
-                        <h3>5. Температура от энергии и глубины</h3>
-                        <p class="formula">X: E_total · Y: depth · Z: T_avg</p>
-                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
-                    </div>
-
-                    <div class="chart-card" data-chart="6"
-                         data-title="Температура от напряжения и глубины"
-                         data-formula="X: V (В) · Y: depth (м) · Z: T_avg (K)">
-                        <div class="chart-card-preview" id="preview6"></div>
-                        <h3>6. Температура от напряжения и глубины</h3>
-                        <p class="formula">X: V · Y: depth · Z: T_avg</p>
-                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
-                    </div>
-
-                    <div class="chart-card" data-chart="7"
-                         data-title="Температура от давления и глубины"
-                         data-formula="X: P (Па) · Y: depth (м) · Z: T_avg (K)">
-                        <div class="chart-card-preview" id="preview7"></div>
-                        <h3>7. Температура от давления и глубины</h3>
-                        <p class="formula">X: P · Y: depth · Z: T_avg</p>
-                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
-                    </div>
-
-                    <div class="chart-card" data-chart="8"
-                         data-title="Температура от плотности тока и глубины"
-                         data-formula="X: j (А/м²) · Y: depth (м) · Z: T_avg (K)">
-                        <div class="chart-card-preview" id="preview8"></div>
-                        <h3>8. Температура от плотности тока и глубины</h3>
-                        <p class="formula">X: j · Y: depth · Z: T_avg</p>
-                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
-                    </div>
-
+            <div class="export-info">
+                <div class="info-badge">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Экспорт в высоком качестве (3200×2000 px) с автоматической компоновкой</span>
+                </div>
+                <div class="info-badge camera-info">
+                    <i class="fas fa-video"></i>
+                    <span>Покрутите график мышью, затем экспортируйте - сохранится ваш угол обзора!</span>
                 </div>
             </div>
+        </div>
 
-            <!-- ═══════════════════════════════════════════
-                 ЭНЕРГИЯ (9–15)
-            ════════════════════════════════════════════ -->
-            <div class="chart-category">
-                <h2><i class="fas fa-fire"></i> Энергия (7)</h2>
-                <div class="charts-grid">
-
-                    <div class="chart-card" data-chart="9"
-                         data-title="Полная энергия от напряжения и плотности тока"
-                         data-formula="X: V (В) · Y: j (А/м²) · Z: E_total (эВ)">
-                        <div class="chart-card-preview" id="preview9"></div>
-                        <h3>9. Полная энергия от напряжения и плотности тока</h3>
-                        <p class="formula">X: V · Y: j · Z: E_total</p>
-                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
-                    </div>
-
-                    <div class="chart-card" data-chart="10"
-                         data-title="Энергия на атом от напряжения и температуры"
-                         data-formula="X: V (В) · Y: E_atom (эВ/атом) · Z: T_avg (K)">
-                        <div class="chart-card-preview" id="preview10"></div>
-                        <h3>10. Энергия на атом от напряжения и конентрации</h3>
-                        <p class="formula">X: V · Y: E_atom · Z: T_avg</p>
-                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
-                    </div>
-
-                    <div class="chart-card" data-chart="11"
-                         data-title="Энергия иона от напряжения и концентрации"
-                         data-formula="X: V (В) · Y: E_ion (эВ) · Z: n (м⁻³)">
-                        <div class="chart-card-preview" id="preview11"></div>
-                        <h3>11. Энергия иона от напряжения и концентрации</h3>
-                        <p class="formula">X: V · Y: E_ion · Z: n</p>
-                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
-                    </div>
-
-                    <div class="chart-card" data-chart="12"
-                         data-title="Термическая диффузия от температуры и энергии"
-                         data-formula="X: T_avg (K) · Y: D_thermal (м²/с) · Z: E_total (эВ)">
-                        <div class="chart-card-preview" id="preview12"></div>
-                        <h3>12. Термическая диффузия от температуры и энергии</h3>
-                        <p class="formula">X: T_avg · Y: D_thermal · Z: E_total</p>
-                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
-                    </div>
-
-                    <div class="chart-card" data-chart="13"
-                         data-title="Энергия → Повреждения при разных температурах"
-                         data-formula="X: E_total (эВ) · Y: damage (м⁻²) · Z: T_avg (K)">
-                        <div class="chart-card-preview" id="preview13"></div>
-                        <h3>13. Энергия → Повреждения при разных температурах</h3>
-                        <p class="formula">X: E_total · Y: damage · Z: T_avg</p>
-                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
-                    </div>
-
-                    <div class="chart-card" data-chart="14"
-                         data-title="Энергия от температуры и давления"
-                         data-formula="X: T_avg (K) · Y: E_total (эВ) · Z: P (Па)">
-                        <div class="chart-card-preview" id="preview14"></div>
-                        <h3>14. Энергия от температуры и давления</h3>
-                        <p class="formula">X: T_avg · Y: E_total · Z: P</p>
-                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
-                    </div>
-
-                    <div class="chart-card" data-chart="15"
-                         data-title="Энергия от давления и температуры"
-                         data-formula="X: P (Па) · Y: E_total (эВ) · Z: T_avg (K)">
-                        <div class="chart-card-preview" id="preview15"></div>
-                        <h3>15. Энергия от давления и температуры</h3>
-                        <p class="formula">X: P · Y: E_total · Z: T_avg</p>
-                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
-                    </div>
-
-                </div>
+        <!-- Loading State -->
+        <div id="loadingState" class="loading-state">
+            <div class="loading-animation">
+                <div class="loading-ring"></div>
+                <div class="loading-ring ring-2"></div>
+                <div class="loading-core"><i class="fas fa-chart-area"></i></div>
             </div>
+            <h3>Загрузка результатов симуляции...</h3>
+            <p>Подготовка графиков для визуализации</p>
+        </div>
 
-            <!-- ═══════════════════════════════════════════
-                 ДИФФУЗИЯ (16–20)
-            ════════════════════════════════════════════ -->
-            <div class="chart-category">
-                <h2><i class="fas fa-wave-square"></i> Диффузия (5)</h2>
-                <div class="charts-grid">
+        <!-- No Data State -->
+        <div id="noDataState" class="no-data-state" style="display:none;">
+            <div class="no-data-icon"><i class="fas fa-chart-line"></i></div>
+            <h3>Нет доступных результатов</h3>
+            <p>Запустите симуляцию для получения данных</p>
+            <a href="simulation.html" class="btn btn-primary btn-large">
+                <i class="fas fa-rocket"></i> Запустить симуляцию
+            </a>
+        </div>
 
-                    <div class="chart-card" data-chart="16"
-                         data-title="D₁ от температуры и напряжения"
-                         data-formula="X: T_avg (K) · Y: D₁ (м²/с) · Z: V (В)">
-                        <div class="chart-card-preview" id="preview16"></div>
-                        <h3>16. D₁ от температуры и напряжения</h3>
-                        <p class="formula">X: T_avg · Y: D₁ · Z: V</p>
-                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
+        <!-- Filter Controls -->
+        <div id="filterControls" class="filter-controls" style="display:none;">
+            <div class="filter-header">
+                <div class="filter-title">
+                    <i class="fas fa-filter"></i>
+                    <div>
+                        <h3>Фильтрация графиков</h3>
+                        <p class="filter-subtitle" id="filterSubtitle">Все графики (85 шт.)</p>
                     </div>
-
-                    <div class="chart-card" data-chart="17"
-                         data-title="D₂ от температуры и напряжения"
-                         data-formula="X: T_avg (K) · Y: D₂ (м²/с) · Z: V (В)">
-                        <div class="chart-card-preview" id="preview17"></div>
-                        <h3>17. D₂ от температуры и напряжения</h3>
-                        <p class="formula">X: T_avg · Y: D₂ · Z: V</p>
-                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
-                    </div>
-
-                    <div class="chart-card" data-chart="18"
-                         data-title="Сравнение D₁ и D₂ при разных температурах"
-                         data-formula="X: D₁ (м²/с) · Y: D₂ (м²/с) · Z: T_avg (K)">
-                        <div class="chart-card-preview" id="preview18"></div>
-                        <h3>18. Сравнение D₁ и D₂</h3>
-                        <p class="formula">X: D₁ · Y: D₂ · Z: T_avg</p>
-                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
-                    </div>
-
-                    <div class="chart-card" data-chart="19"
-                         data-title="Диффузия D₁ от напряжения и температуры"
-                         data-formula="X: V (В) · Y: D₁ (м²/с) · Z: T_avg (K)">
-                        <div class="chart-card-preview" id="preview19"></div>
-                        <h3>19. Диффузия D₁ от напряжения</h3>
-                        <p class="formula">X: V · Y: D₁ · Z: T_avg</p>
-                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
-                    </div>
-
-                    <div class="chart-card" data-chart="20"
-                         data-title="Термическая vs эффективная диффузия"
-                         data-formula="X: D_thermal (м²/с) · Y: D₁ (м²/с) · Z: T_avg (K)">
-                        <div class="chart-card-preview" id="preview20"></div>
-                        <h3>20. Термическая vs эффективная диффузия</h3>
-                        <p class="formula">X: D_thermal · Y: D₁ · Z: T_avg</p>
-                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
-                    </div>
-
                 </div>
+                <button class="filter-reset" onclick="resetFilter()">
+                    <i class="fas fa-redo"></i>
+                    <span>Сбросить фильтр</span>
+                </button>
             </div>
-
-            <!-- ═══════════════════════════════════════════
-                 ПОВРЕЖДЕНИЯ (21–24)
-            ════════════════════════════════════════════ -->
-            <div class="chart-category">
-                <h2><i class="fas fa-exclamation-triangle"></i> Повреждения (4)</h2>
-                <div class="charts-grid">
-
-                    <div class="chart-card" data-chart="21"
-                         data-title="Повреждения от энергии и температуры"
-                         data-formula="X: E_total (эВ) · Y: damage (м⁻²) · Z: T_avg (K)">
-                        <div class="chart-card-preview" id="preview21"></div>
-                        <h3>21. Повреждения от энергии и температуры</h3>
-                        <p class="formula">X: E_total · Y: damage · Z: T_avg</p>
-                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
-                    </div>
-
-                    <div class="chart-card" data-chart="22"
-                         data-title="Импульс от энергии и повреждений"
-                         data-formula="X: E_total (эВ) · Y: p (кг·м/с) · Z: damage (м⁻²)">
-                        <div class="chart-card-preview" id="preview22"></div>
-                        <h3>22. Импульс от энергии и повреждений</h3>
-                        <p class="formula">X: E_total · Y: p · Z: damage</p>
-                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
-                    </div>
-
-                    <div class="chart-card" data-chart="23"
-                         data-title="Смещение от импульса и повреждений"
-                         data-formula="X: p (кг·м/с) · Y: Δx (м) · Z: damage (м⁻²)">
-                        <div class="chart-card-preview" id="preview23"></div>
-                        <h3>23. Смещение от импульса и повреждений</h3>
-                        <p class="formula">X: p · Y: Δx · Z: damage</p>
-                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
-                    </div>
-
-                    <div class="chart-card" data-chart="24"
-                         data-title="Повреждения от температуры и напряжения"
-                         data-formula="X: T_avg (K) · Y: damage (м⁻²) · Z: V (В)">
-                        <div class="chart-card-preview" id="preview24"></div>
-                        <h3>24. Повреждения от температуры и напряжения</h3>
-                        <p class="formula">X: T_avg · Y: damage · Z: V</p>
-                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
-                    </div>
-
-                </div>
+            <div class="filter-tabs">
+                <button class="filter-tab active" data-filter="all" onclick="filterCharts('all')">
+                    <i class="fas fa-th"></i>
+                    <span>Все</span>
+                    <span class="filter-count" id="filter-count-all">85</span>
+                </button>
+                <button class="filter-tab" data-filter="plasma" onclick="filterCharts('plasma')">
+                    <i class="fas fa-atom"></i>
+                    <span>Плазма</span>
+                    <span class="filter-count" id="filter-count-plasma">0</span>
+                </button>
+                <button class="filter-tab" data-filter="energy" onclick="filterCharts('energy')">
+                    <i class="fas fa-fire"></i>
+                    <span>Энергия</span>
+                    <span class="filter-count" id="filter-count-energy">0</span>
+                </button>
+                <button class="filter-tab" data-filter="thermal" onclick="filterCharts('thermal')">
+                    <i class="fas fa-thermometer-half"></i>
+                    <span>Температура</span>
+                    <span class="filter-count" id="filter-count-thermal">0</span>
+                </button>
+                <button class="filter-tab" data-filter="diffusion" onclick="filterCharts('diffusion')">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Диффузия</span>
+                    <span class="filter-count" id="filter-count-diffusion">0</span>
+                </button>
+                <button class="filter-tab" data-filter="damage" onclick="filterCharts('damage')">
+                    <i class="fas fa-radiation-alt"></i>
+                    <span>Повреждения</span>
+                    <span class="filter-count" id="filter-count-damage">0</span>
+                </button>
+                <button class="filter-tab" data-filter="fluence" onclick="filterCharts('fluence')">
+                    <i class="fas fa-clock"></i>
+                    <span>Флюенс</span>
+                    <span class="filter-count" id="filter-count-fluence">0</span>
+                </button>
+                <button class="filter-tab" data-filter="resonance" onclick="filterCharts('resonance')">
+                    <i class="fas fa-wave-square"></i>
+                    <span>Резонанс</span>
+                    <span class="filter-count" id="filter-count-resonance">0</span>
+                </button>
+                <button class="filter-tab" data-filter="slr" onclick="filterCharts('slr')">
+                    <i class="fas fa-sync-alt"></i>
+                    <span>SLR</span>
+                    <span class="filter-count" id="filter-count-slr">0</span>
+                </button>
+                <button class="filter-tab" data-filter="rad_diffusion" onclick="filterCharts('rad_diffusion')">
+                    <i class="fas fa-bezier-curve"></i>
+                    <span>Рад. диффузия</span>
+                    <span class="filter-count" id="filter-count-rad_diffusion">0</span>
+                </button>
+                <button class="filter-tab" data-filter="flux" onclick="filterCharts('flux')">
+                    <i class="fas fa-wind"></i>
+                    <span>Поток</span>
+                    <span class="filter-count" id="filter-count-flux">0</span>
+                </button>
             </div>
+        </div>
 
-            <!-- ═══════════════════════════════════════════
-                 КОМПЛЕКСНЫЕ SURFACE 3D (25–28)
-            ════════════════════════════════════════════ -->
-            <div class="chart-category">
-                <h2><i class="fas fa-cube"></i> Комплексные 3D зависимости (4)</h2>
-                <div class="charts-grid">
-
-                    <div class="chart-card" data-chart="25"
-                         data-title="V · j → Глубина проникновения ионов"
-                         data-formula="X: V (В) · Y: j (А/м²) · Z: depth (м)">
-                        <div class="chart-card-preview" id="preview25"></div>
-                        <h3>25. V · j → Глубина проникновения</h3>
-                        <p class="formula">Surface 3D · X: V · Y: j · Z: depth</p>
-                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
-                    </div>
-
-                    <div class="chart-card" data-chart="26"
-                         data-title="V · j → Суммарная переданная энергия"
-                         data-formula="X: V (В) · Y: j (А/м²) · Z: E_total (эВ)">
-                        <div class="chart-card-preview" id="preview26"></div>
-                        <h3>26. V · j → Суммарная переданная энергия</h3>
-                        <p class="formula">Surface 3D · X: V · Y: j · Z: E_total</p>
-                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
-                    </div>
-
-                    <div class="chart-card" data-chart="27"
-                         data-title="T · P → Диффузия D₁"
-                         data-formula="X: T_avg (K) · Y: P (Па) · Z: D₁ (м²/с)">
-                        <div class="chart-card-preview" id="preview27"></div>
-                        <h3>27. T · P → Диффузия D₁</h3>
-                        <p class="formula">Surface 3D · X: T_avg · Y: P · Z: D₁</p>
-                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
-                    </div>
-
-                    <div class="chart-card" data-chart="28"
-                         data-title="T · V → Суммарные повреждения"
-                         data-formula="X: T_avg (K) · Y: V (В) · Z: damage (м⁻²)">
-                        <div class="chart-card-preview" id="preview28"></div>
-                        <h3>28. T · V → Суммарные повреждения</h3>
-                        <p class="formula">Surface 3D · X: T_avg · Y: V · Z: damage</p>
-                        <button class="view-chart-btn"><i class="fas fa-chart-line"></i> Открыть график</button>
-                    </div>
-
-                </div>
-            </div>
-
-        </div><!-- /chartsWorkspace -->
-    </div><!-- /container -->
-</main>
+        <!-- Charts Grid -->
+        <div id="chartsGrid" class="charts-grid charts-grid-two-columns" style="display:none;">
+            <!-- Charts will be dynamically inserted here -->
+        </div>
+    </div>
+</section>
 
 <footer class="footer">
     <div class="container footer-inner">
-        <span>© 2025 PlasmaLab</span>
-        <span>Research Platform</span>
+        <div class="footer-brand">
+            <div class="logo"><i class="fas fa-atom"></i><span>PlasmaLab</span></div>
+            <p>Научная платформа для моделирования плазменных процессов</p>
+        </div>
+        <div class="footer-bottom"><p>© 2025 PlasmaLab. Research & Simulation Platform</p></div>
     </div>
 </footer>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/plotly.js-dist@2.27.0/plotly.min.js"></script>
-<script src="js/docx.iife.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/main-ui.js"></script>
-<script type="module" src="js/charts-modal.js"></script>
-
+<script src="js/charts.js"></script>
 </body>
 </html>

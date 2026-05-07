@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="База ионов PlasmaLab - характеристики ионов для моделирования плазменных процессов">
+    <title>Ионы | PlasmaLab</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/ions.css">
+</head>
+<body>
+
+<!-- Authentication Modal -->
+<div class="auth-overlay" id="authOverlay">
+    <div class="auth-modal">
+        <div class="auth-header">
+            <button class="auth-tab active" data-tab="login">
+                <i class="fas fa-sign-in-alt"></i>
+                Вход
+            </button>
+            <button class="auth-tab" data-tab="register">
+                <i class="fas fa-user-plus"></i>
+                Регистрация
+            </button>
+            <button class="auth-close" onclick="hideAuthModal()" aria-label="Закрыть">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="auth-body">
+            <!-- Login Form -->
+            <form id="loginForm" class="auth-form active" data-form="login">
+                <div class="auth-field">
+                    <label for="login-username">
+                        <i class="fas fa-user"></i>
+                        Имя пользователя
+                    </label>
+                    <input
+                            type="text"
+                            id="login-username"
+                            name="username"
+                            required
+                            autocomplete="username"
+                            placeholder="Введите имя пользователя"
+                    >
+                </div>
+                <div class="auth-field">
+                    <label for="login-password">
+                        <i class="fas fa-lock"></i>
+                        Пароль
+                    </label>
+                    <input
+                            type="password"
+                            id="login-password"
+                            name="password"
+                            required
+                            autocomplete="current-password"
+                            placeholder="Введите пароль"
+                    >
+                </div>
+                <div id="login_msg" class="auth-message" role="alert"></div>
+                <button type="submit" class="btn btn-primary full">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Войти
+                </button>
+            </form>
+
+            <!-- Register Form -->
+            <form id="registerForm" class="auth-form" data-form="register">
+                <div class="auth-field">
+                    <label for="register-username">
+                        <i class="fas fa-user"></i>
+                        Имя пользователя
+                    </label>
+                    <input
+                            type="text"
+                            id="register-username"
+                            name="username"
+                            required
+                            autocomplete="username"
+                            placeholder="Минимум 5 символов"
+                    >
+                </div>
+                <div class="auth-field">
+                    <label for="register-email">
+                        <i class="fas fa-envelope"></i>
+                        Email
+                    </label>
+                    <input
+                            type="email"
+                            id="register-email"
+                            name="email"
+                            required
+                            autocomplete="email"
+                            placeholder="your@email.com"
+                    >
+                </div>
+                <div class="auth-field">
+                    <label for="register-password">
+                        <i class="fas fa-lock"></i>
+                        Пароль
+                    </label>
+                    <input
+                            type="password"
+                            id="register-password"
+                            name="password"
+                            required
+                            autocomplete="new-password"
+                            placeholder="Минимум 8 символов"
+                    >
+                </div>
+                <div id="signup_msg" class="auth-message" role="alert"></div>
+                <button type="submit" class="btn btn-primary full">
+                    <i class="fas fa-user-plus"></i>
+                    Создать аккаунт
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Create Ion Modal -->
+<div class="ion-modal-overlay" id="createIonModal">
+    <div class="ion-modal">
+        <div class="ion-modal-header">
+            <h3><i class="fas fa-plus-circle"></i> Создать ион</h3>
+            <button class="modal-close" onclick="hideCreateModal()" aria-label="Закрыть">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <form id="createIonForm" class="ion-form">
+            <div class="form-row">
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label for="ion-name">
+                        <i class="fas fa-tag"></i>
+                        Название иона *
+                    </label>
+                    <input
+                            type="text"
+                            id="ion-name"
+                            name="name"
+                            required
+                            placeholder="Fe2"
+                            pattern="^[A-Z][a-z0-9A-Z]*$"
+                            minlength="2"
+                            maxlength="25"
+                            title="Должно начинаться с заглавной буквы, только буквы и цифры"
+                    >
+                    <small>Начинается с заглавной буквы, 2-25 символов (буквы и цифры)</small>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="ion-mass">
+                        <i class="fas fa-weight-hanging"></i>
+                        Масса (кг) *
+                    </label>
+                    <input
+                            type="number"
+                            id="ion-mass"
+                            name="mass"
+                            required
+                            step="1e-30"
+                            placeholder="9.27e-26"
+                            min="1e-30"
+                            max="1e-23"
+                    >
+                    <small>Диапазон: 1e-30 до 1e-23 кг</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="ion-charge">
+                        <i class="fas fa-bolt"></i>
+                        Заряд *
+                    </label>
+                    <input
+                            type="number"
+                            id="ion-charge"
+                            name="charge"
+                            required
+                            step="1"
+                            placeholder="2"
+                            min="-3"
+                            max="3"
+                    >
+                    <small>От -3 до +3</small>
+                </div>
+            </div>
+
+            <div id="createIonMsg" class="auth-message" role="alert"></div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="hideCreateModal()">
+                    <i class="fas fa-times"></i>
+                    Отмена
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i>
+                    Создать ион
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Header -->
+<header class="header">
+    <div class="container header-inner">
+        <a href="index.html" class="logo">
+            <i class="fas fa-atom"></i>
+            <span>PlasmaLab</span>
+        </a>
+
+        <nav class="nav" id="mainNav">
+            <a class="nav-link" href="index.html">
+                <i class="fas fa-home"></i>
+                Главная
+            </a>
+            <a class="nav-link" href="atoms.html">
+                <i class="fas fa-atom"></i>
+                Атомы
+            </a>
+            <a class="nav-link active" href="ions.html">
+                <i class="fas fa-bolt"></i>
+                Ионы
+            </a>
+            <a class="nav-link" href="simulation.html">
+                <i class="fas fa-cogs"></i>
+                Симуляция
+            </a>
+            <a class="nav-link" href="charts.html">
+                <i class="fas fa-chart-line"></i>
+                Графики
+            </a>
+        </nav>
+
+        <div class="auth">
+            <!-- Guest State -->
+            <div class="auth-buttons">
+                <button class="btn btn-primary" onclick="showAuthModal()">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Войти
+                </button>
+            </div>
+
+            <!-- Authenticated State -->
+            <div class="user-menu" style="display: none;">
+                <div class="user-info">
+                    <i class="fas fa-user-circle"></i>
+                    <span class="user-name" id="usernameDisplay"></span>
+                </div>
+                <button class="btn btn-secondary" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Выйти
+                </button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Page Header -->
+<section class="page-header">
+    <div class="container">
+        <div class="page-title">
+            <div class="title-icon">
+                <i class="fas fa-bolt"></i>
+            </div>
+            <div>
+                <h1>База ионов</h1>
+                <p>Характеристики заряженных частиц для плазменного моделирования</p>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-icon ions"><i class="fas fa-bolt"></i></div>
+                <div class="stat-content">
+                    <div class="stat-value" id="totalIons">0</div>
+                    <div class="stat-label">Всего ионов</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon positive"><i class="fas fa-plus"></i></div>
+                <div class="stat-content">
+                    <div class="stat-value" id="positiveIons">0</div>
+                    <div class="stat-label">Положительные</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon negative"><i class="fas fa-minus"></i></div>
+                <div class="stat-content">
+                    <div class="stat-value" id="negativeIons">0</div>
+                    <div class="stat-label">Отрицательные</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon mass"><i class="fas fa-weight-hanging"></i></div>
+                <div class="stat-content">
+                    <div class="stat-value" id="avgMass">0</div>
+                    <div class="stat-label">Средняя масса (кг)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Toolbar -->
+<section class="toolbar">
+    <div class="container">
+        <div class="toolbar-inner">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input
+                        type="text"
+                        id="searchInput"
+                        placeholder="Поиск по названию иона..."
+                        autocomplete="off"
+                >
+                <button class="search-clear" id="searchClear" style="display:none;" aria-label="Очистить поиск">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all" onclick="filterIons('all')">
+                    <i class="fas fa-list"></i>
+                    Все
+                </button>
+                <button class="filter-btn" data-filter="positive" onclick="filterIons('positive')">
+                    <i class="fas fa-plus"></i>
+                    Положительные
+                </button>
+                <button class="filter-btn" data-filter="negative" onclick="filterIons('negative')">
+                    <i class="fas fa-minus"></i>
+                    Отрицательные
+                </button>
+            </div>
+
+            <button class="btn btn-primary" onclick="showCreateModal()">
+                <i class="fas fa-plus"></i>
+                Создать ион
+            </button>
+        </div>
+    </div>
+</section>
+
+<!-- Ions Section -->
+<section class="ions-section">
+    <div class="container">
+        <!-- Loading State -->
+        <div id="loadingState" class="loading-state">
+            <div class="spinner"></div>
+            <p>Загрузка ионов...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state" style="display:none;">
+            <div class="empty-icon">
+                <i class="fas fa-bolt"></i>
+            </div>
+            <h3>Ионы не найдены</h3>
+            <p>Начните с создания первого иона в базе данных</p>
+            <button class="btn btn-primary" onclick="showCreateModal()">
+                <i class="fas fa-plus"></i>
+                Создать ион
+            </button>
+        </div>
+
+        <!-- No Results State -->
+        <div id="noResultsState" class="empty-state" style="display:none;">
+            <div class="empty-icon">
+                <i class="fas fa-search"></i>
+            </div>
+            <h3>Ничего не найдено</h3>
+            <p id="noResultsText">Попробуйте изменить критерии поиска</p>
+        </div>
+
+        <!-- Ions Grid -->
+        <div id="ionsGrid" class="ions-grid" style="display:none;"></div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="container footer-inner">
+        <div class="footer-brand">
+            <div class="logo">
+                <i class="fas fa-atom"></i>
+                <span>PlasmaLab</span>
+            </div>
+            <p>Научная платформа для моделирования плазменных процессов</p>
+        </div>
+
+        <div class="footer-bottom">
+            <p>© 2025 PlasmaLab. Research & Simulation Platform</p>
+        </div>
+    </div>
+</footer>
+
+<!-- Scripts -->
+<script src="js/auth.js"></script>
+<script src="js/main-ui.js"></script>
+<script src="js/ions.js"></script>
+
+</body>
+</html>
