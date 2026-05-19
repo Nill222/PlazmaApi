@@ -216,6 +216,7 @@ public class DiffusionServiceImpl implements DiffusionService {
         double D_res = D_collision * (xi - 1.0);
 
         if (D_res < 0) D_res = 0;
+        double fluenceEff = fluence * Math.max(1.0, slrFactor) * Math.max(1.0, xi);
         // =========================
 // 10. EFFECTIVE DIFFUSION
 // =========================
@@ -344,6 +345,12 @@ public class DiffusionServiceImpl implements DiffusionService {
                 thermal.finalProbeTemperature(),
                 thermal.debyeFrontSpeed(),
                 thermal.debyeFrontDepth(),
+                fluence,
+                fluenceEff,
+                ionFlux,
+                xi,
+                D_slr,
+                D_res,
                 thermalTimes,
                 thermalDepths,
                 thermalTemperatureMap

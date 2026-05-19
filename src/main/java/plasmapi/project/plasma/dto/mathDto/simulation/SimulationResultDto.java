@@ -24,5 +24,11 @@ public record SimulationResultDto(
         List<Double> coolingProfile,            // ThermalResultDto.temperatures()
         double totalMomentum,
         double totalDamage,
-        double totalDisplacement
+        double totalDisplacement,
+        double fluence,
+        double fluenceEff,
+        double ionFlux,
+        double resonanceXi,
+        double dSlr,
+        double dRes
 ) {}

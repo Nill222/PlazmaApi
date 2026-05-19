@@ -59,6 +59,12 @@ public class ResultMapper{
         r.setTotalMomentum(dto.totalMomentum());
         r.setTotalDamage(dto.totalDamage());
         r.setTotalDisplacement(dto.totalDisplacement());
+        r.setFluence(dto.fluence());
+        r.setFluenceEff(dto.fluenceEff());
+        r.setIonFlux(dto.ionFlux());
+        r.setResonanceXi(dto.resonanceXi());
+        r.setDSlr(dto.dSlr());
+        r.setDRes(dto.dRes());
 
         // createdAt установится через @PrePersist
         return r;
@@ -107,6 +113,12 @@ public class ResultMapper{
                 r.getTotalMomentum(),
                 r.getTotalDamage(),
                 r.getTotalDisplacement(),
+                r.getFluence(),
+                r.getFluenceEff(),
+                r.getIonFlux(),
+                r.getResonanceXi(),
+                r.getDSlr(),
+                r.getDRes(),
                 r.getCreatedAt()
         );
     }
