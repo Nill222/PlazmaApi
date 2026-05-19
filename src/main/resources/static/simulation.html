@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Симуляция | PlasmaLab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer"/>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/simulation.css">
+</head>
+<body>
+
+<!-- Auth Modal -->
+<div class="auth-overlay" id="authOverlay">
+    <div class="auth-modal">
+        <div class="auth-header">
+            <button class="auth-tab active" data-tab="login"><i class="fas fa-sign-in-alt"></i> Вход</button>
+            <button class="auth-tab" data-tab="register"><i class="fas fa-user-plus"></i> Регистрация</button>
+            <button class="auth-close" onclick="hideAuthModal()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="auth-body">
+            <form id="loginForm" class="auth-form active" data-form="login">
+                <div class="auth-field">
+                    <label for="login-username"><i class="fas fa-user"></i> Имя пользователя</label>
+                    <input type="text" id="login-username" name="username" required autocomplete="username" placeholder="Введите имя пользователя">
+                </div>
+                <div class="auth-field">
+                    <label for="login-password"><i class="fas fa-lock"></i> Пароль</label>
+                    <input type="password" id="login-password" name="password" required autocomplete="current-password" placeholder="Введите пароль">
+                </div>
+                <div id="login_msg" class="auth-message" role="alert"></div>
+                <button type="submit" class="btn btn-primary full"><i class="fas fa-sign-in-alt"></i> Войти</button>
+            </form>
+            <form id="registerForm" class="auth-form" data-form="register">
+                <div class="auth-field">
+                    <label for="register-username"><i class="fas fa-user"></i> Имя пользователя</label>
+                    <input type="text" id="register-username" name="username" required autocomplete="username" placeholder="Минимум 5 символов">
+                </div>
+                <div class="auth-field">
+                    <label for="register-email"><i class="fas fa-envelope"></i> Email</label>
+                    <input type="email" id="register-email" name="email" required autocomplete="email" placeholder="your@email.com">
+                </div>
+                <div class="auth-field">
+                    <label for="register-password"><i class="fas fa-lock"></i> Пароль</label>
+                    <input type="password" id="register-password" name="password" required autocomplete="new-password" placeholder="Минимум 8 символов">
+                </div>
+                <div id="signup_msg" class="auth-message" role="alert"></div>
+                <button type="submit" class="btn btn-primary full"><i class="fas fa-user-plus"></i> Создать аккаунт</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Header -->
+<header class="header">
+    <div class="container header-inner">
+        <a href="index.html" class="logo"><i class="fas fa-atom"></i><span>PlasmaLab</span></a>
+        <nav class="nav" id="mainNav">
+            <a class="nav-link" href="index.html"><i class="fas fa-home"></i> Главная</a>
+            <a class="nav-link" href="atoms.html"><i class="fas fa-atom"></i> Атомы</a>
+            <a class="nav-link" href="ions.html"><i class="fas fa-bolt"></i> Ионы</a>
+            <a class="nav-link active" href="simulation.html"><i class="fas fa-rocket"></i> Симуляция</a>
+            <a class="nav-link" href="charts.html"><i class="fas fa-cogs"></i> Графики</a>
+        </nav>
+        <div class="auth">
+            <div class="auth-buttons">
+                <button class="btn btn-primary" onclick="showAuthModal()"><i class="fas fa-sign-in-alt"></i> Войти</button>
+            </div>
+            <div class="user-menu" style="display:none;">
+                <div class="user-info"><i class="fas fa-user-circle"></i><span class="user-name" id="usernameDisplay"></span></div>
+                <button class="btn btn-secondary" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Выйти</button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Page Header -->
+<section class="page-header">
+    <div class="container">
+        <div class="page-title">
+            <div class="title-icon"><i class="fas fa-rocket"></i></div>
+            <div>
+                <h1>Симуляция плазменных процессов</h1>
+                <p>Полное моделирование диффузии и физических параметров</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Main -->
+<section class="simulation-section">
+    <div class="container">
+        <div class="simulation-layout">
+
+            <!-- LEFT: Parameters -->
+            <aside class="params-panel">
+                <div class="panel-header">
+                    <h3><i class="fas fa-sliders-h"></i> Параметры симуляции</h3>
+                </div>
+                <form id="simulationForm" class="params-form">
+
+                    <!-- Сплав -->
+                    <div class="param-section">
+                        <h4><i class="fas fa-layer-group"></i> Состав сплава</h4>
+                        <div class="form-group">
+                            <label for="alloyAtomId">Атом</label>
+                            <select id="alloyAtomId"><option value="">Выберите атом...</option></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="alloyFraction">Доля (%)</label>
+                            <input type="number" id="alloyFraction" step="0.1" min="0.1" max="100" placeholder="45.5">
+                        </div>
+                        <button type="button" class="btn btn-secondary full" onclick="addAlloyComponent()">
+                            <i class="fas fa-plus"></i> Добавить атом
+                        </button>
+                        <div id="alloyComponentsList" class="components-list">
+                            <p class="components-empty">Добавьте компоненты сплава</p>
+                        </div>
+                    </div>
+
+                    <!-- Ионный состав -->
+                    <div class="param-section">
+                        <h4><i class="fas fa-bolt"></i> Ионный состав</h4>
+                        <div class="form-group">
+                            <label for="ionCompIonId">Ион</label>
+                            <select id="ionCompIonId"><option value="">Выберите ион...</option></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="ionCompFraction">Доля (%)</label>
+                            <input type="number" id="ionCompFraction" step="0.1" min="0.1" max="100" placeholder="55.0">
+                        </div>
+                        <button type="button" class="btn btn-secondary full" onclick="addIonComponent()">
+                            <i class="fas fa-plus"></i> Добавить ион
+                        </button>
+                        <div id="ionComponentsList" class="components-list">
+                            <p class="components-empty">Добавьте компоненты ионного состава</p>
+                        </div>
+                    </div>
+
+                    <!-- Плазма -->
+                    <div class="param-section">
+                        <h4><i class="fas fa-bolt"></i> Параметры плазмы</h4>
+                        <div class="form-group">
+                            <label for="voltage">Напряжение (В)</label>
+                            <input type="number" id="voltage" name="voltage" required step="1" min="0" max="10000" value="500">
+                        </div>
+                        <div class="form-group">
+                            <label for="current">Ток (А)</label>
+                            <input type="number" id="current" name="current" required step="0.01" min="0" max="100" value="1.5">
+                        </div>
+                        <div class="form-group">
+                            <label for="pressure">Давление (Па)</label>
+                            <input type="number" id="pressure" name="pressure" required step="0.01" min="0" max="1000" value="10">
+                        </div>
+                        <div class="form-group">
+                            <label for="electronTemp">T электронов (К)</label>
+                            <input type="number" id="electronTemp" name="electronTemp" required step="100" min="0" max="100000" value="11600">
+                        </div>
+                    </div>
+
+                    <!-- Геометрия -->
+                    <div class="param-section">
+                        <h4><i class="fas fa-ruler-combined"></i> Геометрия камеры</h4>
+                        <div class="form-group">
+                            <label for="chamberWidth">Ширина (м)</label>
+                            <input type="number" id="chamberWidth" name="chamberWidth" required step="0.01" min="0" max="10" value="0.5">
+                        </div>
+                        <div class="form-group">
+                            <label for="chamberDepth">Глубина (м)</label>
+                            <input type="number" id="chamberDepth" name="chamberDepth" required step="0.01" min="0" max="10" value="0.3">
+                        </div>
+                        <div class="form-group">
+                            <label for="angle">Угол падения (°)</label>
+                            <input type="number" id="angle" name="angle" required step="1" min="0" max="90" value="0">
+                        </div>
+                    </div>
+
+                    <!-- Время -->
+                    <div class="param-section">
+                        <h4><i class="fas fa-clock"></i> Время и температура</h4>
+                        <div class="form-group">
+                            <label for="exposureTime">Время облучения (с)</label>
+                            <input type="number" id="exposureTime" name="exposureTime" required step="1" min="1" max="100000" value="3600">
+                        </div>
+                        <div class="form-group">
+                            <label for="ambientTemp">T окружения (К)</label>
+                            <input type="number" id="ambientTemp" name="ambientTemp" step="10" min="0" max="5000" value="300">
+                        </div>
+                    </div>
+
+                    <!-- Автогенерация -->
+                    <div class="param-section autogen-section">
+                        <h4><i class="fas fa-robot"></i> Автогенерация симуляций</h4>
+
+                        <div class="form-group">
+                            <label for="autogenPreset">Режим</label>
+                            <select id="autogenPreset">
+                                <option value="magnetron">Magnetron Sputtering</option>
+                                <option value="etching">Plasma Etching</option>
+                                <option value="implant">Ion Implantation</option>
+                                <option value="cvd">Plasma CVD</option>
+                                <option value="custom">Custom</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="autogenCount">Количество симуляций</label>
+                            <input type="number" id="autogenCount" min="1" max="1000" value="25">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="autogenRandomAlloy" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" id="autogenRandomAlloy" checked>
+                                <i class="fas fa-dice"></i> Случайный сплав и ион
+                            </label>
+                        </div>
+
+                        <div class="autogen-actions">
+                            <button type="button" class="btn btn-success full" onclick="startAutoGeneration()">
+                                <i class="fas fa-play-circle"></i> Запустить автогенерацию
+                            </button>
+
+                            <button type="button" class="btn btn-danger full" onclick="cancelAutoGeneration()" id="cancelAutogenBtn" disabled>
+                                <i class="fas fa-stop-circle"></i> Отменить
+                            </button>
+                        </div>
+
+                        <div id="autogenProgress" class="components-list">
+                            <p class="components-empty">Автогенерация не запущена</p>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary btn-large full" id="runBtn">
+                            <i class="fas fa-play"></i> Запустить симуляцию
+                        </button>
+                    </div>
+                </form>
+            </aside>
+
+            <!-- RIGHT: Results -->
+            <main class="results-panel">
+
+                <!-- Initial -->
+                <div id="initialState" class="initial-state">
+                    <div class="initial-animation">
+                        <div class="orbit-ring ring-1"></div>
+                        <div class="orbit-ring ring-2"></div>
+                        <div class="orbit-ring ring-3"></div>
+                        <div class="nucleus-icon"><i class="fas fa-atom"></i></div>
+                    </div>
+                    <h3>Готово к запуску</h3>
+                    <p>Настройте состав сплава и ионный состав, затем запустите симуляцию</p>
+                </div>
+
+                <!-- Loading -->
+                <div id="loadingState" class="loading-state" style="display:none;">
+                    <div class="loading-animation">
+                        <div class="loading-ring"></div>
+                        <div class="loading-ring ring-2"></div>
+                        <div class="loading-core"><i class="fas fa-rocket"></i></div>
+                    </div>
+                    <h3>Выполняется расчёт...</h3>
+                    <p>Это может занять несколько секунд</p>
+                    <div class="loading-steps">
+                        <div class="loading-step active"><i class="fas fa-bolt"></i> Параметры плазмы</div>
+                        <div class="loading-step"><i class="fas fa-thermometer-half"></i> Тепловая модель</div>
+                        <div class="loading-step"><i class="fas fa-atom"></i> Коллизии</div>
+                        <div class="loading-step"><i class="fas fa-chart-line"></i> Диффузия</div>
+                    </div>
+                </div>
+
+                <!-- Results -->
+                <div id="resultsState" class="results-state" style="display:none;">
+
+                    <div class="success-badge">
+                        <div class="success-icon"><i class="fas fa-check-circle"></i></div>
+                        <div class="success-text">
+                            <strong>Симуляция завершена</strong>
+                            <span id="resultTimestamp"></span>
+                        </div>
+                    </div>
+
+                    <!-- Входные данные -->
+                    <div class="result-block">
+                        <div class="result-block-header input-header">
+                            <div class="block-icon"><i class="fas fa-sliders-h"></i></div>
+                            <div>
+                                <h4>Входные параметры</h4>
+                                <p>Параметры запущенной симуляции</p>
+                            </div>
+                        </div>
+                        <div class="input-summary">
+                            <div class="input-chip composition-chip">
+                                <i class="fas fa-layer-group"></i>
+                                <span class="chip-label">Сплав</span>
+                                <strong id="r_composition">—</strong>
+                            </div>
+                            <div class="input-chip ion-chip">
+                                <i class="fas fa-bolt"></i>
+                                <span class="chip-label">Ионы</span>
+                                <strong id="r_ion_composition">—</strong>
+                            </div>
+                        </div>
+                        <div class="result-grid cols-4">
+                            <div class="result-card accent-blue"><div class="rc-icon"><i class="fas fa-plug"></i></div><div class="rc-label">Напряжение</div><div class="rc-value" id="r_voltage">—</div><div class="rc-unit">В</div></div>
+                            <div class="result-card accent-blue"><div class="rc-icon"><i class="fas fa-bolt"></i></div><div class="rc-label">Ток</div><div class="rc-value" id="r_current">—</div><div class="rc-unit">А</div></div>
+                            <div class="result-card accent-blue"><div class="rc-icon"><i class="fas fa-wind"></i></div><div class="rc-label">Давление</div><div class="rc-value" id="r_pressure">—</div><div class="rc-unit">Па</div></div>
+                            <div class="result-card accent-blue"><div class="rc-icon"><i class="fas fa-thermometer-full"></i></div><div class="rc-label">T электронов</div><div class="rc-value" id="r_electron_temp">—</div><div class="rc-unit">К</div></div>
+                            <div class="result-card accent-blue"><div class="rc-icon"><i class="fas fa-expand-arrows-alt"></i></div><div class="rc-label">Ширина камеры</div><div class="rc-value" id="r_chamber_width">—</div><div class="rc-unit">м</div></div>
+                            <div class="result-card accent-blue"><div class="rc-icon"><i class="fas fa-ruler-vertical"></i></div><div class="rc-label">Глубина камеры</div><div class="rc-value" id="r_chamber_depth">—</div><div class="rc-unit">м</div></div>
+                            <div class="result-card accent-blue"><div class="rc-icon"><i class="fas fa-clock"></i></div><div class="rc-label">Время облучения</div><div class="rc-value" id="r_exposure_time">—</div><div class="rc-unit">с</div></div>
+                            <div class="result-card accent-blue"><div class="rc-icon"><i class="fas fa-angle-double-right"></i></div><div class="rc-label">Угол падения</div><div class="rc-value" id="r_angle">—</div><div class="rc-unit">°</div></div>
+                        </div>
+                    </div>
+
+                    <!-- Табы -->
+                    <div class="results-tabs">
+                        <button class="tab-btn active" data-tab="diffusion"><i class="fas fa-chart-line"></i> Диффузия</button>
+                        <button class="tab-btn" data-tab="energy"><i class="fas fa-fire"></i> Энергия</button>
+                        <button class="tab-btn" data-tab="thermal"><i class="fas fa-thermometer-half"></i> Температура</button>
+                        <button class="tab-btn" data-tab="debye3d"><i class="fas fa-cube"></i> 3D Визуализация</button>
+                    </div>
+
+                    <div class="tab-content">
+
+                        <!-- Диффузия -->
+                        <div class="tab-pane active" id="diffusion-tab">
+                            <div class="result-block">
+                                <div class="result-block-header diffusion-header">
+                                    <div class="block-icon"><i class="fas fa-chart-line"></i></div>
+                                    <div><h4>Диффузионный профиль</h4><p>Коэффициенты диффузии и глубина проникновения</p></div>
+                                </div>
+                                <div class="result-grid cols-3">
+                                    <div class="result-card accent-purple hero-card"><div class="rc-icon"><i class="fas fa-chart-line"></i></div><div class="rc-label">D эффективный</div><div class="rc-value" id="r_d_effective">—</div><div class="rc-unit">м²/с</div></div>
+                                    <div class="result-card accent-purple hero-card"><div class="rc-icon"><i class="fas fa-temperature-high"></i></div><div class="rc-label">D термический</div><div class="rc-value" id="r_d_thermal">—</div><div class="rc-unit">м²/с</div></div>
+                                    <div class="result-card accent-purple hero-card"><div class="rc-icon"><i class="fas fa-arrows-alt-v"></i></div><div class="rc-label">Средняя глубина</div><div class="rc-value" id="r_mean_depth">—</div><div class="rc-unit">м</div></div>
+                                    <div class="result-card accent-indigo"><div class="rc-icon"><i class="fas fa-superscript"></i></div><div class="rc-label">D₁ предэкспонента</div><div class="rc-value" id="r_d1">—</div><div class="rc-unit">м²/с</div></div>
+                                    <div class="result-card accent-indigo"><div class="rc-icon"><i class="fas fa-superscript"></i></div><div class="rc-label">D₂ предэкспонента</div><div class="rc-value" id="r_d2">—</div><div class="rc-unit">м²/с</div></div>
+                                    <div class="result-card accent-indigo"><div class="rc-icon"><i class="fas fa-fire"></i></div><div class="rc-label">Q₁ активации</div><div class="rc-value" id="r_q1">—</div><div class="rc-unit">эВ</div></div>
+                                    <div class="result-card accent-indigo"><div class="rc-icon"><i class="fas fa-fire-alt"></i></div><div class="rc-label">Q₂ активации</div><div class="rc-value" id="r_q2">—</div><div class="rc-unit">эВ</div></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Энергия -->
+                        <div class="tab-pane" id="energy-tab" style="display:none;">
+                            <div class="result-block">
+                                <div class="result-block-header energy-header">
+                                    <div class="block-icon"><i class="fas fa-fire"></i></div>
+                                    <div><h4>Энергетические параметры</h4><p>Перенос энергии и взаимодействие с поверхностью</p></div>
+                                </div>
+                                <div class="result-grid cols-2">
+                                    <div class="result-card accent-orange hero-card"><div class="rc-icon"><i class="fas fa-bolt"></i></div><div class="rc-label">Суммарная переданная энергия</div><div class="rc-value" id="ps_total_energy">—</div><div class="rc-unit">эВ</div></div>
+                                    <div class="result-card accent-orange hero-card"><div class="rc-icon"><i class="fas fa-atom"></i></div><div class="rc-label">Средняя энергия на атом</div><div class="rc-value" id="ps_avg_energy">—</div><div class="rc-unit">эВ</div></div>
+                                    <div class="result-card accent-red"><div class="rc-icon"><i class="fas fa-link"></i></div><div class="rc-label">Энергия связи поверхности</div><div class="rc-value" id="ps_binding_energy">—</div><div class="rc-unit">эВ</div></div>
+                                    <div class="result-card accent-red"><div class="rc-icon"><i class="fas fa-radiation"></i></div><div class="rc-label">Энергия иона</div><div class="rc-value" id="pc_ion_energy">—</div><div class="rc-unit">эВ</div></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Температура -->
+                        <div class="tab-pane" id="thermal-tab" style="display:none;">
+                            <div class="result-block">
+                                <div class="result-block-header thermal-header">
+                                    <div class="block-icon"><i class="fas fa-thermometer-half"></i></div>
+                                    <div><h4>Температурные параметры</h4><p>Тепловые характеристики и фронт Дебая</p></div>
+                                </div>
+                                <div class="result-grid cols-3">
+                                    <div class="result-card accent-teal hero-card"><div class="rc-icon"><i class="fas fa-thermometer-full"></i></div><div class="rc-label">T в точке зонда</div><div class="rc-value" id="ps_probe_temp">—</div><div class="rc-unit">К</div></div>
+                                    <div class="result-card accent-teal"><div class="rc-icon"><i class="fas fa-tachometer-alt"></i></div><div class="rc-label">Скорость фронта Дебая</div><div class="rc-value" id="ps_debye_speed">—</div><div class="rc-unit">м/с</div></div>
+                                    <div class="result-card accent-teal"><div class="rc-icon"><i class="fas fa-ruler-vertical"></i></div><div class="rc-label">Глубина фронта Дебая</div><div class="rc-value" id="ps_debye_depth">—</div><div class="rc-unit">м</div></div>
+                                </div>
+                            </div>
+                            <div class="result-block" style="margin-top:1.5rem;">
+                                <div class="result-block-header plasma-header">
+                                    <div class="block-icon"><i class="fas fa-atom"></i></div>
+                                    <div><h4>Параметры плазмы</h4><p>Электронные характеристики разряда</p></div>
+                                </div>
+                                <div class="result-grid cols-3">
+                                    <div class="result-card accent-cyan"><div class="rc-icon"><i class="fas fa-dot-circle"></i></div><div class="rc-label">Плотность электронов</div><div class="rc-value" id="ps_electron_density">—</div><div class="rc-unit">м⁻³</div></div>
+                                    <div class="result-card accent-cyan"><div class="rc-icon"><i class="fas fa-fighter-jet"></i></div><div class="rc-label">Скорость электронов</div><div class="rc-value" id="ps_electron_velocity">—</div><div class="rc-unit">м/с</div></div>
+                                    <div class="result-card accent-cyan"><div class="rc-icon"><i class="fas fa-water"></i></div><div class="rc-label">Плотность тока</div><div class="rc-value" id="ps_current_density">—</div><div class="rc-unit">А/м²</div></div>
+                                </div>
+                            </div>
+                            <div class="result-block" style="margin-top:1.5rem;">
+                                <div class="result-block-header damage-header">
+                                    <div class="block-icon"><i class="fas fa-radiation-alt"></i></div>
+                                    <div><h4>Радиационное повреждение</h4><p>Дефекты, импульс и смещение атомов</p></div>
+                                </div>
+                                <div class="result-grid cols-3">
+                                    <div class="result-card accent-pink"><div class="rc-icon"><i class="fas fa-wrench"></i></div><div class="rc-label">Суммарные дефекты</div><div class="rc-value" id="ps_total_damage">—</div><div class="rc-unit">вакансии/м²</div></div>
+                                    <div class="result-card accent-pink"><div class="rc-icon"><i class="fas fa-arrows-alt"></i></div><div class="rc-label">Суммарный импульс</div><div class="rc-value" id="ps_total_momentum">—</div><div class="rc-unit">кг·м/с</div></div>
+                                    <div class="result-card accent-pink"><div class="rc-icon"><i class="fas fa-compress-arrows-alt"></i></div><div class="rc-label">Смещение атомов</div><div class="rc-value" id="ps_total_displacement">—</div><div class="rc-unit">м</div></div>
+                                </div>
+                                <div class="result-grid cols-3">
+                                    <div class="result-card accent-pink"><div class="rc-icon"><i class="fas fa-wrench"></i></div><div class="rc-label">Fluence</div><div class="rc-value" id="ps_fluence">—</div><div class="rc-unit">1/м²</div></div>
+                                    <div class="result-card accent-pink"><div class="rc-icon"><i class="fas fa-arrows-alt"></i></div><div class="rc-label">FluenceEff</div><div class="rc-value" id="ps_fluence_eff">—</div><div class="rc-unit">1/м²</div></div>
+                                    <div class="result-card accent-pink"><div class="rc-icon"><i class="fas fa-compress-arrows-alt"></i></div><div class="rc-label">IonFlux</div><div class="rc-value" id="ps_ion_flux">—</div><div class="rc-unit">1/(м²·с)</div></div>
+                                </div>
+                                <div class="result-grid cols-3">
+                                    <div class="result-card accent-pink"><div class="rc-icon"><i class="fas fa-wrench"></i></div><div class="rc-label">Resonance ξ</div><div class="rc-value" id="ps_resonance_xi">—</div><div class="rc-unit">—</div></div>
+                                    <div class="result-card accent-pink"><div class="rc-icon"><i class="fas fa-arrows-alt"></i></div><div class="rc-label">D_slr</div><div class="rc-value" id="ps_d_slr">—</div><div class="rc-unit">м²</div></div>
+                                    <div class="result-card accent-pink"><div class="rc-icon"><i class="fas fa-compress-arrows-alt"></i></div><div class="rc-label">D_res</div><div class="rc-value" id="ps_d_res">—</div><div class="rc-unit">м²/с</div></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 3D Визуализация -->
+                        <div class="tab-pane" id="debye3d-tab" style="display:none;">
+                            <div class="result-block">
+                                <div class="result-block-header viz3d-header">
+                                    <div class="block-icon"><i class="fas fa-cube"></i></div>
+                                    <div>
+                                        <h4>3D Визуализация температурного профиля</h4>
+                                        <p>Интерактивная трёхмерная модель распределения температуры</p>
+                                    </div>
+                                </div>
+
+                                <div class="viz3d-selector">
+                                    <button class="viz3d-btn active" data-view="surface" onclick="set3DViewType('surface')">
+                                        <i class="fas fa-chart-area"></i><span>Поверхность</span>
+                                    </button>
+                                    <button class="viz3d-btn" data-view="sphere" onclick="set3DViewType('sphere')">
+                                        <i class="fas fa-globe"></i><span>Сфера + пересечение</span>
+                                    </button>
+                                </div>
+
+                                <div class="chart-container-3d">
+                                    <div id="physics3dChart"></div>
+                                </div>
+
+                                <div class="viz3d-legend">
+                                    <div class="legend-item">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span><strong>Поверхность:</strong> 3D профиль T(глубина, время) с проекцией контуров</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <i class="fas fa-globe"></i>
+                                        <span><strong>Сфера + пересечение:</strong> слева — целая сфера (горячо в центре, холодно снаружи); справа — пересечение двух полусфер показывает внутренние слои</span>
+                                    </div>
+                                </div>
+
+                                <div class="viz3d-actions">
+                                    <button class="btn btn-secondary" onclick="clearPhysics3DHistory()">
+                                        <i class="fas fa-trash-alt"></i> Очистить историю
+                                    </button>
+                                    <button class="btn btn-primary" onclick="renderPhysicsStats3D()">
+                                        <i class="fas fa-sync-alt"></i> Обновить график
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div><!-- /tab-content -->
+
+                    <div class="results-actions">
+                        <button class="btn btn-success btn-large" onclick="saveResults()" id="saveBtn">
+                            <i class="fas fa-save"></i> Сохранить результаты
+                        </button>
+                    </div>
+
+                </div><!-- /resultsState -->
+            </main>
+        </div>
+    </div>
+</section>
+
+<footer class="footer">
+    <div class="container footer-inner">
+        <div class="footer-brand">
+            <div class="logo"><i class="fas fa-atom"></i><span>PlasmaLab</span></div>
+            <p>Научная платформа для моделирования плазменных процессов</p>
+        </div>
+        <div class="footer-bottom"><p>© 2026 PlasmaLab. Research &amp; Simulation Platform</p></div>
+    </div>
+</footer>
+
+<script src="js/auth.js"></script>
+<script src="js/main-ui.js"></script>
+<script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+<script src="js/plasma3d.js"></script>
+<script src="js/simulation.js"></script>
+</body>
+</html>

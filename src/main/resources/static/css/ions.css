@@ -1,582 +1,667 @@
-/* ==================== IONS PAGE STYLES ==================== */
+/**
+ * ==============================================================
+ * PlasmaLab Ions Page Styles v3.0
+ * Professional design for ions database management
+ * ==============================================================
+ */
 
-.main-content {
-    min-height: calc(100vh - 200px);
-    padding: 3rem 0;
-}
+/* ==============================================================
+   Page Header
+   ============================================================== */
 
-/* ==================== PAGE HEADER ==================== */
 .page-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 3rem;
-    padding-bottom: 2rem;
-    border-bottom: 1px solid var(--border);
+    padding: var(--spacing-3xl) 0 var(--spacing-2xl);
+    background: linear-gradient(to bottom, #f0f9ff, var(--bg-primary));
+    border-bottom: 1px solid var(--gray-200);
 }
 
-.page-header h1 {
-    font-size: 2.5rem;
+.page-title {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-2xl);
+}
+
+.title-icon {
+    width: 4rem;
+    height: 4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+    border-radius: var(--radius-xl);
+    color: white;
+    font-size: 2rem;
+    box-shadow: var(--shadow-lg);
+}
+
+.page-title h1 {
+    font-size: clamp(2rem, 4vw, 2.5rem);
+    margin: 0;
+}
+
+.page-title p {
+    font-size: 1.125rem;
+    color: var(--text-secondary);
+    margin: var(--spacing-sm) 0 0;
+}
+
+/* ==============================================================
+   Stats Grid
+   ============================================================== */
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    background: var(--bg-primary);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-base);
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--primary-300);
+}
+
+.stat-icon {
+    flex-shrink: 0;
+    width: 3rem;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    font-size: 1.5rem;
+}
+
+.stat-icon.ions {
+    background: rgba(139, 92, 246, 0.1);
+    color: #8b5cf6;
+}
+
+.stat-icon.positive {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.stat-icon.negative {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.stat-icon.mass {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.stat-content {
+    flex-grow: 1;
+}
+
+.stat-value {
+    font-size: 1.75rem;
     font-weight: 800;
-    background: var(--gradient-secondary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-top: var(--spacing-xs);
+}
+
+/* ==============================================================
+   Toolbar
+   ============================================================== */
+
+.toolbar {
+    padding: var(--spacing-xl) 0;
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--gray-200);
+    position: sticky;
+    top: 73px;
+    z-index: var(--z-sticky);
+    backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.toolbar-inner {
     display: flex;
     align-items: center;
-    gap: 1rem;
-}
-
-.page-header h1 i {
-    background: var(--gradient-secondary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: pulse 2s ease-in-out infinite;
-}
-
-@keyframes pulse {
-    0%, 100% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.1); opacity: 0.8; }
-}
-
-.page-header p {
-    color: var(--text-muted);
-    font-size: 1.1rem;
-}
-
-/* ==================== CONTROLS ==================== */
-.controls {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 2rem;
+    gap: var(--spacing-md);
+    justify-content: space-between;
     flex-wrap: wrap;
-    align-items: center;
 }
 
 .search-box {
-    flex: 1;
-    min-width: 300px;
     position: relative;
+    flex: 1;
+    max-width: 400px;
+    min-width: 250px;
 }
 
-.search-box i {
+.search-box i.fa-search {
     position: absolute;
-    left: 1.2rem;
+    left: 1rem;
     top: 50%;
     transform: translateY(-50%);
-    color: var(--text-muted);
+    color: var(--text-tertiary);
+    font-size: 1rem;
 }
 
 .search-box input {
     width: 100%;
-    padding: 1rem 1rem 1rem 3rem;
-    background: var(--bg-surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--text-main);
+    padding: 0.875rem 3rem 0.875rem 3rem;
     font-size: 1rem;
-    transition: all 0.3s ease;
+    color: var(--text-primary);
+    background: var(--gray-100);
+    border: 2px solid var(--gray-300);
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-base);
+}
+
+.search-box input::placeholder {
+    color: var(--text-tertiary);
 }
 
 .search-box input:focus {
     outline: none;
-    border-color: var(--secondary);
-    box-shadow: 0 0 0 3px rgba(129,140,248,0.1);
+    border-color: #8b5cf6;
+    background: var(--bg-primary);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
 }
 
-.filter-group {
+.search-clear {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2rem;
+    height: 2rem;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-}
-
-.filter-group label {
-    color: var(--text-muted);
-    font-weight: 500;
-    white-space: nowrap;
-}
-
-.filter-group select {
-    padding: 0.8rem 1.2rem;
-    background: var(--bg-surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--text-main);
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-md);
+    color: var(--text-tertiary);
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: all var(--transition-base);
 }
 
-.filter-group select:focus {
-    outline: none;
-    border-color: var(--secondary);
+.search-clear:hover {
+    background: var(--gray-200);
+    color: var(--text-primary);
 }
 
-/* ==================== STATS BAR ==================== */
-.stats-bar {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2.5rem;
+/* Filter Buttons */
+.filter-buttons {
+    display: flex;
+    gap: var(--spacing-sm);
+    background: var(--gray-100);
+    padding: var(--spacing-xs);
+    border-radius: var(--radius-lg);
 }
 
-.stat-card {
-    background: var(--bg-card);
-    backdrop-filter: blur(20px);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 1.5rem;
+.filter-btn {
     display: flex;
     align-items: center;
-    gap: 1.5rem;
-    transition: all 0.3s ease;
+    gap: var(--spacing-xs);
+    padding: 0.625rem 1rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-base);
 }
 
-.stat-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
-    border-color: var(--secondary);
+.filter-btn:hover {
+    color: var(--primary-600);
+    background: var(--bg-primary);
 }
 
-.stat-card i {
-    font-size: 2.5rem;
-    background: var(--gradient-secondary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+.filter-btn.active {
+    color: white;
+    background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+    box-shadow: var(--shadow-sm);
 }
 
-.stat-value {
-    display: block;
-    font-size: 2rem;
-    font-weight: 800;
-    color: var(--text-main);
-    line-height: 1;
-    margin-bottom: 0.3rem;
+/* ==============================================================
+   Ions Section
+   ============================================================== */
+
+.ions-section {
+    padding: var(--spacing-3xl) 0;
+    min-height: 50vh;
 }
 
-.stat-label {
-    display: block;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
+/* ==============================================================
+   Loading & Empty States
+   ============================================================== */
 
-/* ==================== LOADING & EMPTY STATES ==================== */
 .loading-state {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 5rem 2rem;
+    padding: var(--spacing-3xl);
+    text-align: center;
 }
 
 .spinner {
     width: 50px;
     height: 50px;
-    border: 4px solid var(--border);
-    border-top-color: var(--secondary);
+    border: 4px solid var(--gray-200);
+    border-top-color: #8b5cf6;
     border-radius: 50%;
-    animation: spin 1s linear infinite;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: var(--spacing-lg);
 }
 
 @keyframes spin {
-    from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
 }
 
 .loading-state p {
-    margin-top: 1.5rem;
-    color: var(--text-muted);
-    font-size: 1.1rem;
+    font-size: 1rem;
+    color: var(--text-secondary);
 }
 
 .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-3xl);
     text-align: center;
-    padding: 5rem 2rem;
 }
 
-.empty-state i {
-    font-size: 4rem;
-    color: var(--text-dark);
-    margin-bottom: 1.5rem;
+.empty-icon {
+    width: 6rem;
+    height: 6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gray-100);
+    border-radius: var(--radius-2xl);
+    color: var(--text-tertiary);
+    font-size: 3rem;
+    margin-bottom: var(--spacing-lg);
 }
 
 .empty-state h3 {
-    font-size: 1.8rem;
-    color: var(--text-main);
-    margin-bottom: 0.5rem;
+    font-size: 1.5rem;
+    margin-bottom: var(--spacing-md);
+    color: var(--text-primary);
 }
 
 .empty-state p {
-    color: var(--text-muted);
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-xl);
 }
 
-/* ==================== IONS GRID ==================== */
+/* ==============================================================
+   Ions Grid
+   ============================================================== */
+
 .ions-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 1.5rem;
-    animation: fadeIn 0.5s ease-out;
+    gap: var(--spacing-lg);
+    animation: fadeIn var(--transition-base);
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
-/* ==================== ION CARD ==================== */
 .ion-card {
-    background: var(--bg-card);
-    backdrop-filter: blur(20px);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 2rem;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
+    padding: var(--spacing-xl);
+    background: var(--bg-primary);
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-base);
     overflow: hidden;
 }
 
 .ion-card::before {
-    content: "";
+    content: '';
     position: absolute;
-    inset: 0;
-    background: linear-gradient(135deg,
-    rgba(129,140,248,0.15) 0%,
-    rgba(244,114,182,0.15) 100%
-    );
-    opacity: 0;
-    transition: opacity 0.4s ease;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--transition-base);
+}
+
+.ion-card.positive::before {
+    background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+}
+
+.ion-card.negative::before {
+    background: linear-gradient(90deg, #ef4444 0%, #f87171 100%);
 }
 
 .ion-card:hover {
-    transform: translateY(-8px);
-    box-shadow: var(--shadow), 0 0 40px rgba(129,140,248,0.3);
-    border-color: var(--secondary);
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: #8b5cf6;
 }
 
 .ion-card:hover::before {
-    opacity: 1;
+    transform: scaleX(1);
 }
 
-.ion-card > * {
-    position: relative;
-    z-index: 1;
-}
-
-/* Card Header */
 .ion-card-header {
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 1.5rem;
+    margin-bottom: var(--spacing-lg);
 }
 
 .ion-symbol {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: var(--spacing-md);
 }
 
-.ion-icon {
-    width: 70px;
-    height: 70px;
-    border-radius: 50%;
+.ion-name {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.ion-charge-badge {
+    width: 3rem;
+    height: 3rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.8rem;
-    font-weight: 800;
-    transition: all 0.4s ease;
-    position: relative;
-}
-
-/* Positive ions - blue glow */
-.ion-icon.positive {
-    background: rgba(129,140,248,0.2);
-    color: var(--secondary);
-    box-shadow: 0 0 20px rgba(129,140,248,0.3);
-}
-
-.ion-card:hover .ion-icon.positive {
-    box-shadow: 0 0 40px rgba(129,140,248,0.5);
-    transform: scale(1.1);
-}
-
-/* Negative ions - pink glow */
-.ion-icon.negative {
-    background: rgba(244,114,182,0.2);
-    color: var(--accent);
-    box-shadow: 0 0 20px rgba(244,114,182,0.3);
-}
-
-.ion-card:hover .ion-icon.negative {
-    box-shadow: 0 0 40px rgba(244,114,182,0.5);
-    transform: scale(1.1);
-}
-
-.ion-name h3 {
-    font-size: 1.5rem;
+    border-radius: var(--radius-lg);
+    font-size: 1.25rem;
     font-weight: 700;
-    color: var(--text-main);
-    margin-bottom: 0.3rem;
+    color: white;
+    box-shadow: var(--shadow-md);
 }
 
-.ion-name p {
-    color: var(--text-muted);
-    font-size: 0.9rem;
+.ion-charge-badge.positive {
+    background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+}
+
+.ion-charge-badge.negative {
+    background: linear-gradient(135deg, #ef4444 0%, #f87171 100%);
 }
 
 .ion-actions {
     display: flex;
-    gap: 0.5rem;
+    gap: var(--spacing-xs);
 }
 
-.ion-actions button {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text-muted);
-    cursor: pointer;
-    transition: all 0.3s ease;
+.ion-btn {
+    width: 2rem;
+    height: 2rem;
     display: flex;
     align-items: center;
     justify-content: center;
+    background: var(--gray-100);
+    border: none;
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-base);
 }
 
-.ion-actions button:hover {
-    background: rgba(129,140,248,0.1);
-    border-color: var(--secondary);
-    color: var(--secondary);
-    transform: scale(1.1);
+.ion-btn:hover {
+    background: var(--gray-200);
+    color: var(--text-primary);
 }
 
-.ion-actions button.delete:hover {
-    background: rgba(244,67,54,0.1);
-    border-color: #f44336;
-    color: #f44336;
+.ion-btn.delete:hover {
+    background: var(--accent-error);
+    color: white;
 }
 
-/* Card Body */
-.ion-properties {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1.5rem;
-}
-
-.property {
+.ion-card-body {
     display: flex;
     flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.ion-property {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--gray-50);
+    border-radius: var(--radius-md);
 }
 
 .property-label {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--text-dark);
-    margin-bottom: 0.4rem;
-    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+.property-label i {
+    color: #8b5cf6;
 }
 
 .property-value {
-    font-size: 1.2rem;
-    font-weight: 700;
-    color: var(--text-main);
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
 }
 
-.property-value.highlight {
-    font-size: 2rem;
-    background: var(--gradient-secondary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+.property-unit {
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    margin-left: var(--spacing-xs);
 }
 
-/* Charge Badge */
-.charge-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    font-size: 1.5rem;
-    font-weight: 800;
-    margin-top: 0.5rem;
-}
+/* ==============================================================
+   Ion Modal
+   ============================================================== */
 
-.charge-badge.positive {
-    background: rgba(129,140,248,0.2);
-    color: var(--secondary);
-    border: 2px solid rgba(129,140,248,0.5);
-}
-
-.charge-badge.negative {
-    background: rgba(244,114,182,0.2);
-    color: var(--accent);
-    border: 2px solid rgba(244,114,182,0.5);
-}
-
-/* ==================== MODAL ==================== */
-.modal-overlay {
+.ion-modal-overlay {
     position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.85);
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(8px);
     display: none;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
-    animation: fadeIn 0.3s ease-out;
+    z-index: var(--z-modal);
+    padding: var(--spacing-lg);
+    animation: fadeIn var(--transition-base);
 }
 
-.modal {
-    background: var(--bg-surface);
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow);
-    width: 500px;
-    max-width: 90%;
-    animation: scaleIn 0.3s ease-out;
+.ion-modal {
+    background: var(--bg-primary);
+    border-radius: var(--radius-2xl);
+    box-shadow: var(--shadow-2xl);
+    width: 100%;
+    max-width: 500px;
+    overflow: hidden;
+    animation: slideUp var(--transition-slow);
 }
 
-@keyframes scaleIn {
+@keyframes slideUp {
     from {
-        transform: scale(0.9);
+        transform: translateY(30px);
         opacity: 0;
     }
     to {
-        transform: scale(1);
+        transform: translateY(0);
         opacity: 1;
     }
 }
 
-.modal-header {
+.ion-modal-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 1.5rem 2rem;
-    border-bottom: 1px solid var(--border);
+    justify-content: space-between;
+    padding: var(--spacing-lg) var(--spacing-xl);
+    border-bottom: 1px solid var(--gray-200);
+    background: var(--gray-50);
 }
 
-.modal-header h3 {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--text-main);
+.ion-modal-header h3 {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 1.25rem;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.ion-modal-header h3 i {
+    color: #8b5cf6;
 }
 
 .modal-close {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    border: none;
-    background: transparent;
-    color: var(--text-muted);
-    font-size: 1.5rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
+    width: 2.5rem;
+    height: 2.5rem;
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-base);
 }
 
 .modal-close:hover {
-    background: rgba(255,255,255,0.1);
-    color: var(--text-main);
-    transform: rotate(90deg);
+    background: var(--gray-200);
+    color: var(--accent-error);
 }
 
-.modal-body {
-    padding: 2rem;
+/* ==============================================================
+   Ion Form
+   ============================================================== */
+
+.ion-form {
+    padding: var(--spacing-xl);
 }
 
-/* ==================== FORM ==================== */
 .form-row {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
 }
 
-.form-field {
+.form-group {
     display: flex;
     flex-direction: column;
-    margin-bottom: 1.5rem;
 }
 
-.form-field label {
-    margin-bottom: 0.5rem;
-    color: var(--text-muted);
-    font-weight: 500;
-    font-size: 0.9rem;
+.form-group label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
 }
 
-.form-field input,
-.form-field select {
-    padding: 0.9rem 1rem;
-    background: var(--bg-main);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-    color: var(--text-main);
+.form-group label i {
+    color: #8b5cf6;
+}
+
+.form-group small {
+    display: block;
+    margin-top: 0.25rem;
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+}
+
+.form-group input {
+    padding: 0.875rem 1rem;
     font-size: 1rem;
-    transition: all 0.3s ease;
+    color: var(--text-primary);
+    background: var(--bg-secondary);
+    border: 2px solid var(--gray-300);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-base);
 }
 
-.form-field input:focus,
-.form-field select:focus {
+.form-group input::placeholder {
+    color: var(--text-tertiary);
+}
+
+.form-group input:focus {
     outline: none;
-    border-color: var(--secondary);
-    box-shadow: 0 0 0 3px rgba(129,140,248,0.1);
-}
-
-.form-field small {
-    margin-top: 0.3rem;
-    color: var(--text-dark);
-    font-size: 0.8rem;
-}
-
-.form-message {
-    padding: 0.8rem;
-    border-radius: var(--radius-sm);
-    margin: 1rem 0;
-    text-align: center;
-    font-weight: 500;
-    display: none;
+    border-color: #8b5cf6;
+    background: var(--bg-primary);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
 }
 
 .form-actions {
     display: flex;
-    gap: 1rem;
+    gap: var(--spacing-md);
     justify-content: flex-end;
-    margin-top: 2rem;
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--gray-200);
 }
 
-/* ==================== RESPONSIVE ==================== */
-@media (max-width: 768px) {
-    .page-header {
-        flex-direction: column;
-        gap: 1.5rem;
-        align-items: flex-start;
-    }
+/* ==============================================================
+   Responsive Design
+   ============================================================== */
 
-    .controls {
+@media (max-width: 1024px) {
+    .toolbar-inner {
         flex-direction: column;
         align-items: stretch;
     }
 
     .search-box {
-        min-width: 100%;
+        max-width: 100%;
     }
 
-    .filter-group {
-        width: 100%;
+    .filter-buttons {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-title {
+        flex-direction: column;
+        align-items: flex-start;
     }
 
-    .filter-group select {
-        flex: 1;
-    }
-
-    .stats-bar {
-        grid-template-columns: 1fr;
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
 
     .ions-grid {
@@ -587,7 +672,80 @@
         grid-template-columns: 1fr;
     }
 
-    .ion-properties {
+    .form-actions {
+        flex-direction: column-reverse;
+    }
+
+    .form-actions .btn {
+        width: 100%;
+    }
+
+    .filter-buttons {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .page-header {
+        padding: var(--spacing-xl) 0;
+    }
+
+    .page-title h1 {
+        font-size: 1.75rem;
+    }
+
+    .ion-modal {
+        max-width: 100%;
+        margin: var(--spacing-md);
+    }
+
+    .ion-form {
+        padding: var(--spacing-md);
+    }
+
+    .stats-grid {
         grid-template-columns: 1fr;
     }
+}
+
+/* ==============================================================
+   Animation Classes
+   ============================================================== */
+
+.fade-in {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+}
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
 }

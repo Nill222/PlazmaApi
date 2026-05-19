@@ -2,66 +2,133 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>PlasmaLab | Исследование плазмы</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="PlasmaLab - Научная платформа для моделирования атомных и ионных процессов в плазменных средах">
+    <title>PlasmaLab | Исследование плазмы</title>
 
     <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
     <!-- Icons -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
     <!-- CSS -->
     <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
 
-<!-- AUTH MODAL -->
+<!-- Authentication Modal -->
 <div class="auth-overlay" id="authOverlay">
     <div class="auth-modal">
         <div class="auth-header">
-            <button class="auth-tab active" data-tab="login">Вход</button>
-            <button class="auth-tab" data-tab="register">Регистрация</button>
-            <button class="auth-close" onclick="hideAuthModal()">×</button>
+            <button class="auth-tab active" data-tab="login">
+                <i class="fas fa-sign-in-alt"></i>
+                Вход
+            </button>
+            <button class="auth-tab" data-tab="register">
+                <i class="fas fa-user-plus"></i>
+                Регистрация
+            </button>
+            <button class="auth-close" onclick="hideAuthModal()" aria-label="Закрыть">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
 
         <div class="auth-body">
-            <!-- LOGIN -->
+            <!-- Login Form -->
             <form id="loginForm" class="auth-form active" data-form="login">
                 <div class="auth-field">
-                    <label>Имя пользователя</label>
-                    <input type="text" name="username" required autocomplete="username">
+                    <label for="login-username">
+                        <i class="fas fa-user"></i>
+                        Имя пользователя
+                    </label>
+                    <input
+                            type="text"
+                            id="login-username"
+                            name="username"
+                            required
+                            autocomplete="username"
+                            placeholder="Введите имя пользователя"
+                    >
                 </div>
                 <div class="auth-field">
-                    <label>Пароль</label>
-                    <input type="password" name="password" required autocomplete="current-password">
+                    <label for="login-password">
+                        <i class="fas fa-lock"></i>
+                        Пароль
+                    </label>
+                    <input
+                            type="password"
+                            id="login-password"
+                            name="password"
+                            required
+                            autocomplete="current-password"
+                            placeholder="Введите пароль"
+                    >
                 </div>
-                <div id="login_msg" class="auth-message"></div>
-                <button type="submit" class="btn btn-primary full">Войти</button>
+                <div id="login_msg" class="auth-message" role="alert"></div>
+                <button type="submit" class="btn btn-primary full">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Войти
+                </button>
             </form>
 
-            <!-- REGISTER -->
+            <!-- Register Form -->
             <form id="registerForm" class="auth-form" data-form="register">
                 <div class="auth-field">
-                    <label>Имя пользователя</label>
-                    <input type="text" name="username" required autocomplete="username">
+                    <label for="register-username">
+                        <i class="fas fa-user"></i>
+                        Имя пользователя
+                    </label>
+                    <input
+                            type="text"
+                            id="register-username"
+                            name="username"
+                            required
+                            autocomplete="username"
+                            placeholder="Минимум 5 символов"
+                    >
                 </div>
                 <div class="auth-field">
-                    <label>Email</label>
-                    <input type="email" name="email" required autocomplete="email">
+                    <label for="register-email">
+                        <i class="fas fa-envelope"></i>
+                        Email
+                    </label>
+                    <input
+                            type="email"
+                            id="register-email"
+                            name="email"
+                            required
+                            autocomplete="email"
+                            placeholder="your@email.com"
+                    >
                 </div>
                 <div class="auth-field">
-                    <label>Пароль</label>
-                    <input type="password" name="password" required autocomplete="new-password">
+                    <label for="register-password">
+                        <i class="fas fa-lock"></i>
+                        Пароль
+                    </label>
+                    <input
+                            type="password"
+                            id="register-password"
+                            name="password"
+                            required
+                            autocomplete="new-password"
+                            placeholder="Минимум 8 символов"
+                    >
                 </div>
-                <div id="signup_msg" class="auth-message"></div>
-                <button type="submit" class="btn btn-primary full">Создать аккаунт</button>
+                <div id="signup_msg" class="auth-message" role="alert"></div>
+                <button type="submit" class="btn btn-primary full">
+                    <i class="fas fa-user-plus"></i>
+                    Создать аккаунт
+                </button>
             </form>
         </div>
     </div>
 </div>
 
-<!-- HEADER -->
+<!-- Header -->
 <header class="header">
     <div class="container header-inner">
         <a href="index.html" class="logo">
@@ -69,92 +136,328 @@
             <span>PlasmaLab</span>
         </a>
 
-        <nav class="nav">
-            <a class="nav-link active" href="index.html">Главная</a>
-            <a class="nav-link" href="array.html">Атомы</a>
-            <a class="nav-link" href="chain.html">Ионы</a>
-            <a class="nav-link" href="methods.html">Методы</a>
-            <a class="nav-link" href="charts.html">Графики</a>
+        <nav class="nav" id="mainNav">
+            <a class="nav-link active" href="index.html">
+                <i class="fas fa-home"></i>
+                Главная
+            </a>
+            <a class="nav-link" href="atoms.html">
+                <i class="fas fa-atom"></i>
+                Атомы
+            </a>
+            <a class="nav-link" href="ions.html">
+                <i class="fas fa-bolt"></i>
+                Ионы
+            </a>
+            <a class="nav-link" href="simulation.html">
+                <i class="fas fa-cogs"></i>
+                Симуляция
+            </a>
+            <a class="nav-link" href="charts.html">
+                <i class="fas fa-chart-line"></i>
+                Графики
+            </a>
         </nav>
 
         <div class="auth">
-            <!-- ГОСТЬ -->
+            <!-- Guest State -->
             <div class="auth-buttons">
-                <button class="btn btn-primary" onclick="showAuthModal()">Войти</button>
+                <button class="btn btn-primary" onclick="showAuthModal()">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Войти
+                </button>
             </div>
 
-            <!-- АВТОРИЗОВАН -->
-            <div class="user-menu" style="display:none;">
-                <span class="user-name" id="usernameDisplay"></span>
-                <button class="btn btn-secondary" onclick="logout()">Выйти</button>
+            <!-- Authenticated State -->
+            <div class="user-menu" style="display: none;">
+                <div class="user-info">
+                    <i class="fas fa-user-circle"></i>
+                    <span class="user-name" id="usernameDisplay"></span>
+                </div>
+                <button class="btn btn-secondary" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Выйти
+                </button>
             </div>
         </div>
+
+        <!-- Mobile Menu Toggle -->
+        <button class="mobile-menu-toggle" id="mobileMenuToggle" aria-label="Меню">
+            <i class="fas fa-bars"></i>
+        </button>
     </div>
 </header>
 
-<!-- HERO -->
+<!-- Hero Section -->
 <section class="hero">
+    <div class="hero-background"></div>
     <div class="container hero-inner">
-        <span class="hero-badge">
-            <i class="fas fa-flask"></i> Research Platform
-        </span>
+        <div class="hero-content">
+                <span class="hero-badge" data-aos="fade-down">
+                    <i class="fas fa-flask"></i>
+                    Research Platform
+                </span>
 
-        <h1>
-            Исследование плазмы.<br>
-            Численное моделирование.
-        </h1>
+            <h1 data-aos="fade-up" data-aos-delay="100">
+                Исследование плазмы.<br>
+                <span class="gradient-text">Численное моделирование.</span>
+            </h1>
 
-        <p>
-            PlasmaLab — научная платформа для моделирования
-            атомных и ионных процессов в плазменных средах.
-        </p>
+            <p data-aos="fade-up" data-aos-delay="200">
+                PlasmaLab — научная платформа для моделирования
+                атомных и ионных процессов в плазменных средах.
+                Передовые алгоритмы расчета и визуализации данных.
+            </p>
+
+            <div class="info-banner" data-aos="fade-up" data-aos-delay="300">
+                <div class="info-icon">
+                    <i class="fas fa-lightbulb"></i>
+                </div>
+                <div class="info-content">
+                    <strong>Модули расчетов</strong> работают локально БЕЗ авторизации!
+                    <br>
+                    Для работы с базой атомов и ионов необходим вход в систему.
+                </div>
+            </div>
+
+            <div class="hero-actions" data-aos="fade-up" data-aos-delay="400">
+                <a href="#modules" class="btn btn-primary btn-large">
+                    <i class="fas fa-rocket"></i>
+                    Начать работу
+                </a>
+                <a href="#calculations" class="btn btn-outline btn-large">
+                    <i class="fas fa-calculator"></i>
+                    Модули расчетов
+                </a>
+            </div>
+        </div>
+
+        <div class="hero-visual" data-aos="fade-left" data-aos-delay="500">
+            <div class="atom-animation">
+                <div class="nucleus"></div>
+                <div class="electron-orbit orbit-1">
+                    <div class="electron"></div>
+                </div>
+                <div class="electron-orbit orbit-2">
+                    <div class="electron"></div>
+                </div>
+                <div class="electron-orbit orbit-3">
+                    <div class="electron"></div>
+                </div>
+            </div>
+        </div>
     </div>
 </section>
 
-<!-- MODULES -->
-<section class="modules">
+<!-- Main Modules Section -->
+<section class="modules" id="modules">
     <div class="container">
-        <h2>Основные модули</h2>
+        <div class="section-header" data-aos="fade-up">
+            <h2>Основные модули</h2>
+            <p>Работа с базами данных и результатами моделирования</p>
+        </div>
 
         <div class="modules-grid">
-            <a href="array.html" class="module-card">
-                <div class="module-icon"><i class="fas fa-atom"></i></div>
+            <a href="atoms.html" class="module-card" data-aos="fade-up" data-aos-delay="100">
+                <div class="module-icon atoms">
+                    <i class="fas fa-atom"></i>
+                </div>
                 <h3>Атомы</h3>
-                <p>Характеристики и свойства атомов для моделирования</p>
+                <p>Характеристики и свойства атомов для моделирования плазменных процессов</p>
+                <div class="module-footer">
+                        <span class="badge-auth">
+                            <i class="fas fa-lock"></i>
+                            Требуется авторизация
+                        </span>
+                </div>
             </a>
 
-            <a href="chain.html" class="module-card">
-                <div class="module-icon"><i class="fas fa-bolt"></i></div>
+            <a href="ions.html" class="module-card" data-aos="fade-up" data-aos-delay="200">
+                <div class="module-icon ions">
+                    <i class="fas fa-bolt"></i>
+                </div>
                 <h3>Ионы</h3>
-                <p>Исследование ионных взаимодействий и зарядов</p>
+                <p>Исследование ионных взаимодействий, зарядов и энергетических характеристик</p>
+                <div class="module-footer">
+                        <span class="badge-auth">
+                            <i class="fas fa-lock"></i>
+                            Требуется авторизация
+                        </span>
+                </div>
             </a>
 
-            <a href="methods.html" class="module-card">
-                <div class="module-icon"><i class="fas fa-cogs"></i></div>
+            <a href="simulation.html" class="module-card" data-aos="fade-up" data-aos-delay="300">
+                <div class="module-icon methods">
+                    <i class="fas fa-cogs"></i>
+                </div>
                 <h3>Методы</h3>
-                <p>Численные алгоритмы и методы расчета</p>
+                <p>Численные алгоритмы и методы расчета физических параметров</p>
+                <div class="module-footer">
+                        <span class="badge-auth">
+                            <i class="fas fa-lock"></i>
+                            Требуется авторизация
+                        </span>
+                </div>
             </a>
 
-            <a href="charts.html" class="module-card">
-                <div class="module-icon"><i class="fas fa-chart-line"></i></div>
+            <a href="charts.html" class="module-card" data-aos="fade-up" data-aos-delay="400">
+                <div class="module-icon charts">
+                    <i class="fas fa-chart-line"></i>
+                </div>
                 <h3>Графики</h3>
-                <p>Визуализация и анализ результатов</p>
+                <p>Визуализация результатов моделирования и анализ данных</p>
+                <div class="module-footer">
+                        <span class="badge-auth">
+                            <i class="fas fa-lock"></i>
+                            Требуется авторизация
+                        </span>
+                </div>
             </a>
         </div>
     </div>
 </section>
 
-<!-- FOOTER -->
+<!-- Calculation Modules Section -->
+<section class="modules calculations-section" id="calculations">
+    <div class="container">
+        <div class="section-header" data-aos="fade-up">
+            <h2>Модули расчетов</h2>
+            <p>Локальные вычисления без подключения к серверу</p>
+        </div>
+
+        <div class="modules-grid three-cols">
+            <a href="plasma.html" class="module-card" data-aos="fade-up" data-aos-delay="100">
+                <div class="module-icon plasma">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <h3>Параметры плазмы</h3>
+                <p>Расчет плотности электронов, скорости и энергии ионов</p>
+                <div class="module-footer">
+                        <span class="badge-success">
+                            <i class="fas fa-check-circle"></i>
+                            Работает локально
+                        </span>
+                </div>
+            </a>
+
+            <a href="thermal.html" class="module-card" data-aos="fade-up" data-aos-delay="200">
+                <div class="module-icon thermal">
+                    <i class="fas fa-temperature-high"></i>
+                </div>
+                <h3>Тепловая симуляция</h3>
+                <p>Моделирование изменения температуры материала с построением графиков</p>
+                <div class="module-footer">
+                        <span class="badge-success">
+                            <i class="fas fa-check-circle"></i>
+                            Работает локально
+                        </span>
+                </div>
+            </a>
+
+            <a href="collision.html" class="module-card" data-aos="fade-up" data-aos-delay="300">
+                <div class="module-icon collision">
+                    <i class="fas fa-burst"></i>
+                </div>
+                <h3>Коллизии ионов</h3>
+                <p>Анализ взаимодействия ионов с атомами решётки и передачи энергии</p>
+                <div class="module-footer">
+                        <span class="badge-success">
+                            <i class="fas fa-check-circle"></i>
+                            Работает локально
+                        </span>
+                </div>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features">
+    <div class="container">
+        <div class="section-header" data-aos="fade-up">
+            <h2>Преимущества платформы</h2>
+            <p>Современные технологии для научных исследований</p>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card" data-aos="fade-up" data-aos-delay="100">
+                <div class="feature-icon">
+                    <i class="fas fa-rocket"></i>
+                </div>
+                <h3>Высокая производительность</h3>
+                <p>Оптимизированные алгоритмы для быстрых расчетов сложных физических моделей</p>
+            </div>
+
+            <div class="feature-card" data-aos="fade-up" data-aos-delay="200">
+                <div class="feature-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h3>Безопасность данных</h3>
+                <p>Надежная система аутентификации и защита научных данных пользователей</p>
+            </div>
+
+            <div class="feature-card" data-aos="fade-up" data-aos-delay="300">
+                <div class="feature-icon">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <h3>Визуализация</h3>
+                <p>Профессиональные графики и диаграммы для анализа результатов моделирования</p>
+            </div>
+
+            <div class="feature-card" data-aos="fade-up" data-aos-delay="400">
+                <div class="feature-icon">
+                    <i class="fas fa-server"></i>
+                </div>
+                <h3>Локальные расчеты</h3>
+                <p>Возможность работы без подключения к серверу для базовых вычислений</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
 <footer class="footer">
     <div class="container footer-inner">
-        <span>© 2025 PlasmaLab</span>
-        <span>Research & Simulation Platform</span>
+        <div class="footer-brand">
+            <div class="logo">
+                <i class="fas fa-atom"></i>
+                <span>PlasmaLab</span>
+            </div>
+            <p>Научная платформа для моделирования плазменных процессов</p>
+        </div>
+
+        <div class="footer-links">
+            <div class="footer-column">
+                <h4>Платформа</h4>
+                <a href="atoms.html">Атомы</a>
+                <a href="ions.html">Ионы</a>
+                <a href="simulation.html">Методы</a>
+                <a href="charts.html">Графики</a>
+            </div>
+
+            <div class="footer-column">
+                <h4>Расчеты</h4>
+                <a href="plasma.html">Параметры плазмы</a>
+                <a href="thermal.html">Тепловая симуляция</a>
+                <a href="collision.html">Коллизии ионов</a>
+            </div>
+
+        </div>
+
+        <div class="footer-bottom">
+            <p>© 2026 PlasmaLab. Research & Simulation Platform</p>
+            <div class="footer-social">
+                <a href="https://github.com/Nill222/PlazmaApi" aria-label="GitHub"><i class="fab fa-github"></i></a>
+            </div>
+        </div>
     </div>
 </footer>
 
-<!-- ВАЖНО: auth.js должен загружаться ПЕРВЫМ -->
+<!-- Scripts -->
 <script src="js/auth.js"></script>
 <script src="js/main-ui.js"></script>
+<script src="js/main.js"></script>
+<script src="js/animations.js"></script>
 
 </body>
 </html>

@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="База атомов PlasmaLab - характеристики химических элементов для моделирования">
+    <title>Атомы | PlasmaLab</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/atoms.css">
+</head>
+<body>
+
+<!-- Authentication Modal -->
+<div class="auth-overlay" id="authOverlay">
+    <div class="auth-modal">
+        <div class="auth-header">
+            <button class="auth-tab active" data-tab="login">
+                <i class="fas fa-sign-in-alt"></i>
+                Вход
+            </button>
+            <button class="auth-tab" data-tab="register">
+                <i class="fas fa-user-plus"></i>
+                Регистрация
+            </button>
+            <button class="auth-close" onclick="hideAuthModal()" aria-label="Закрыть">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="auth-body">
+            <!-- Login Form -->
+            <form id="loginForm" class="auth-form active" data-form="login">
+                <div class="auth-field">
+                    <label for="login-username">
+                        <i class="fas fa-user"></i>
+                        Имя пользователя
+                    </label>
+                    <input
+                            type="text"
+                            id="login-username"
+                            name="username"
+                            required
+                            autocomplete="username"
+                            placeholder="Введите имя пользователя"
+                    >
+                </div>
+                <div class="auth-field">
+                    <label for="login-password">
+                        <i class="fas fa-lock"></i>
+                        Пароль
+                    </label>
+                    <input
+                            type="password"
+                            id="login-password"
+                            name="password"
+                            required
+                            autocomplete="current-password"
+                            placeholder="Введите пароль"
+                    >
+                </div>
+                <div id="login_msg" class="auth-message" role="alert"></div>
+                <button type="submit" class="btn btn-primary full">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Войти
+                </button>
+            </form>
+
+            <!-- Register Form -->
+            <form id="registerForm" class="auth-form" data-form="register">
+                <div class="auth-field">
+                    <label for="register-username">
+                        <i class="fas fa-user"></i>
+                        Имя пользователя
+                    </label>
+                    <input
+                            type="text"
+                            id="register-username"
+                            name="username"
+                            required
+                            autocomplete="username"
+                            placeholder="Минимум 5 символов"
+                    >
+                </div>
+                <div class="auth-field">
+                    <label for="register-email">
+                        <i class="fas fa-envelope"></i>
+                        Email
+                    </label>
+                    <input
+                            type="email"
+                            id="register-email"
+                            name="email"
+                            required
+                            autocomplete="email"
+                            placeholder="your@email.com"
+                    >
+                </div>
+                <div class="auth-field">
+                    <label for="register-password">
+                        <i class="fas fa-lock"></i>
+                        Пароль
+                    </label>
+                    <input
+                            type="password"
+                            id="register-password"
+                            name="password"
+                            required
+                            autocomplete="new-password"
+                            placeholder="Минимум 8 символов"
+                    >
+                </div>
+                <div id="signup_msg" class="auth-message" role="alert"></div>
+                <button type="submit" class="btn btn-primary full">
+                    <i class="fas fa-user-plus"></i>
+                    Создать аккаунт
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Create Atom Modal -->
+<div class="atom-modal-overlay" id="createAtomModal">
+    <div class="atom-modal">
+        <div class="atom-modal-header">
+            <h3><i class="fas fa-plus-circle"></i> Создать атом</h3>
+            <button class="modal-close" onclick="hideCreateModal()" aria-label="Закрыть">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <form id="createAtomForm" class="atom-form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="atom-name">
+                        <i class="fas fa-tag"></i>
+                        Символ элемента *
+                    </label>
+                    <input
+                            type="text"
+                            id="atom-name"
+                            name="atomName"
+                            required
+                            placeholder="Si"
+                            pattern="^[A-Z][a-z]?$"
+                            maxlength="2"
+                            title="Должно начинаться с заглавной буквы, не более 2 букв"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="atom-fullname">
+                        <i class="fas fa-file-alt"></i>
+                        Полное название *
+                    </label>
+                    <input
+                            type="text"
+                            id="atom-fullname"
+                            name="fullName"
+                            required
+                            placeholder="Silicon"
+                            minlength="2"
+                            maxlength="50"
+                    >
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="atom-mass">
+                        <i class="fas fa-weight-hanging"></i>
+                        Масса (кг) *
+                    </label>
+                    <input
+                            type="number"
+                            id="atom-mass"
+                            name="mass"
+                            required
+                            step="1e-27"
+                            placeholder="4.66e-26"
+                            min="1e-27"
+                            max="1e-24"
+                    >
+                    <small style="font-size: 0.75rem; color: var(--text-tertiary); margin-top: 0.25rem;">
+                        Диапазон: 1e-27 до 1e-24 кг
+                    </small>
+                </div>
+
+                <div class="form-group">
+                    <label for="atom-a">
+                        <i class="fas fa-cube"></i>
+                        Параметр решётки (Å) *
+                    </label>
+                    <input
+                            type="number"
+                            id="atom-a"
+                            name="a"
+                            required
+                            step="0.001"
+                            placeholder="5.431"
+                            min="0"
+                    >
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="atom-debye">
+                        <i class="fas fa-thermometer-half"></i>
+                        Температура Дебая (К) *
+                    </label>
+                    <input
+                            type="number"
+                            id="atom-debye"
+                            name="debyeTemperature"
+                            required
+                            step="0.1"
+                            placeholder="645"
+                            min="0"
+                            max="1000"
+                    >
+                </div>
+
+                <div class="form-group">
+                    <label for="atom-valence">
+                        <i class="fas fa-link"></i>
+                        Валентность *
+                    </label>
+                    <input
+                            type="number"
+                            id="atom-valence"
+                            name="valence"
+                            required
+                            step="1"
+                            placeholder="4"
+                            min="0"
+                            max="8"
+                    >
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label for="atom-structure">
+                        <i class="fas fa-shapes"></i>
+                        Структура *
+                    </label>
+                    <select
+                            id="atom-structure"
+                            name="structure"
+                            required
+                    >
+                        <option value="">Выберите тип структуры</option>
+                        <option value="FCC">FCC (ГЦК - гранецентрированная кубическая)</option>
+                        <option value="BCC">BCC (ОЦК - объёмноцентрированная кубическая)</option>
+                        <option value="HCP">HCP (ГПУ - гексагональная плотноупакованная)</option>
+                        <option value="DIAMOND">DIAMOND (Алмазная)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="createAtomMsg" class="auth-message" role="alert"></div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="hideCreateModal()">
+                    <i class="fas fa-times"></i>
+                    Отмена
+                </button>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i>
+                    Создать атом
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Header -->
+<header class="header">
+    <div class="container header-inner">
+        <a href="index.html" class="logo">
+            <i class="fas fa-atom"></i>
+            <span>PlasmaLab</span>
+        </a>
+
+        <nav class="nav" id="mainNav">
+            <a class="nav-link" href="index.html">
+                <i class="fas fa-home"></i>
+                Главная
+            </a>
+            <a class="nav-link active" href="atoms.html">
+                <i class="fas fa-atom"></i>
+                Атомы
+            </a>
+            <a class="nav-link" href="ions.html">
+                <i class="fas fa-bolt"></i>
+                Ионы
+            </a>
+            <a class="nav-link" href="simulation.html">
+                <i class="fas fa-cogs"></i>
+                Симуляция
+            </a>
+            <a class="nav-link" href="charts.html">
+                <i class="fas fa-chart-line"></i>
+                Графики
+            </a>
+        </nav>
+
+        <div class="auth">
+            <!-- Guest State -->
+            <div class="auth-buttons">
+                <button class="btn btn-primary" onclick="showAuthModal()">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Войти
+                </button>
+            </div>
+
+            <!-- Authenticated State -->
+            <div class="user-menu" style="display: none;">
+                <div class="user-info">
+                    <i class="fas fa-user-circle"></i>
+                    <span class="user-name" id="usernameDisplay"></span>
+                </div>
+                <button class="btn btn-secondary" onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Выйти
+                </button>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Page Header -->
+<section class="page-header">
+    <div class="container">
+        <div class="page-title">
+            <div class="title-icon">
+                <i class="fas fa-atom"></i>
+            </div>
+            <div>
+                <h1>База атомов</h1>
+                <p>Характеристики химических элементов для моделирования</p>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-atom"></i></div>
+                <div class="stat-content">
+                    <div class="stat-value" id="totalAtoms">0</div>
+                    <div class="stat-label">Всего атомов</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-weight-hanging"></i></div>
+                <div class="stat-content">
+                    <div class="stat-value" id="avgMass">0</div>
+                    <div class="stat-label">Средняя масса (кг)</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-cube"></i></div>
+                <div class="stat-content">
+                    <div class="stat-value" id="avgEnergy">0</div>
+                    <div class="stat-label">Средний параметр (Å)</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Toolbar -->
+<section class="toolbar">
+    <div class="container">
+        <div class="toolbar-inner">
+            <div class="search-box">
+                <label for="searchInput" class="sr-only">Поиск атомов</label>
+                <i class="fas fa-search" aria-hidden="true"></i>
+                <input
+                        type="text"
+                        id="searchInput"
+                        placeholder="Поиск по символу или названию..."
+                        autocomplete="off"
+                >
+                <button class="search-clear" id="searchClear" style="display:none;" aria-label="Очистить поиск">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                </button>
+            </div>
+
+            <button class="btn btn-primary" onclick="showCreateModal()">
+                <i class="fas fa-plus" aria-hidden="true"></i>
+                Создать атом
+            </button>
+        </div>
+    </div>
+</section>
+
+<!-- Atoms Section -->
+<section class="atoms-section">
+    <div class="container">
+        <!-- Loading State -->
+        <div id="loadingState" class="loading-state">
+            <div class="spinner"></div>
+            <p>Загрузка атомов...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state" style="display:none;">
+            <div class="empty-icon">
+                <i class="fas fa-atom"></i>
+            </div>
+            <h3>Атомы не найдены</h3>
+            <p>Начните с создания первого атома в базе данных</p>
+            <button class="btn btn-primary" onclick="showCreateModal()">
+                <i class="fas fa-plus"></i>
+                Создать атом
+            </button>
+        </div>
+
+        <!-- No Results State -->
+        <div id="noResultsState" class="empty-state" style="display:none;">
+            <div class="empty-icon">
+                <i class="fas fa-search"></i>
+            </div>
+            <h3>Ничего не найдено</h3>
+            <p id="noResultsText">Попробуйте изменить поисковый запрос</p>
+        </div>
+
+        <!-- Atoms Grid -->
+        <div id="atomsGrid" class="atoms-grid" style="display:none;"></div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+    <div class="container footer-inner">
+        <div class="footer-brand">
+            <div class="logo">
+                <i class="fas fa-atom"></i>
+                <span>PlasmaLab</span>
+            </div>
+            <p>Научная платформа для моделирования плазменных процессов</p>
+        </div>
+
+        <div class="footer-bottom">
+            <p>© 6 PlasmaLab. Research & Simulation Platform</p>
+        </div>
+    </div>
+</footer>
+
+<!-- Scripts -->
+<script src="js/auth.js"></script>
+<script src="js/main-ui.js"></script>
+<script src="js/atoms.js"></script>
+
+</body>
+</html>

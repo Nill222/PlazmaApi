@@ -1,121 +1,221 @@
-// ==============================================================
-// PlasmaLab Main UI Logic
-// ==============================================================
+/**
+ * ==============================================================
+ * PlasmaLab Main UI Logic v3.0
+ * Clean, modular UI management
+ * ==============================================================
+ */
 
-// Функции для модального окна
-function showAuthModal() {
-    const overlay = document.getElementById('authOverlay');
-    if (overlay) {
-        overlay.style.display = 'flex';
-        console.log('[UI] Auth modal opened');
-    }
-}
-
-function hideAuthModal() {
-    const overlay = document.getElementById('authOverlay');
-    if (overlay) {
-        overlay.style.display = 'none';
-        console.log('[UI] Auth modal closed');
-    }
-    // Очищаем сообщения при закрытии
-    if (window.PlasmaAuth?.clearMessages) {
-        window.PlasmaAuth.clearMessages();
-    }
-}
-
-// Экспортируем в window СРАЗУ (не ждём DOMContentLoaded)
-window.showAuthModal = showAuthModal;
-window.hideAuthModal = hideAuthModal;
+'use strict';
 
 // ==============================================================
-// Инициализация UI
+// Modal Manager
 // ==============================================================
 
-document.addEventListener('DOMContentLoaded', function() {
+const ModalManager = {
+    /**
+     * Show authentication modal
+     */
+    show() {
+        const overlay = document.getElementById('authOverlay');
+        if (overlay) {
+            overlay.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            console.log('[UI] Auth modal opened');
+        }
+    },
+
+    /**
+     * Hide authentication modal
+     */
+    hide() {
+        const overlay = document.getElementById('authOverlay');
+        if (overlay) {
+            overlay.style.display = 'none';
+            document.body.style.overflow = '';
+            console.log('[UI] Auth modal closed');
+        }
+
+        // Clear messages when closing modal
+        if (window.PlasmaAuth?.clearMessages) {
+            window.PlasmaAuth.clearMessages();
+        }
+    },
+};
+
+// ==============================================================
+// Tab Manager
+// ==============================================================
+
+const TabManagerUI = {
+    /**
+     * Initialize tab switching
+     */
+    init() {
+        const tabs = document.querySelectorAll('.auth-tab');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                this.switchTab(tab.dataset.tab);
+            });
+        });
+
+        console.log('[UI] Tab manager initialized');
+    },
+
+    /**
+     * Switch to a specific tab
+     * @param {string} tabName - Tab identifier
+     */
+    switchTab(tabName) {
+        // Update tab buttons
+        document.querySelectorAll('.auth-tab').forEach(tab => {
+            tab.classList.remove('active');
+            if (tab.dataset.tab === tabName) {
+                tab.classList.add('active');
+            }
+        });
+
+        // Update form visibility
+        document.querySelectorAll('.auth-form').forEach(form => {
+            form.classList.remove('active');
+            if (form.dataset.form === tabName) {
+                form.classList.add('active');
+            }
+        });
+
+        // Clear messages when switching tabs
+        if (window.PlasmaAuth?.clearMessages) {
+            window.PlasmaAuth.clearMessages();
+        }
+    },
+};
+
+// ==============================================================
+// Protected Links Manager
+// ==============================================================
+
+const ProtectedLinksManager = {
+    /**
+     * Pages that require authentication
+     */
+    protectedPages: [
+        {
+            href: 'atoms.html',
+            message: 'Для доступа к модулю "Атомы" необходимо войти в систему',
+        },
+        {
+            href: 'ions.html',
+            message: 'Для доступа к модулю "Ионы" необходимо войти в систему',
+        },
+        {
+            href: 'simulation.html',
+            message: 'Для доступа к модулю "Методы" необходимо войти в систему',
+        },
+        {
+            href: 'charts.html',
+            message: 'Для доступа к модулю "Графики" необходимо войти в систему',
+        },
+    ],
+
+    /**
+     * Setup protection for authenticated pages
+     */
+    setup() {
+        this.protectedPages.forEach(page => {
+            const links = document.querySelectorAll(`a[href="${page.href}"]`);
+
+            links.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    const isAuthenticated = window.PlasmaAuth?.isAuthenticated() || false;
+
+                    if (!isAuthenticated) {
+                        e.preventDefault();
+
+                        // Show message
+                        if (window.PlasmaAuth?.showMessage) {
+                            window.PlasmaAuth.showMessage(page.message, 'error');
+                        } else {
+                            alert(page.message);
+                        }
+
+                        // Open auth modal
+                        ModalManager.show();
+                    }
+                });
+            });
+        });
+
+        console.log('[UI] Protected links setup complete');
+    },
+};
+
+// ==============================================================
+// Event Handlers
+// ==============================================================
+
+const EventHandlers = {
+    /**
+     * Setup modal close handlers
+     */
+    setupModalClose() {
+        const overlay = document.getElementById('authOverlay');
+
+        if (overlay) {
+            // Close on overlay click
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    ModalManager.hide();
+                }
+            });
+        }
+
+        // Close on ESC key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const overlay = document.getElementById('authOverlay');
+                if (overlay && overlay.style.display === 'flex') {
+                    ModalManager.hide();
+                }
+            }
+        });
+    },
+
+    /**
+     * Setup mobile menu toggle
+     */
+    setupMobileMenu() {
+        const toggle = document.getElementById('mobileMenuToggle');
+        const nav = document.getElementById('mainNav');
+
+        if (toggle && nav) {
+            toggle.addEventListener('click', () => {
+                nav.classList.toggle('active');
+            });
+        }
+    },
+};
+
+// ==============================================================
+// Initialization
+// ==============================================================
+
+document.addEventListener('DOMContentLoaded', () => {
     console.log('[MainUI] Initializing...');
 
-    // Переключение вкладок в модальном окне
-    document.querySelectorAll('.auth-tab').forEach(tab => {
-        tab.addEventListener('click', () => {
-            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
-
-            tab.classList.add('active');
-            const targetForm = document.querySelector(`.auth-form[data-form="${tab.dataset.tab}"]`);
-            if (targetForm) {
-                targetForm.classList.add('active');
-            }
-
-            // Очищаем сообщения при переключении вкладок
-            if (window.PlasmaAuth?.clearMessages) {
-                window.PlasmaAuth.clearMessages();
-            }
-        });
-    });
-
-    // Закрытие модального окна при клике вне его
-    const authOverlay = document.getElementById('authOverlay');
-    if (authOverlay) {
-        authOverlay.addEventListener('click', (e) => {
-            if (e.target === authOverlay) {
-                hideAuthModal();
-            }
-        });
-    }
-
-    // Закрытие по ESC
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            const overlay = document.getElementById('authOverlay');
-            if (overlay && overlay.style.display === 'flex') {
-                hideAuthModal();
-            }
-        }
-    });
-
-    // Защита ссылок на закрытые страницы
-    setupProtectedLinks();
+    // Initialize components
+    TabManagerUI.init();
+    ProtectedLinksManager.setup();
+    EventHandlers.setupModalClose();
+    EventHandlers.setupMobileMenu();
 
     console.log('[MainUI] Initialization complete');
 });
 
 // ==============================================================
-// Защита защищенных страниц
+// Export to window
 // ==============================================================
 
-function setupProtectedLinks() {
-    const protectedPages = [
-        {
-            href: 'methods.html',
-            message: 'Для доступа к методам моделирования необходимо войти в систему'
-        },
-        {
-            href: 'charts.html',
-            message: 'Для просмотра графиков необходимо войти в систему'
-        }
-    ];
+window.showAuthModal = () => ModalManager.show();
+window.hideAuthModal = () => ModalManager.hide();
 
-    protectedPages.forEach(page => {
-        const links = document.querySelectorAll(`a[href="${page.href}"]`);
-
-        links.forEach(link => {
-            link.addEventListener('click', function(e) {
-                const isAuth = window.PlasmaAuth?.isAuthenticated() || false;
-
-                if (!isAuth) {
-                    e.preventDefault();
-
-                    if (window.PlasmaAuth?.showMessage) {
-                        window.PlasmaAuth.showMessage(page.message, 'error');
-                    } else {
-                        alert(page.message);
-                    }
-
-                    showAuthModal();
-                }
-            });
-        });
-    });
-
-    console.log('[MainUI] Protected links setup complete');
-}
+console.log('[MainUI] v3.0 loaded');
