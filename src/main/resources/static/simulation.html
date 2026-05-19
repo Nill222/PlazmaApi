@@ -145,19 +145,19 @@
                         <h4><i class="fas fa-bolt"></i> Параметры плазмы</h4>
                         <div class="form-group">
                             <label for="voltage">Напряжение (В)</label>
-                            <input type="number" id="voltage" name="voltage" required step="1" min="0" max="10000" value="500">
+                            <input type="number" id="voltage" name="voltage" step="1" min="0" max="10000" value="500">
                         </div>
                         <div class="form-group">
                             <label for="current">Ток (А)</label>
-                            <input type="number" id="current" name="current" required step="0.01" min="0" max="100" value="1.5">
+                            <input type="number" id="current" name="current" step="0.01" min="0" max="100" value="1.5">
                         </div>
                         <div class="form-group">
                             <label for="pressure">Давление (Па)</label>
-                            <input type="number" id="pressure" name="pressure" required step="0.01" min="0" max="1000" value="10">
+                            <input type="number" id="pressure" name="pressure" step="0.01" min="0" max="1000" value="10">
                         </div>
                         <div class="form-group">
                             <label for="electronTemp">T электронов (К)</label>
-                            <input type="number" id="electronTemp" name="electronTemp" required step="100" min="0" max="100000" value="11600">
+                            <input type="number" id="electronTemp" name="electronTemp" step="100" min="0" max="100000" value="11600">
                         </div>
                     </div>
 
@@ -166,15 +166,15 @@
                         <h4><i class="fas fa-ruler-combined"></i> Геометрия камеры</h4>
                         <div class="form-group">
                             <label for="chamberWidth">Ширина (м)</label>
-                            <input type="number" id="chamberWidth" name="chamberWidth" required step="0.01" min="0" max="10" value="0.5">
+                            <input type="number" id="chamberWidth" name="chamberWidth" step="0.01" min="0" max="10" value="0.5">
                         </div>
                         <div class="form-group">
                             <label for="chamberDepth">Глубина (м)</label>
-                            <input type="number" id="chamberDepth" name="chamberDepth" required step="0.01" min="0" max="10" value="0.3">
+                            <input type="number" id="chamberDepth" name="chamberDepth" step="0.01" min="0" max="10" value="0.3">
                         </div>
                         <div class="form-group">
                             <label for="angle">Угол падения (°)</label>
-                            <input type="number" id="angle" name="angle" required step="1" min="0" max="90" value="0">
+                            <input type="number" id="angle" name="angle" step="1" min="0" max="90" value="0">
                         </div>
                     </div>
 
@@ -183,7 +183,7 @@
                         <h4><i class="fas fa-clock"></i> Время и температура</h4>
                         <div class="form-group">
                             <label for="exposureTime">Время облучения (с)</label>
-                            <input type="number" id="exposureTime" name="exposureTime" required step="1" min="1" max="100000" value="3600">
+                            <input type="number" id="exposureTime" name="exposureTime" step="1" min="1" max="100000" value="3600">
                         </div>
                         <div class="form-group">
                             <label for="ambientTemp">T окружения (К)</label>
@@ -375,6 +375,36 @@
                                     <div class="result-card accent-teal"><div class="rc-icon"><i class="fas fa-ruler-vertical"></i></div><div class="rc-label">Глубина фронта Дебая</div><div class="rc-value" id="ps_debye_depth">—</div><div class="rc-unit">м</div></div>
                                 </div>
                             </div>
+
+                            <!-- Skin-слой и поверхностные эффекты -->
+                            <div class="result-block" style="margin-top:1.5rem;">
+                                <div class="result-block-header skin-header">
+                                    <div class="block-icon"><i class="fas fa-bolt"></i></div>
+                                    <div><h4>Скин-эффект и поверхностный нагрев</h4><p>Параметры электромагнитного взаимодействия с поверхностью</p></div>
+                                </div>
+                                <div class="result-grid cols-3">
+                                    <div class="result-card accent-yellow"><div class="rc-icon"><i class="fas fa-wave-square"></i></div><div class="rc-label">δ — глубина скин-слоя</div><div class="rc-value" id="ps_skin_depth">—</div><div class="rc-unit">м</div></div>
+                                    <div class="result-card accent-yellow"><div class="rc-icon"><i class="fas fa-power-off"></i></div><div class="rc-label">P_skin (???)</div><div class="rc-value" id="ps_skin_surface_power">—</div><div class="rc-unit">Вт/м²</div></div>
+                                    <div class="result-card accent-yellow"><div class="rc-icon"><i class="fas fa-battery-full"></i></div><div class="rc-label">Накопленная энергия (???)</div><div class="rc-value" id="ps_skin_accumulated_energy">—</div><div class="rc-unit">Дж/м²</div></div>
+                                    <div class="result-card accent-yellow"><div class="rc-icon"><i class="fas fa-temperature-high"></i></div><div class="rc-label">ΔT_skin</div><div class="rc-value" id="ps_skin_temperature_delta">—</div><div class="rc-unit">К</div></div>
+                                    <div class="result-card accent-yellow"><div class="rc-icon"><i class="fas fa-thermometer-full"></i></div><div class="rc-label">эффективная температура поверхности</div><div class="rc-value" id="ps_effective_surface_temp">—</div><div class="rc-unit">К</div></div>
+                                </div>
+                            </div>
+
+                            <!-- Энергетические коэффициенты -->
+                            <div class="result-block" style="margin-top:1.5rem;">
+                                <div class="result-block-header gain-header">
+                                    <div class="block-icon"><i class="fas fa-chart-line"></i></div>
+                                    <div><h4>Коэффициенты усиления и динамика</h4><p>Параметры энерговыделения и модификации слоя</p></div>
+                                </div>
+                                <div class="result-grid cols-3">
+                                    <div class="result-card accent-lime"><div class="rc-icon"><i class="fas fa-arrow-up"></i></div><div class="rc-label">Энергетическое усиление G</div><div class="rc-value" id="ps_energy_gain_factor">—</div><div class="rc-unit">—</div></div>
+                                    <div class="result-card accent-lime"><div class="rc-icon"><i class="fas fa-adjust"></i></div><div class="rc-label">M_p — плазменный множитель</div><div class="rc-value" id="ps_plasma_correction_factor">—</div><div class="rc-unit">—</div></div>
+                                    <div class="result-card accent-lime"><div class="rc-icon"><i class="fas fa-tachometer-alt"></i></div><div class="rc-label">Скорость воздействия v(t)</div><div class="rc-value" id="ps_exposure_rate">—</div><div class="rc-unit">1/с</div></div>
+                                    <div class="result-card accent-lime"><div class="rc-icon"><i class="fas fa-layer-group"></i></div><div class="rc-label">Толщина модифицированного слоя</div><div class="rc-value" id="ps_modified_layer_thickness">—</div><div class="rc-unit">м</div></div>
+                                </div>
+                            </div>
+
                             <div class="result-block" style="margin-top:1.5rem;">
                                 <div class="result-block-header plasma-header">
                                     <div class="block-icon"><i class="fas fa-atom"></i></div>

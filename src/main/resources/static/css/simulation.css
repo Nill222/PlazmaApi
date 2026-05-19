@@ -844,3 +844,36 @@
     gap: .75rem;
     margin-top: 1rem;
 }
+
+/* Новые акцентные цвета для карточек */
+.result-card.accent-amber { border-left-color: #f59e0b; background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); }
+.result-card.accent-slate { border-left-color: #64748b; background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%); }
+
+/* Сетка 4 колонки для новых блоков */
+.result-grid.cols-4 {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+@media (max-width: 1200px) {
+    .result-grid.cols-4 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+    .result-grid.cols-4 { grid-template-columns: 1fr; }
+}
+
+/* Контейнер для графика концентрации */
+.chart-container {
+    background: #fff;
+    border-radius: 12px;
+    padding: 1rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* Визуализация 3D - кнопка профиля концентрации */
+.viz3d-btn[data-view="concentration"] { border-color: #8b5cf6; }
+.viz3d-btn[data-view="concentration"].active {
+    background: #8b5cf6;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(139, 92, 246, 0.4);
+}
