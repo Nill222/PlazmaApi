@@ -18,6 +18,15 @@ public record PhysicsStats(
     double fluence,                // Интегральный поток ионов (1/м²)
     double fluenceEff,             // Эффективный флюенс с учётом усиления
     double ionFlux,                // Поток ионов (1/(м²·с))
+    double energyGainFactor,       // G — энергетическое усиление (2)
+    double plasmaCorrectionFactor, // M_p — плазменный множитель (3)
+    double exposureRate,           // скорость воздействия v(t) (4)
+    double modifiedLayerThickness, // h — толщина модифицированного слоя (5), м
+    double skinDepth,              // δ — глубина скин-слоя (6), м
+    double skinSurfacePower,       // P_skin (9), Вт/м²
+    double skinAccumulatedEnergy,  // W_skin (10), Дж/м²
+    double skinTemperatureDelta,   // ΔT_skin (11), К
+    double effectiveSurfaceTemperature, // T_eff (12), К
     double resonanceXi,            // Резонансный коэффициент усиления
     double dSlr,                   // Вклад SLR в D (м²/с)
     double dRes,                   // Резонансный вклад в D (м²/с)

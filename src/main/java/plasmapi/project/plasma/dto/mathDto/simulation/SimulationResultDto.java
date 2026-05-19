@@ -30,5 +30,6 @@ public record SimulationResultDto(
         double ionFlux,
         double resonanceXi,
         double dSlr,
-        double dRes
+        double dRes,
+        SimulationIntermediateResultDto intermediate
 ) {}

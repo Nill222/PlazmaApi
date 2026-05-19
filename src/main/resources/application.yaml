@@ -34,3 +34,38 @@ spring:
   token:
     signing:
       key: "53A73E5F1C4E0A2D3B5F2D784E6A1B423D6F247D1F6E5C3A596D635A75327855"
+
+# Модель энерговклада ионного воздействия (формулы 1–14)
+energy-deposition:
+  anode-drop-fraction: 0.02
+  cathode-fall-fraction: 0.85
+  anode-sheath-fraction: 0.05
+  cathode-sheath-fraction: 0.12
+  energy-gain-exponent: 1.0
+  reference-path-length-m: 0.1
+  default-gap-length-m: 0.1
+  default-path-length-m: 0.1
+  integration:
+    min-steps: 50
+    max-steps: 5000
+  layer:
+    dose-to-thickness: 5.0e-12
+    implantation-efficiency: 0.35
+    angle-exponent: 1.0
+    temperature-sensitivity: 2.0e-4
+  plasma:
+    linear-pressure: 1.0e-5
+    linear-electron-temp: 0.15
+    linear-current: 1.0e-3
+    linear-voltage: 1.0e-4
+    pair-pressure-temp: 2.0e-6
+    pair-current-voltage: 5.0e-7
+    min-factor: 0.1
+    max-factor: 10.0
+  skin:
+    enabled: true
+    angular-frequency: 2.0e6
+    ac-field-fraction: 0.12
+    surface-heat-capacity: 4.0e6
+    default-conductivity: 1.0e7
+    relative-permeability: 1.0

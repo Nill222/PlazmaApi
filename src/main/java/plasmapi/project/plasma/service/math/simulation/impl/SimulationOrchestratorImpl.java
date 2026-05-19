@@ -10,6 +10,7 @@ import plasmapi.project.plasma.repository.IonRepository;
 import plasmapi.project.plasma.service.math.diffusion.*;
 import plasmapi.project.plasma.service.math.ion.IonComponent;
 import plasmapi.project.plasma.service.math.ion.IonComposition;
+import plasmapi.project.plasma.service.math.PhysicsStats;
 import plasmapi.project.plasma.service.math.plazma.PlasmaResult;
 import plasmapi.project.plasma.service.math.plazma.PlasmaService;
 import plasmapi.project.plasma.service.math.simulation.*;
@@ -97,14 +98,65 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
         );
 
         // =========================
-        // 8. RESULT (с PhysicsStats)
+        // 8. RESULT (профиль + промежуточные этапы)
         // =========================
+        PhysicsStats stats = profile.getStats();
+        SimulationIntermediateResult intermediate = new SimulationIntermediateResult(
+                plasma,
+                profile.getEnergyDeposition(),
+                buildThermalIntermediate(stats),
+                profile.getDiffusionIntermediate()
+        );
+
         return new SimulationResult(
                 profile,
                 atom,
                 ion,
                 cfg,
-                profile.getStats() // 🔥 теперь явно доступно
+                stats,
+                plasma,
+                intermediate
+        );
+    }
+
+    private ThermalIntermediate buildThermalIntermediate(PhysicsStats stats) {
+        double min = Double.POSITIVE_INFINITY;
+        double max = Double.NEGATIVE_INFINITY;
+        double sum = 0.0;
+        int count = 0;
+
+        List<List<Double>> map = stats.thermalTemperatureMap();
+        if (map != null) {
+            for (List<Double> row : map) {
+                for (Double t : row) {
+                    if (t == null) continue;
+                    min = Math.min(min, t);
+                    max = Math.max(max, t);
+                    sum += t;
+                    count++;
+                }
+            }
+        }
+
+        if (count == 0) {
+            double probe = stats.finalProbeTemperature();
+            return new ThermalIntermediate(
+                    probe,
+                    stats.debyeFrontSpeed(),
+                    stats.debyeFrontDepth(),
+                    probe,
+                    probe,
+                    probe
+            );
+        }
+
+        return new ThermalIntermediate(
+                stats.finalProbeTemperature(),
+                stats.debyeFrontSpeed(),
+                stats.debyeFrontDepth(),
+                min,
+                max,
+                sum / count
         );
     }
 

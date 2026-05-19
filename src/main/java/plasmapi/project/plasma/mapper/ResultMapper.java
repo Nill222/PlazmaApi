@@ -8,6 +8,7 @@ import plasmapi.project.plasma.dto.logikDTO.atom.AtomListDTO;
 import plasmapi.project.plasma.dto.logikDTO.config.ConfigDTO;
 import plasmapi.project.plasma.dto.logikDTO.ion.IonDTO;
 import plasmapi.project.plasma.dto.logikDTO.user.UserDTO;
+import plasmapi.project.plasma.dto.mathDto.simulation.SimulationIntermediateResultDto;
 import plasmapi.project.plasma.dto.mathDto.simulation.SimulationResultDto;
 import plasmapi.project.plasma.model.res.Result;
 import plasmapi.project.plasma.model.security.User;
@@ -66,8 +67,74 @@ public class ResultMapper{
         r.setDSlr(dto.dSlr());
         r.setDRes(dto.dRes());
 
+        if (dto.intermediate() != null) {
+            applyIntermediate(r, dto.intermediate());
+        }
+
         // createdAt установится через @PrePersist
         return r;
+    }
+
+    private void applyIntermediate(Result r, SimulationIntermediateResultDto i) {
+        r.setPotentialAtSurface(i.potentialAtSurface());
+        r.setAcceleratingField(i.acceleratingField());
+        r.setEnergyGainFactor(i.energyGainFactor());
+        r.setPlasmaCorrectionFactor(i.plasmaCorrectionFactor());
+        r.setExposureRate(i.exposureRate());
+        r.setModifiedLayerThickness(i.modifiedLayerThickness());
+        r.setSkinDepth(i.skinDepth());
+        r.setSkinSurfacePower(i.skinSurfacePower());
+        r.setSkinAccumulatedEnergy(i.skinAccumulatedEnergy());
+        r.setSkinTemperatureDelta(i.skinTemperatureDelta());
+        r.setEffectiveSurfaceTemperature(i.effectiveSurfaceTemperature());
+        r.setFinalProbeTemperature(i.finalProbeTemperature());
+        r.setDebyeFrontSpeed(i.debyeFrontSpeed());
+        r.setDebyeFrontDepth(i.debyeFrontDepth());
+        r.setDRadiation(i.dRadiation());
+        r.setDCollision(i.dCollision());
+        r.setSlrFactor(i.slrFactor());
+        r.setDamageRate(i.damageRate());
+        r.setProjectedRange(i.projectedRange());
+        r.setStraggleSigma(i.straggleSigma());
+        r.setLatticeStiffness(i.latticeStiffness());
+        r.setEquilibriumDistance(i.equilibriumDistance());
+    }
+
+    private SimulationIntermediateResultDto readIntermediate(Result r) {
+        return new SimulationIntermediateResultDto(
+                r.getIonEnergy() != null ? r.getIonEnergy() : 0.0,
+                r.getIonFlux() != null ? r.getIonFlux() : 0.0,
+                nz(r.getPotentialAtSurface()),
+                nz(r.getAcceleratingField()),
+                nz(r.getEnergyGainFactor()),
+                nz(r.getPlasmaCorrectionFactor()),
+                nz(r.getExposureRate()),
+                nz(r.getFluence()),
+                nz(r.getModifiedLayerThickness()),
+                nz(r.getSkinDepth()),
+                nz(r.getSkinSurfacePower()),
+                nz(r.getSkinAccumulatedEnergy()),
+                nz(r.getSkinTemperatureDelta()),
+                nz(r.getEffectiveSurfaceTemperature()),
+                nz(r.getFinalProbeTemperature()),
+                nz(r.getDebyeFrontSpeed()),
+                nz(r.getDebyeFrontDepth()),
+                nz(r.getAvgT()),
+                nz(r.getMinT()),
+                nz(r.getMaxT()),
+                nz(r.getDRadiation()),
+                nz(r.getDCollision()),
+                nz(r.getSlrFactor()),
+                nz(r.getDamageRate()),
+                nz(r.getProjectedRange()),
+                nz(r.getStraggleSigma()),
+                nz(r.getLatticeStiffness()),
+                nz(r.getEquilibriumDistance())
+        );
+    }
+
+    private static double nz(Double v) {
+        return v != null ? v : 0.0;
     }
 
     public ResultDTO toDTO(Result r) {
@@ -119,6 +186,7 @@ public class ResultMapper{
                 r.getResonanceXi(),
                 r.getDSlr(),
                 r.getDRes(),
+                readIntermediate(r),
                 r.getCreatedAt()
         );
     }

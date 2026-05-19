@@ -119,6 +119,78 @@ public class Result {
         @Column(name = "d_res")
         private Double dRes;
 
+        // ------------------ Intermediate: energy deposition / SKIN ---------
+
+        @Column(name = "potential_at_surface")
+        private Double potentialAtSurface;
+
+        @Column(name = "accelerating_field")
+        private Double acceleratingField;
+
+        @Column(name = "energy_gain_factor")
+        private Double energyGainFactor;
+
+        @Column(name = "plasma_correction_factor")
+        private Double plasmaCorrectionFactor;
+
+        @Column(name = "exposure_rate")
+        private Double exposureRate;
+
+        @Column(name = "modified_layer_thickness")
+        private Double modifiedLayerThickness;
+
+        @Column(name = "skin_depth")
+        private Double skinDepth;
+
+        @Column(name = "skin_surface_power")
+        private Double skinSurfacePower;
+
+        @Column(name = "skin_accumulated_energy")
+        private Double skinAccumulatedEnergy;
+
+        @Column(name = "skin_temperature_delta")
+        private Double skinTemperatureDelta;
+
+        @Column(name = "effective_surface_temperature")
+        private Double effectiveSurfaceTemperature;
+
+        // ------------------ Intermediate: thermal --------------------------
+
+        @Column(name = "final_probe_temperature")
+        private Double finalProbeTemperature;
+
+        @Column(name = "debye_front_speed")
+        private Double debyeFrontSpeed;
+
+        @Column(name = "debye_front_depth")
+        private Double debyeFrontDepth;
+
+        // ------------------ Intermediate: diffusion / transport -----------
+
+        @Column(name = "d_radiation")
+        private Double dRadiation;
+
+        @Column(name = "d_collision")
+        private Double dCollision;
+
+        @Column(name = "slr_factor")
+        private Double slrFactor;
+
+        @Column(name = "damage_rate")
+        private Double damageRate;
+
+        @Column(name = "projected_range")
+        private Double projectedRange;
+
+        @Column(name = "straggle_sigma")
+        private Double straggleSigma;
+
+        @Column(name = "lattice_stiffness")
+        private Double latticeStiffness;
+
+        @Column(name = "equilibrium_distance")
+        private Double equilibriumDistance;
+
         @Column(name = "created_at")
         private LocalDateTime createdAt = LocalDateTime.now();
 

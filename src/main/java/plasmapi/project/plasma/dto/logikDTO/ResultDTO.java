@@ -3,6 +3,7 @@ package plasmapi.project.plasma.dto.logikDTO;
 import plasmapi.project.plasma.dto.logikDTO.atom.AtomListDTO;
 import plasmapi.project.plasma.dto.logikDTO.config.ConfigDTO;
 import plasmapi.project.plasma.dto.logikDTO.ion.IonDTO;
+import plasmapi.project.plasma.dto.mathDto.simulation.SimulationIntermediateResultDto;
 
 import java.time.LocalDateTime;
 
@@ -37,6 +38,7 @@ public record ResultDTO(
         double resonanceXi,
         double dSlr,
         double dRes,
+        SimulationIntermediateResultDto intermediate,
         LocalDateTime createdAt
 ) {}
 

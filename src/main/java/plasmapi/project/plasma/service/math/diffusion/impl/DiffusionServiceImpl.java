@@ -20,10 +20,13 @@ import plasmapi.project.plasma.service.math.slr.SLRService;
 import plasmapi.project.plasma.service.math.thermal.ThermalResult;
 import plasmapi.project.plasma.service.math.thermal.ThermalService;
 import plasmapi.project.plasma.service.math.thermal.impl.ThermalServiceImpl;
+import plasmapi.project.plasma.service.math.energy.EnergyDepositionResult;
+import plasmapi.project.plasma.service.math.energy.EnergyDepositionService;
 import plasmapi.project.plasma.service.math.transport.IonTransportService;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.DoubleUnaryOperator;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +39,7 @@ public class DiffusionServiceImpl implements DiffusionService {
     private final ResonanceService resonanceService;
     private final IonCollisionAveragingService ionCollisionAveragingService;
     private final IonTransportService ionTransportService;
+    private final EnergyDepositionService energyDepositionService;
 
     private static final double R = PhysicalConstants.R;
     private static final double NA = PhysicalConstants.NA;
@@ -91,7 +95,27 @@ public class DiffusionServiceImpl implements DiffusionService {
 
         double ionEnergyEv = plasma.ionEnergyEv();
         double ionFlux = plasma.ionFlux();
-        double fluence = ionFlux * exposureTime;
+
+        // =========================
+        // 2b. ЭНЕРГОВКЛАД (1)–(5), SKIN (6)–(12)
+        // =========================
+        DoubleUnaryOperator timeModulation = buildThermalCyclingModulation(
+                adapter.isThermalCyclingEnabled(),
+                adapter.getCyclePeriod(),
+                adapter.getDutyCycle()
+        );
+
+        EnergyDepositionResult energyDeposition = energyDepositionService.compute(
+                plasmaConfig,
+                atom,
+                ionFlux,
+                exposureTime,
+                ambientTemp,
+                timeModulation
+        );
+
+        double fluence = energyDeposition.fluence();
+        double effectiveSurfaceTemp = energyDeposition.effectiveSurfaceTemperature();
 
         // =========================
         // 3. D0 (alloy-aware)
@@ -148,8 +172,8 @@ public class DiffusionServiceImpl implements DiffusionService {
         // 6. THERMAL DIFFUSION
         // =========================
         double D_thermal = clamp(
-                (D1 * Math.exp(-Q1 / (R * finalT)) +
-                        D2 * Math.exp(-Q2 / (R * finalT)))
+                (D1 * Math.exp(-Q1 / (R * effectiveSurfaceTemp)) +
+                        D2 * Math.exp(-Q2 / (R * effectiveSurfaceTemp)))
         );
 
         // =========================
@@ -216,7 +240,8 @@ public class DiffusionServiceImpl implements DiffusionService {
         double D_res = D_collision * (xi - 1.0);
 
         if (D_res < 0) D_res = 0;
-        double fluenceEff = fluence * Math.max(1.0, slrFactor) * Math.max(1.0, xi);
+        double fluenceEff = fluence * Math.max(1.0, slrFactor) * Math.max(1.0, xi)
+                * Math.max(energyDeposition.plasmaCorrectionFactor(), 1.0);
         // =========================
 // 10. EFFECTIVE DIFFUSION
 // =========================
@@ -278,7 +303,7 @@ public class DiffusionServiceImpl implements DiffusionService {
             conc.add(c);
         }
 
-        double meanDepth = Rp;
+        double meanDepth = Math.max(Rp, energyDeposition.modifiedLayerThickness());
 
         // =========================
 // 13. РАСЧЕТ ДОП. ПАРАМЕТРОВ (NEW)
@@ -348,12 +373,32 @@ public class DiffusionServiceImpl implements DiffusionService {
                 fluence,
                 fluenceEff,
                 ionFlux,
+                energyDeposition.energyGainFactor(),
+                energyDeposition.plasmaCorrectionFactor(),
+                energyDeposition.exposureRate(),
+                energyDeposition.modifiedLayerThickness(),
+                energyDeposition.skinDepth(),
+                energyDeposition.skinSurfacePower(),
+                energyDeposition.skinAccumulatedEnergy(),
+                energyDeposition.skinTemperatureDelta(),
+                energyDeposition.effectiveSurfaceTemperature(),
                 xi,
                 D_slr,
                 D_res,
                 thermalTimes,
                 thermalDepths,
                 thermalTemperatureMap
+        );
+
+        DiffusionIntermediate diffusionIntermediate = new DiffusionIntermediate(
+                D_rad,
+                D_collision,
+                slrFactor,
+                damageRate,
+                Rp,
+                sigma,
+                stiffness,
+                re
         );
 
         return new DiffusionProfile(
@@ -365,7 +410,9 @@ public class DiffusionServiceImpl implements DiffusionService {
                 meanDepth,
                 depths,
                 conc,
-                stats
+                stats,
+                energyDeposition,
+                diffusionIntermediate
         );
     }
 
@@ -376,6 +423,21 @@ public class DiffusionServiceImpl implements DiffusionService {
     private double clamp(double D) {
         if (Double.isNaN(D) || D < MIN_D) return MIN_D;
         return Math.min(D, MAX_D);
+    }
+
+    private DoubleUnaryOperator buildThermalCyclingModulation(
+            boolean enabled,
+            Double cyclePeriod,
+            Double dutyCycle
+    ) {
+        if (!enabled || cyclePeriod == null || cyclePeriod <= 0) {
+            return t -> 1.0;
+        }
+        double duty = (dutyCycle == null) ? 0.5 : Math.max(0.01, Math.min(0.99, dutyCycle));
+        return t -> {
+            double phase = t % cyclePeriod;
+            return phase <= cyclePeriod * duty ? 1.0 : 0.0;
+        };
     }
 
     /**

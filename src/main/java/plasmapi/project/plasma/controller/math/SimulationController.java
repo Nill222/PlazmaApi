@@ -13,6 +13,7 @@ import plasmapi.project.plasma.service.math.simulation.SimulationOrchestratorSer
 import plasmapi.project.plasma.service.math.simulation.SimulationRequest;
 import plasmapi.project.plasma.service.math.simulation.SimulationResult;
 
+import java.util.Map;
 import java.util.Optional;
 
 
@@ -47,6 +48,33 @@ public class SimulationController {
         ApiResponse<Optional<ResultDTO>> resp = new ApiResponse<>(
                 result,
                 "Симуляция выполнена",
+                HttpStatus.OK.value()
+        );
+        return ResponseEntity.ok(resp);
+    }
+
+    /**
+     * Запуск симуляции и сохранение итоговых и промежуточных результатов в БД.
+     */
+    @PostMapping("/run-and-save")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> runAndSave(
+            @Valid @RequestBody SimulationRequest request,
+            @RequestParam Integer configId
+    ) {
+        SimulationResult simulation = simulationService.runSimulation(request);
+        Optional<ResultDTO> saved = resultService.saveFromSimulation(
+                simulation,
+                configId,
+                request.getAtomId(),
+                request.getIonId()
+        );
+
+        ApiResponse<Map<String, Object>> resp = new ApiResponse<>(
+                Map.of(
+                        "simulation", simulation,
+                        "saved", saved.orElse(null)
+                ),
+                "Симуляция выполнена и сохранена",
                 HttpStatus.OK.value()
         );
         return ResponseEntity.ok(resp);

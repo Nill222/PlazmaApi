@@ -8,10 +8,11 @@ import plasmapi.project.plasma.model.res.Ion;
 import plasmapi.project.plasma.model.res.PlasmaConfiguration;
 import plasmapi.project.plasma.service.math.PhysicsStats;
 import plasmapi.project.plasma.service.math.diffusion.DiffusionProfile;
+import plasmapi.project.plasma.service.math.plazma.PlasmaResult;
 
 /**
  * Результат симуляции, возвращаемый клиенту.
- * Содержит рассчитанный диффузионный профиль и исходные данные для контекста.
+ * Содержит рассчитанный диффузионный профиль, промежуточные этапы и исходные данные.
  */
 @Getter
 @Setter
@@ -22,4 +23,6 @@ public class SimulationResult {
     private final Ion ion;
     private final PlasmaConfiguration plasmaConfig;
     private final PhysicsStats stats;
+    private final PlasmaResult plasmaResult;
+    private final SimulationIntermediateResult intermediate;
 }

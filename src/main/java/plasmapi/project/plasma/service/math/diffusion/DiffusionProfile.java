@@ -3,6 +3,7 @@ package plasmapi.project.plasma.service.math.diffusion;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import plasmapi.project.plasma.service.math.PhysicsStats;
+import plasmapi.project.plasma.service.math.energy.EnergyDepositionResult;
 
 import java.util.List;
 
@@ -23,4 +24,6 @@ public class DiffusionProfile {
     private final List<Double> depths;      // массив глубин для построения профиля, м
     private final List<Double> concentration; // относительная концентрация (нормированная) на соответствующих глубинах
     private final PhysicsStats stats;
+    private final EnergyDepositionResult energyDeposition;
+    private final DiffusionIntermediate diffusionIntermediate;
 }

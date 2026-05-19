@@ -1,0 +1,23 @@
+-- Промежуточные результаты расчёта (энерговклад, SKIN, диффузия)
+ALTER TABLE plazma.results ADD COLUMN IF NOT EXISTS potential_at_surface DOUBLE PRECISION;
+ALTER TABLE plazma.results ADD COLUMN IF NOT EXISTS accelerating_field DOUBLE PRECISION;
+ALTER TABLE plazma.results ADD COLUMN IF NOT EXISTS energy_gain_factor DOUBLE PRECISION;
+ALTER TABLE plazma.results ADD COLUMN IF NOT EXISTS plasma_correction_factor DOUBLE PRECISION;
+ALTER TABLE plazma.results ADD COLUMN IF NOT EXISTS exposure_rate DOUBLE PRECISION;
+ALTER TABLE plazma.results ADD COLUMN IF NOT EXISTS modified_layer_thickness DOUBLE PRECISION;
+ALTER TABLE plazma.results ADD COLUMN IF NOT EXISTS skin_depth DOUBLE PRECISION;
+ALTER TABLE plazma.results ADD COLUMN IF NOT EXISTS skin_surface_power DOUBLE PRECISION;
+ALTER TABLE plazma.results ADD COLUMN IF NOT EXISTS skin_accumulated_energy DOUBLE PRECISION;
+ALTER TABLE plazma.results ADD COLUMN IF NOT EXISTS skin_temperature_delta DOUBLE PRECISION;
+ALTER TABLE plazma.results ADD COLUMN IF NOT EXISTS effective_surface_temperature DOUBLE PRECISION;
+ALTER TABLE plazma.results ADD COLUMN IF NOT EXISTS final_probe_temperature DOUBLE PRECISION;
+ALTER TABLE plazma.results ADD COLUMN IF NOT EXISTS debye_front_speed DOUBLE PRECISION;
+ALTER TABLE plazma.results ADD COLUMN IF NOT EXISTS debye_front_depth DOUBLE PRECISION;
+ALTER TABLE plazma.results ADD COLUMN IF NOT EXISTS d_radiation DOUBLE PRECISION;
+ALTER TABLE plazma.results ADD COLUMN IF NOT EXISTS d_collision DOUBLE PRECISION;
+ALTER TABLE plazma.results ADD COLUMN IF NOT EXISTS slr_factor DOUBLE PRECISION;
+ALTER TABLE plazma.results ADD COLUMN IF NOT EXISTS damage_rate DOUBLE PRECISION;
+ALTER TABLE plazma.results ADD COLUMN IF NOT EXISTS projected_range DOUBLE PRECISION;
+ALTER TABLE plazma.results ADD COLUMN IF NOT EXISTS straggle_sigma DOUBLE PRECISION;
+ALTER TABLE plazma.results ADD COLUMN IF NOT EXISTS lattice_stiffness DOUBLE PRECISION;
+ALTER TABLE plazma.results ADD COLUMN IF NOT EXISTS equilibrium_distance DOUBLE PRECISION;
