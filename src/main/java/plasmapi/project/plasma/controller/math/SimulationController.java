@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.*;
 import plasmapi.project.plasma.dto.ApiResponse;
 import plasmapi.project.plasma.dto.logikDTO.ResultDTO;
 import plasmapi.project.plasma.dto.mathDto.simulation.SimulationResultDto;
+import plasmapi.project.plasma.dto.mathDto.simulation.SimulationRunResponse;
+import plasmapi.project.plasma.mapper.SimulationResultMapper;
 import plasmapi.project.plasma.service.logik.ResultService;
 import plasmapi.project.plasma.service.math.simulation.SimulationOrchestratorService;
 import plasmapi.project.plasma.service.math.simulation.SimulationRequest;
@@ -24,18 +26,23 @@ public class SimulationController {
 
     private final SimulationOrchestratorService simulationService;
     private final ResultService resultService;
+    private final SimulationResultMapper simulationResultMapper;
 
     /**
      * Запустить полную симуляцию (оркестратор).
      * Тело запроса — SimulationRequestDto.
      */
     @PostMapping("/run")
-    public ResponseEntity<ApiResponse<SimulationResult>> runSimulation(
+    public ResponseEntity<ApiResponse<SimulationRunResponse>> runSimulation(
             @Valid @RequestBody SimulationRequest request) {
 
         SimulationResult result = simulationService.runSimulation(request);
-        ApiResponse<SimulationResult> resp = new ApiResponse<>(
+        SimulationRunResponse response = SimulationRunResponse.from(
                 result,
+                simulationResultMapper.toIntermediateDto(result.getIntermediate())
+        );
+        ApiResponse<SimulationRunResponse> resp = new ApiResponse<>(
+                response,
                 "Симуляция выполнена",
                 HttpStatus.OK.value()
         );
