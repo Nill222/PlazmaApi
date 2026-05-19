@@ -1,13 +1,4 @@
-/**
- * ==============================================================
- * PlasmaLab 3D Visualization Engine v5.2
- * FIXES:
- *   - Temperature gradient: core HOT, surface COLD
- *   - Debye temperature converted from Celsius to Kelvin
- *   - Sphere rendered with solid surface traces (not dots)
- *   - Cross-section opens like a walnut, showing inner layers
- * ==============================================================
- */
+/* global Plotly */
 'use strict';
 
 // ==============================================================
@@ -95,6 +86,9 @@ function _fillGrid(nRows, nCols, value) {
 
 /**
  * @param {Object} stats  – result.stats from API
+ * @param {Array<number>} [stats.thermalTimes]
+ * @param {Array<number>} [stats.thermalDepths]
+ * @param {Array<Array<number>>} [stats.thermalTemperatureMap]
  * @param {Object} simReq – original simulation request (must contain
  *                          composition with debye_temperature, ambientTemp, etc.)
  */
@@ -201,10 +195,24 @@ function clearPhysics3DHistory() {
     window.PlasmaAnimations?.ToastNotifications?.show('История 3D графиков очищена', 'info', 2000);
 }
 
-// ==============================================================
-// Surface renderer  T(depth, time)
-// ==============================================================
+/**
+ * Вычисляет min/max температуры по сетке
+ * @param {Array<Array<number>>} grid - двумерный массив температур
+ * @returns {{minT: number, maxT: number}}
+ */
+function _calcTempRange(grid) {
+    let minT = Infinity, maxT = -Infinity;
+    for (const row of grid) for (const v of row) {
+        if (isFinite(v)) { if (v < minT) minT = v; if (v > maxT) maxT = v; }
+    }
+    if (!isFinite(minT)) { minT = 300; maxT = 5000; }
+    return { minT, maxT };
+}
 
+/**
+ * @param {HTMLElement} el
+ * @param {Object} data
+ */
 function _renderSurface(el, data) {
     const MAX_PTS = 400;
     let { times, depths, grid } = data;
@@ -224,11 +232,7 @@ function _renderSurface(el, data) {
         times = st; depthsNm = sd; grid = sg;
     }
 
-    let minT = Infinity, maxT = -Infinity;
-    for (const row of grid) for (const v of row) {
-        if (isFinite(v)) { if (v < minT) minT = v; if (v > maxT) maxT = v; }
-    }
-    if (!isFinite(minT)) { minT = 300; maxT = 5000; }
+    const { minT, maxT } = _calcTempRange(grid);
 
     const trace = {
         type: 'surface',
@@ -272,6 +276,7 @@ function _renderSurface(el, data) {
         font: { family: 'Inter, sans-serif', color: '#e2e8f0' },
     };
 
+    // noinspection JSUnresolvedFunction
     Plotly.react(el, [trace], layout, _config())
         .then(() => console.log('[3D] Surface OK'))
         .catch(err => { console.error('[3D] Surface error:', err); _showEmptyState(el, 'Ошибка отображения поверхности'); });
@@ -299,11 +304,7 @@ function _renderSphereWithSection(el, data) {
     const nDepth = depths.length;
 
     // Global temperature range
-    let minT = Infinity, maxT = -Infinity;
-    for (const row of grid) for (const v of row) {
-        if (isFinite(v)) { if (v < minT) minT = v; if (v > maxT) maxT = v; }
-    }
-    if (!isFinite(minT)) { minT = 300; maxT = 5000; }
+    const { minT, maxT } = _calcTempRange(grid);
 
     const R = 1.0;
 
@@ -520,24 +521,12 @@ function _renderSphereWithSection(el, data) {
         showlegend: false,
         font: { family: 'Inter, sans-serif', color: '#e2e8f0' },
     };
-
+    // noinspection JSUnresolvedFunction
     Plotly.react(el, traces, layout, _config())
         .then(() => console.log('[3D] Sphere + section OK'))
         .catch(err => { console.error('[3D] Sphere error:', err); _showEmptyState(el, 'Ошибка сферической визуализации'); });
 }
 
-// ==============================================================
-// Private: rebuild thermal map from physics parameters
-// ==============================================================
-
-/**
- * FIX v5.2:
- *  - Extracts debye_temperature from simReq.composition
- *  - Converts from Celsius to Kelvin (+273.15) since DB stores in °C
- *  - Uses WEIGHTED AVERAGE of all atoms based on their fractions
- *  - Ensures coreTemp > ambientTemp (hot core)
- *  - grid[tIdx][dIdx]: dIdx=0 surface (cold), dIdx=N-1 core (hot)
- */
 function _rebuildThermalMap(stats, simReq) {
     const req         = simReq       || {};
     const ambientTemp = Math.max(parseFloat(req.ambientTemp) || 300, 50);  // K

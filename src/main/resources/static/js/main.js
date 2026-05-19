@@ -1,20 +1,6 @@
-/**
- * ==============================================================
- * PlasmaLab Main Page Logic v3.0
- * Navigation highlighting and smooth scrolling
- * ==============================================================
- */
-
 'use strict';
 
-// ==============================================================
-// Navigation Manager
-// ==============================================================
-
 const NavigationManager = {
-    /**
-     * Update active navigation link based on current page
-     */
     updateActiveLink() {
         const currentPage = this._getCurrentPage();
         const navLinks = document.querySelectorAll('.nav-link');
@@ -55,14 +41,8 @@ const NavigationManager = {
     },
 };
 
-// ==============================================================
-// Smooth Scroll Manager
-// ==============================================================
-
 const SmoothScrollManager = {
-    /**
-     * Setup smooth scrolling for anchor links
-     */
+
     setup() {
         const anchorLinks = document.querySelectorAll('a[href^="#"]');
 
@@ -101,14 +81,7 @@ const SmoothScrollManager = {
     },
 };
 
-// ==============================================================
-// Scroll Animations Manager
-// ==============================================================
-
 const ScrollAnimationsManager = {
-    /**
-     * Setup scroll-based animations
-     */
     setup() {
         this._observeElements();
     },
@@ -138,10 +111,6 @@ const ScrollAnimationsManager = {
         });
     },
 };
-
-// ==============================================================
-// Card Animations Manager
-// ==============================================================
 
 const CardAnimationsManager = {
     /**

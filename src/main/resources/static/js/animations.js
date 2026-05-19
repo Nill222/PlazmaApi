@@ -1,15 +1,4 @@
-/**
- * ==============================================================
- * PlasmaLab Animations v3.0
- * Advanced animations and visual effects
- * ==============================================================
- */
-
 'use strict';
-
-// ==============================================================
-// Particle Background (optional enhancement)
-// ==============================================================
 
 const ParticleBackground = {
     canvas: null,
@@ -126,10 +115,6 @@ const ParticleBackground = {
     },
 };
 
-// ==============================================================
-// Parallax Scroll Effect
-// ==============================================================
-
 const ParallaxScroll = {
     /**
      * Setup parallax scrolling
@@ -162,10 +147,6 @@ const ParallaxScroll = {
     },
 };
 
-// ==============================================================
-// Typewriter Effect
-// ==============================================================
-
 const TypewriterEffect = {
     /**
      * Create typewriter effect on element
@@ -192,10 +173,6 @@ const TypewriterEffect = {
     },
 };
 
-// ==============================================================
-// Number Counter Animation
-// ==============================================================
-
 const NumberCounter = {
     /**
      * Animate number counting
@@ -215,10 +192,12 @@ const NumberCounter = {
             current += increment;
 
             if (current < end) {
-                element.textContent = Math.floor(current);
+                // Приводим число к строке
+                element.textContent = String(Math.floor(current));
                 requestAnimationFrame(updateCount);
             } else {
-                element.textContent = end;
+                // Приводим число к строке
+                element.textContent = String(end);
             }
         };
 
@@ -246,10 +225,6 @@ const NumberCounter = {
         counters.forEach(counter => observer.observe(counter));
     },
 };
-
-// ==============================================================
-// Loading Animation
-// ==============================================================
 
 const LoadingAnimation = {
     /**
@@ -291,10 +266,6 @@ const LoadingAnimation = {
         }
     },
 };
-
-// ==============================================================
-// Toast Notifications
-// ==============================================================
 
 const ToastNotifications = {
     /**
@@ -362,10 +333,6 @@ const ToastNotifications = {
     },
 };
 
-// ==============================================================
-// Scroll Progress Bar
-// ==============================================================
-
 const ScrollProgressBar = {
     /**
      * Initialize scroll progress bar
@@ -410,9 +377,6 @@ const ScrollProgressBar = {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('[Animations] Initializing...');
 
-    // Optional: Enable particle background (can be heavy on performance)
-    // ParticleBackground.init();
-
     // Setup parallax scrolling
     ParallaxScroll.setup();
 
@@ -425,10 +389,6 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('[Animations] Initialization complete');
 });
 
-// ==============================================================
-// Export to window
-// ==============================================================
-
 window.PlasmaAnimations = {
     ParticleBackground,
     TypewriterEffect,
@@ -437,4 +397,4 @@ window.PlasmaAnimations = {
     ToastNotifications,
 };
 
-console.log('[Animations] v3.0 loaded');
+console.log('[Animations] loaded');

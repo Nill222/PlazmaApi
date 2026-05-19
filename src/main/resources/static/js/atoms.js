@@ -1,24 +1,9 @@
-/**
- * ==============================================================
- * PlasmaLab Atoms Page Logic v3.0
- * Professional atoms database management
- * ==============================================================
- */
-
 'use strict';
-
-// ==============================================================
-// Configuration
-// ==============================================================
 
 const ATOMS_CONFIG = {
     API_ENDPOINT: '/atoms',
     DEBOUNCE_DELAY: 300,
 };
-
-// ==============================================================
-// State Management
-// ==============================================================
 
 const AtomsState = {
     atoms: [],
@@ -26,10 +11,6 @@ const AtomsState = {
     isLoading: false,
     searchQuery: '',
 };
-
-// ==============================================================
-// API Client for Atoms
-// ==============================================================
 
 const AtomsAPI = {
     /**
@@ -48,25 +29,6 @@ const AtomsAPI = {
         }
 
         return response.data?.data || [];
-    },
-
-    /**
-     * Get atom by ID
-     * @param {number} id - Atom ID
-     * @returns {Promise<Object>}
-     */
-    async getById(id) {
-        const response = await window.PlasmaAuth.apiRequest(
-            `${ATOMS_CONFIG.API_ENDPOINT}/${id}`,
-            null,
-            true
-        );
-
-        if (!response.ok) {
-            throw new Error(response.data?.message || 'Failed to fetch atom');
-        }
-
-        return response.data?.data;
     },
 
     /**
@@ -103,27 +65,6 @@ const AtomsAPI = {
         return response.ok;
     },
 
-    /**
-     * Search atoms by symbol
-     * @param {string} symbol - Search query
-     * @returns {Promise<Array>}
-     */
-    async searchBySymbol(symbol) {
-        const response = await window.PlasmaAuth.apiRequest(
-            `${ATOMS_CONFIG.API_ENDPOINT}/symbol/${encodeURIComponent(symbol)}`,
-            null,
-            true
-        );
-
-        if (!response.ok) {
-            if (response.status === 404) {
-                return [];
-            }
-            throw new Error(response.data?.message || 'Search failed');
-        }
-
-        return response.data?.data || [];
-    },
 };
 
 // ==============================================================
@@ -568,7 +509,9 @@ const FormHandler = {
         if (createForm) {
             createForm.addEventListener('submit', (e) => {
                 e.preventDefault();
-                this.handleCreate(createForm);
+                this.handleCreate(createForm).catch(error => {
+                    console.error('[Atoms] Unhandled create error:', error);
+                });
             });
         }
     },
@@ -582,13 +525,13 @@ const FormHandler = {
 
         // Собираем данные согласно CreateAtomListDto
         const atomData = {
-            atomName: formData.get('atomName')?.trim() || '',
-            fullName: formData.get('fullName')?.trim() || '',
-            mass: parseFloat(formData.get('mass')) || 0,
-            a: parseFloat(formData.get('a')) || 0,
-            debyeTemperature: parseFloat(formData.get('debyeTemperature')) || 0,
-            valence: parseInt(formData.get('valence')) || 0,
-            structure: formData.get('structure') || '',
+            atomName: String(formData.get('atomName')?.trim() || ''),
+            fullName: String(formData.get('fullName')?.trim() || ''),
+            mass: parseFloat(String(formData.get('mass') || '0')),
+            a: parseFloat(String(formData.get('a') || '0')),
+            debyeTemperature: parseFloat(String(formData.get('debyeTemperature') || '0')),
+            valence: parseInt(String(formData.get('valence') || '0'), 10),
+            structure: String(formData.get('structure') || ''),
         };
 
         // Validate
@@ -602,6 +545,8 @@ const FormHandler = {
             AtomModalManager.showMessage('⏳ Создание атома...', 'info');
 
             const newAtom = await AtomsAPI.create(atomData);
+
+            console.log('[Atoms] Created atom:', newAtom); // Логирование созданного атома
 
             AtomModalManager.showMessage('✔ Атом создан успешно!', 'success');
 
@@ -718,18 +663,22 @@ window.handleDeleteAtom = async (id) => {
             if (card) {
                 card.style.animation = 'fadeOut 0.3s ease';
                 setTimeout(() => {
-                    loadAtoms();
+                    loadAtoms(); // setTimeout callback не может быть асинхронным
                 }, 300);
             } else {
-                loadAtoms();
+                await loadAtoms(); // Добавлен await
             }
         } else {
-            throw new Error('Не удалось удалить атом');
+            // Показываем сообщение об ошибке вместо throw
+            window.PlasmaAnimations?.ToastNotifications.show(
+                'Не удалось удалить атом',
+                'error'
+            );
         }
     } catch (error) {
         console.error('[Atoms] Delete error:', error);
         window.PlasmaAnimations?.ToastNotifications.show(
-            error.message || 'Ошибка удаления атома',
+            error.message || 'Ошибка при удалении атома',
             'error'
         );
     }

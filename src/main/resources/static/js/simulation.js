@@ -354,7 +354,7 @@ const SimulationUI = {
 
         // Feed 3D engine
         if (window.addPhysics3DData) {
-            window.addPhysics3DData(stats, simReq);
+            window.addPhysics3DData(/** @type {Object} */ (stats), simReq);
         } else {
             console.error('[Simulation] addPhysics3DData not found — is plasma3d.js loaded?');
         }
@@ -588,7 +588,7 @@ const FormHandler = {
         const primaryIon  = SimulationState.ionComponents[0];
 
         /** @type {SimRequest} */
-        const requestData = {
+        const requestData = /** @type {SimRequest} */ ({
             atomId:       Number(primaryAtom.atomId),
             ionId:        Number(primaryIon.ionId),
             voltage:      parseFloat(getField('voltage')),
@@ -611,7 +611,7 @@ const FormHandler = {
                 ionName:  c.ionName,
                 fraction: c.fraction,
             })),
-        };
+        });
 
         try {
             SimulationUI.showLoading();
@@ -696,8 +696,12 @@ window.saveResults = async () => {
         const firstAtom = SimulationState.alloyComponents[0];
         const firstIon  = SimulationState.ionComponents[0];
 
-        if (!firstAtom?.atomId || !firstIon?.ionId)
-            throw new Error('Не удалось определить атом и ион для сохранения');
+        if (!firstAtom?.atomId || !firstIon?.ionId) {
+            window.PlasmaAnimations?.ToastNotifications.show(
+                'Не удалось определить атом и ион для сохранения', 'error'
+            );
+            return;
+        }
 
         /** @type {DiffusionProfile} */
         const profile = result.profile      || {};
@@ -921,7 +925,7 @@ const AutoGenerationManager = {
                 const gen = this.generateParams(preset);
 
                 /** @type {SimRequest} */
-                const requestData = {
+                const requestData = /** @type {SimRequest} */ ({
                     atomId:       Number(runAlloy[0].atomId),
                     ionId:        Number(runIons[0].ionId),
                     voltage:      gen.voltage,
@@ -944,7 +948,7 @@ const AutoGenerationManager = {
                         ionName:  c.ionName,
                         fraction: c.fraction,
                     })),
-                };
+                });
 
                 const result = await SimulationAPI.run(requestData);
                 SimulationState.currentResult  = result;

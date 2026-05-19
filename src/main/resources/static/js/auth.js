@@ -38,9 +38,8 @@ const CookieManager = {
         date.setTime(date.getTime() + days * 24 * 60 * 60 * 1000);
 
         const secure = location.protocol === 'https:' ? '; Secure' : '';
-        const cookie = `${name}=${encodeURIComponent(String(value))}; expires=${date.toUTCString()}; path=/; SameSite=Lax${secure}`;
 
-        document.cookie = cookie;
+        document.cookie = `${name}=${encodeURIComponent(String(value))}; expires=${date.toUTCString()}; path=/; SameSite=Lax${secure}`;
     },
 
     /**
@@ -462,8 +461,7 @@ const TokenManager = {
             if (parts.length !== 3) {
                 return null;
             }
-            const payload = JSON.parse(atob(parts[1]));
-            return payload;
+            return JSON.parse(atob(parts[1]));
         } catch {
             return null;
         }
@@ -688,6 +686,27 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ==============================================================
 // Public API
 // ==============================================================
+
+/**
+ * PlasmaAuth Public API
+ * @namespace
+ * @property {Function} signin - Authenticate user
+ * @property {Function} signup - Register new user
+ * @property {Function} logout - Logout user
+ * @property {Function} requireAuth - Require authentication
+ * @property {Function} verifyAuth - Verify authentication token
+ * @property {Function} getToken - Get current token
+ * @property {Function} getUsername - Get current username
+ * @property {Function} getUserId - Get current user ID
+ * @property {Function} getUserRole - Get current user role
+ * @property {Function} isAuthenticated - Check if authenticated
+ * @property {Function} isAdmin - Check if admin role
+ * @property {Function} hasRole - Check specific role
+ * @property {Function} apiRequest - Make API request
+ * @property {Function} showMessage - Show UI message
+ * @property {Function} clearMessages - Clear UI messages
+ */
+
 
 window.PlasmaAuth = {
     // Actions

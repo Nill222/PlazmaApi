@@ -479,7 +479,7 @@
     background: linear-gradient(90deg, #2b579a, #1e3f73, #2b579a);
     background-size: 200% 100%;
     border-radius: var(--radius-full);
-    width: 0%;
+    width: 0;
     transition: width 0.3s ease;
     animation: shimmer 2s linear infinite;
 }
@@ -1406,4 +1406,33 @@
         justify-content: space-between;
         padding: var(--spacing-md);
     }
+}
+
+.pressure-preset-row {
+    margin-bottom: 12px;
+}
+
+.pressure-preset {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    color: #1e293b;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.pressure-preset:hover {
+    border-color: #3b82f6;
+    background: #ffffff;
+}
+
+.pressure-preset:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
 }

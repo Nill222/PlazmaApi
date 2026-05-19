@@ -52,25 +52,6 @@ const IonsAPI = {
     },
 
     /**
-     * Get ion by ID
-     * @param {number} id - Ion ID
-     * @returns {Promise<Object>}
-     */
-    async getById(id) {
-        const response = await window.PlasmaAuth.apiRequest(
-            `${IONS_CONFIG.API_ENDPOINT}/${id}`,
-            null,
-            true
-        );
-
-        if (!response.ok) {
-            throw new Error(response.data?.message || 'Failed to fetch ion');
-        }
-
-        return response.data?.data;
-    },
-
-    /**
      * Create new ion
      * @param {Object} ionData - Ion data
      * @returns {Promise<Object>}
@@ -511,7 +492,9 @@ const FormHandler = {
         if (createForm) {
             createForm.addEventListener('submit', (e) => {
                 e.preventDefault();
-                this.handleCreate(createForm);
+                this.handleCreate(createForm).catch(error => {
+                    console.error('[Ions] Unhandled create error:', error);
+                });
             });
         }
     },
@@ -524,9 +507,9 @@ const FormHandler = {
         const formData = new FormData(form);
 
         const ionData = {
-            name: formData.get('name')?.trim() || '',
-            mass: parseFloat(formData.get('mass')) || 0,
-            charge: parseInt(formData.get('charge')) || 0,
+            name: String(formData.get('name')?.trim() || ''),
+            mass: parseFloat(String(formData.get('mass') || '0')),
+            charge: parseInt(String(formData.get('charge') || '0'), 10),
         };
 
         // Validate
@@ -539,7 +522,7 @@ const FormHandler = {
         try {
             IonModalManager.showMessage('⏳ Создание иона...', 'info');
 
-            const newIon = await IonsAPI.create(ionData);
+            await IonsAPI.create(ionData);
 
             IonModalManager.showMessage('✔ Ион создан успешно!', 'success');
 
@@ -591,22 +574,15 @@ const FormHandler = {
 // Event Handlers
 // ==============================================================
 
-/**
- * Show create modal
- */
 window.showCreateModal = () => {
     IonModalManager.showCreate();
 };
 
-/**
- * Hide create modal
- */
 window.hideCreateModal = () => {
     IonModalManager.hideCreate();
 };
 
 /**
- * Filter ions by charge
  * @param {string} filter - Filter type: 'all', 'positive', 'negative'
  */
 window.filterIons = (filter) => {
@@ -635,23 +611,27 @@ window.handleDeleteIon = async (id) => {
     try {
         const success = await IonsAPI.delete(id);
 
-        if (success) {
+        if (!success) {
             window.PlasmaAnimations?.ToastNotifications.show(
-                'Ион удален успешно',
-                'success'
+                'Не удалось удалить ион',
+                'error'
             );
+            return;
+        }
 
-            const card = document.querySelector(`[data-ion-id="${id}"]`);
-            if (card) {
-                card.style.animation = 'fadeOut 0.3s ease';
-                setTimeout(() => {
-                    loadIons();
-                }, 300);
-            } else {
+        window.PlasmaAnimations?.ToastNotifications.show(
+            'Ион удален успешно',
+            'success'
+        );
+
+        const card = document.querySelector(`[data-ion-id="${id}"]`);
+        if (card) {
+            card.style.animation = 'fadeOut 0.3s ease';
+            setTimeout(() => {
                 loadIons();
-            }
+            }, 300);
         } else {
-            throw new Error('Не удалось удалить ион');
+            await loadIons();
         }
     } catch (error) {
         console.error('[Ions] Delete error:', error);
@@ -674,9 +654,7 @@ async function loadIons() {
     IonsUI.showLoading();
 
     try {
-        const ions = await IonsAPI.getAll();
-
-        IonsState.ions = ions;
+        IonsState.ions = await IonsAPI.getAll();
         SearchFilterManager.applyFilters();
 
     } catch (error) {
