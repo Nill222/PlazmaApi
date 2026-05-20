@@ -357,6 +357,17 @@ public class DiffusionServiceImpl implements DiffusionService {
             }
         }
 
+        DiffusionIntermediate diffusionIntermediate = new DiffusionIntermediate(
+                D_rad,
+                D_collision,
+                slrFactor,
+                damageRate,
+                Rp,
+                sigma,
+                stiffness,
+                re
+        );
+
         PhysicsStats stats = new PhysicsStats(
                 electronDensity,
                 electronVelocity,
@@ -385,20 +396,10 @@ public class DiffusionServiceImpl implements DiffusionService {
                 xi,
                 D_slr,
                 D_res,
+                diffusionIntermediate,
                 thermalTimes,
                 thermalDepths,
                 thermalTemperatureMap
-        );
-
-        DiffusionIntermediate diffusionIntermediate = new DiffusionIntermediate(
-                D_rad,
-                D_collision,
-                slrFactor,
-                damageRate,
-                Rp,
-                sigma,
-                stiffness,
-                re
         );
 
         return new DiffusionProfile(

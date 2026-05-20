@@ -1,5 +1,7 @@
 package plasmapi.project.plasma.service.math;
 
+import plasmapi.project.plasma.service.math.diffusion.DiffusionIntermediate;
+
 import java.util.List;
 
 public record PhysicsStats(
@@ -30,6 +32,7 @@ public record PhysicsStats(
     double resonanceXi,            // Резонансный коэффициент усиления
     double dSlr,                   // Вклад SLR в D (м²/с)
     double dRes,                   // Резонансный вклад в D (м²/с)
+    DiffusionIntermediate diffusionTransport, // снимок диффузии/транспорта (не нулевой при полном расчёте)
     List<Double> thermalTimes,     // Шкала времени для температурного поля (с)
     List<Double> thermalDepths,    // Шкала глубины для температурного поля (м)
     List<List<Double>> thermalTemperatureMap // T(depth, time) для 3D-графика
