@@ -11,7 +11,6 @@ const SIMULATION_CONFIG = {
     API_IONS:       '/ions',
 };
 
-// Preset ranges — electron-temp range stored as 'et' (avoids IDE typo flag on 'etemp')
 const AUTOGEN_PRESETS = {
     magnetron: { voltage:[200,800],   current:[0.2,3.0],   pressure:[0.1,5],     et:[11600,34800],  width:[0.1,0.4],  depth:[0.1,0.4],  time:[5,120],   angle:[0,20]  },
     etching:   { voltage:[100,400],   current:[0.05,1.0],  pressure:[1,50],      et:[23200,69600],  width:[0.1,0.3],  depth:[0.1,0.3],  time:[10,300],  angle:[0,45]  },
@@ -21,7 +20,7 @@ const AUTOGEN_PRESETS = {
 };
 
 // ==============================================================
-// JSDoc typedefs — eliminates "Unresolved variable" IDE warnings
+// JSDoc typedefs
 // ==============================================================
 
 /**
@@ -42,63 +41,82 @@ const AUTOGEN_PRESETS = {
  */
 
 /**
+ * Соответствует Java-классу DiffusionProfile
  * @typedef {Object} DiffusionProfile
- * @property {number} [d_effective]
- * @property {number} [D_effective]
- * @property {number} [d_thermal]
- * @property {number} [D_thermal]
- * @property {number} [meanDepth]
- * @property {number} [d1]
- * @property {number} [D1]
- * @property {number} [d2]
- * @property {number} [D2]
- * @property {number} [q1_ev]
- * @property {number} [Q1_ev]
- * @property {number} [q2_ev]
- * @property {number} [Q2_ev]
+ * @property {number} d1
+ * @property {number} d2
+ * @property {number} q1_ev
+ * @property {number} q2_ev
+ * @property {number} d_thermal
+ * @property {number} d_effective
+ * @property {number} meanDepth
+ * @property {number[]} depths
+ * @property {number[]} concentration
  */
 
 /**
- * @typedef {Object} SimStats
- * @property {number}   [totalTransferredEnergy]
- * @property {number}   [avgTransferredPerAtom]
- * @property {number}   [surfaceBindingEnergy]
- * @property {number}   [finalProbeTemperature]
- * @property {number}   [avgTemperature]
- * @property {number}   [minTemperature]
- * @property {number}   [maxTemperature]
- * @property {number}   [debyeFrontSpeed]
- * @property {number}   [debyeFrontDepth]
- * @property {number}   [electronDensity]
- * @property {number}   [electronVelocity]
- * @property {number}   [currentDensity]
- * @property {number}   [totalDamage]
- * @property {number}   [totalMomentum]
- * @property {number}   [totalDisplacement]
- * @property {number}   [fluence]
- * @property {number}   [fluenceEff]
- * @property {number}   [ionFlux]
- * @property {number}   [resonanceXi]
- * @property {number}   [dSlr]
- * @property {number}   [dRes]
- * @property {number[]} [perAtomTransferredEnergies]
- * @property {number[]} [coolingProfile]
+ * Соответствует Java-record PhysicsStats
+ * @typedef {Object} PhysicsStats
+ * @property {number}     electronDensity
+ * @property {number}     electronVelocity
+ * @property {number}     currentDensity
+ * @property {number}     surfaceBindingEnergy
+ * @property {number}     totalTransferredEnergy
+ * @property {number}     avgTransferredPerAtom
+ * @property {number}     totalDamage
+ * @property {number}     totalMomentum
+ * @property {number}     totalDisplacement
+ * @property {number}     finalProbeTemperature
+ * @property {number}     debyeFrontSpeed
+ * @property {number}     fluence
+ * @property {number}     fluenceEff
+ * @property {number}     ionFlux
+ * @property {number}     resonanceXi
+ * @property {number}     dSlr
+ * @property {number}     dRes
+ * @property {number}     debyeFrontDepth
+ * @property {number}     energyGainFactor
+ * @property {number}     plasmaCorrectionFactor
+ * @property {number}     exposureRate
+ * @property {number}     modifiedLayerThickness
+ * @property {number}     skinDepth
+ * @property {number}     skinSurfacePower
+ * @property {number}     skinAccumulatedEnergy
+ * @property {number}     skinTemperatureDelta
+ * @property {number}     effectiveSurfaceTemperature
+ * @property {number[]}   thermalTimes
+ * @property {number[]}   thermalDepths
+ * @property {number[][]} thermalTemperatureMap
  */
 
 /**
+ * Соответствует Java-классу PlasmaConfiguration
  * @typedef {Object} PlasmaConfig
  * @property {number} [id]
- * @property {number} [ionEnergyOverride]
  * @property {number} [voltage]
+ * @property {number} [current]
  * @property {number} [pressure]
  * @property {number} [electronTemperature]
+ * @property {number} [ionTemperature]
+ * @property {number} [ionEnergyOverride]
+ * @property {number} [chamberWidth]
+ * @property {number} [chamberDepth]
+ * @property {number} [exposureTime]
+ * @property {number} [currentDensity]
+ * @property {number} [electronDensity]
+ * @property {number} [electronVelocity]
  */
 
 /**
+ * Соответствует Java-классу SimulationResult
  * @typedef {Object} SimResult
  * @property {DiffusionProfile} profile
- * @property {SimStats}         stats
+ * @property {PhysicsStats}     stats
  * @property {PlasmaConfig}     plasmaConfig
+ * @property {Object}           plasmaResult
+ * @property {Object}           intermediate
+ * @property {Object}           atom
+ * @property {Object}           ion
  */
 
 /**
@@ -138,15 +156,11 @@ const SimulationState = {
 };
 
 // ==============================================================
-// Fraction normalisation utility
+// Fraction normalisation
 // ==============================================================
 
 /**
- * Convert raw weights into fractions that sum to EXACTLY 1.0.
- * Uses integer rounding at 6 decimal places; the last element
- * absorbs any floating-point remainder so the total is always 1.
- *
- * @param {number[]} weights - arbitrary positive numbers
+ * @param {number[]} weights
  * @returns {number[]}
  */
 function normaliseFractions(weights) {
@@ -172,7 +186,8 @@ const SimulationAPI = {
             SIMULATION_CONFIG.API_SIMULATION, requestData, true
         );
         if (!response.ok) throw new Error(response.data?.message || 'Simulation failed');
-        return response.data?.data;
+        // Бэкенд возвращает SimulationResult напрямую в data
+        return response.data?.data ?? response.data;
     },
 
     /**
@@ -186,7 +201,7 @@ const SimulationAPI = {
             SIMULATION_CONFIG.API_SAVE, resultData, true
         );
         if (!response.ok) throw new Error(response.data?.message || 'Failed to save');
-        return response.data?.data;
+        return response.data?.data ?? response.data;
     },
 
     /** @returns {Promise<Object[]>} */
@@ -214,9 +229,9 @@ const SimulationAPI = {
 
 const SimulationUI = {
     showLoading() {
-        document.getElementById('initialState').style.display = 'none';
-        document.getElementById('loadingState').style.display = 'flex';
-        document.getElementById('resultsState').style.display = 'none';
+        document.getElementById('initialState').style.display   = 'none';
+        document.getElementById('loadingState').style.display   = 'flex';
+        document.getElementById('resultsState').style.display   = 'none';
 
         const btn = document.getElementById('runBtn');
         if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Расчёт...'; }
@@ -231,9 +246,9 @@ const SimulationUI = {
     },
 
     showResults() {
-        document.getElementById('initialState').style.display = 'none';
-        document.getElementById('loadingState').style.display = 'none';
-        document.getElementById('resultsState').style.display = 'flex';
+        document.getElementById('initialState').style.display   = 'none';
+        document.getElementById('loadingState').style.display   = 'none';
+        document.getElementById('resultsState').style.display   = 'flex';
 
         const btn = document.getElementById('runBtn');
         if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-play"></i> Запустить симуляцию'; }
@@ -244,8 +259,8 @@ const SimulationUI = {
 
     /** @param {string} message */
     showError(message) {
-        document.getElementById('loadingState').style.display = 'none';
-        document.getElementById('initialState').style.display = 'flex';
+        document.getElementById('loadingState').style.display  = 'none';
+        document.getElementById('initialState').style.display  = 'flex';
 
         const btn = document.getElementById('runBtn');
         if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-play"></i> Запустить симуляцию'; }
@@ -260,7 +275,7 @@ const SimulationUI = {
     fillResults(result, simReq) {
         /** @type {DiffusionProfile} */
         const profile = result.profile      || {};
-        /** @type {SimStats} */
+        /** @type {PhysicsStats} */
         const stats   = result.stats        || {};
         /** @type {PlasmaConfig} */
         const plasma  = result.plasmaConfig  || {};
@@ -298,7 +313,7 @@ const SimulationUI = {
             }).join(' · ');
         };
 
-        // Input params
+        // ── Входные параметры ──────────────────────────────────
         if (simReq) {
             set('r_composition',     fmtComp(simReq.composition));
             set('r_ion_composition', fmtIon(simReq.ionComposition));
@@ -312,30 +327,22 @@ const SimulationUI = {
             set('r_angle',           num(simReq.angle, 1));
         }
 
-        // Diffusion — resolve both snake_case and PascalCase API variants
-        const dEff  = profile.d_effective ?? profile.D_effective;
-        const dTher = profile.d_thermal   ?? profile.D_thermal;
-        const dMean = profile.meanDepth;
-        const d1    = profile.d1  ?? profile.D1;
-        const d2    = profile.d2  ?? profile.D2;
-        const q1    = profile.q1_ev ?? profile.Q1_ev;
-        const q2    = profile.q2_ev ?? profile.Q2_ev;
+        // ── Диффузия (поля Java DiffusionProfile — PascalCase) ─
+        set('r_d_effective', sci(profile.d_effective));
+        set('r_d_thermal',   sci(profile.d_thermal));
+        set('r_mean_depth',  sci(profile.meanDepth));
+        set('r_d1',          sci(profile.d1));
+        set('r_d2',          sci(profile.d2));
+        set('r_q1',          num(profile.q1_ev, 3));
+        set('r_q2',          num(profile.q2_ev, 3));
 
-        set('r_d_effective', sci(dEff));
-        set('r_d_thermal',   sci(dTher));
-        set('r_mean_depth',  sci(dMean));
-        set('r_d1',          sci(d1));
-        set('r_d2',          sci(d2));
-        set('r_q1',          num(q1, 3));
-        set('r_q2',          num(q2, 3));
-
-        // Energy
+        // ── Энергия ────────────────────────────────────────────
         set('ps_total_energy',   sci(stats.totalTransferredEnergy));
         set('ps_avg_energy',     sci(stats.avgTransferredPerAtom));
         set('ps_binding_energy', num(stats.surfaceBindingEnergy, 3));
         set('pc_ion_energy',     num(plasma.ionEnergyOverride, 3));
 
-        // Temperature & physics
+        // ── Температура и физика ───────────────────────────────
         set('ps_probe_temp',         num(stats.finalProbeTemperature, 2));
         set('ps_debye_speed',        sci(stats.debyeFrontSpeed));
         set('ps_debye_depth',        sci(stats.debyeFrontDepth));
@@ -352,7 +359,18 @@ const SimulationUI = {
         set('ps_d_slr',              sci(stats.dSlr));
         set('ps_d_res',              sci(stats.dRes));
 
-        // Feed 3D engine
+        // ── Новые поля (skin-слой, энергетика, плазма) ────────
+        set('ps_skin_depth',               sci(stats.skinDepth));
+        set('ps_skin_surface_power',       sci(stats.skinSurfacePower));
+        set('ps_skin_accumulated_energy',  sci(stats.skinAccumulatedEnergy));
+        set('ps_skin_temperature_delta',   num(stats.skinTemperatureDelta, 2));
+        set('ps_effective_surface_temp',   num(stats.effectiveSurfaceTemperature, 2));
+        set('ps_energy_gain_factor',       num(stats.energyGainFactor, 4));
+        set('ps_plasma_correction_factor', num(stats.plasmaCorrectionFactor, 4));
+        set('ps_modified_layer_thickness', sci(stats.modifiedLayerThickness));
+        set('ps_exposure_rate',            sci(stats.exposureRate));
+
+        // ── 3D-движок ─────────────────────────────────────────
         if (window.addPhysics3DData) {
             window.addPhysics3DData(/** @type {Object} */ (stats), simReq);
         } else {
@@ -705,13 +723,10 @@ window.saveResults = async () => {
 
         /** @type {DiffusionProfile} */
         const profile = result.profile      || {};
-        /** @type {SimStats} */
+        /** @type {PhysicsStats} */
         const stats   = result.stats        || {};
         /** @type {PlasmaConfig} */
         const plasma  = result.plasmaConfig  || {};
-
-        const dEffSave  = profile.d_effective || profile.D_effective || profile.d1 || 0;
-        const dTherSave = profile.d_thermal   || profile.D_thermal   || profile.d2 || 0;
 
         const saveData = {
             atomId:   firstAtom.atomId,
@@ -719,43 +734,57 @@ window.saveResults = async () => {
             configId: plasma.id || 1,
             atomName: firstAtom.atomName || 'Unknown',
             s: `${firstAtom.atomName} ${(firstAtom.fraction * 100).toFixed(1)}%`,
-            totalTransferredEnergy: stats.totalTransferredEnergy || 0,
-            avgTransferredPerAtom:  stats.avgTransferredPerAtom  || 0,
-            avgT: stats.finalProbeTemperature || stats.avgTemperature || 0,
-            minT: stats.finalProbeTemperature || stats.minTemperature || 0,
-            maxT: stats.finalProbeTemperature || stats.maxTemperature || 0,
-            diffusionCoefficient1: dEffSave,
-            diffusionCoefficient2: dTherSave,
-            totalMomentum:     stats.totalMomentum     || 0,
-            totalDamage:       stats.totalDamage       || 0,
-            totalDisplacement: stats.totalDisplacement || 0,
-            fluence:    stats.fluence    || 0,
-            fluenceEff: stats.fluenceEff || 0,
-            ionFlux:    stats.ionFlux    || 0,
-            resonanceXi: stats.resonanceXi || 0,
-            dSlr:        stats.dSlr || 0,
-            dRes:        stats.dRes || 0,
-            plasmaParameters: {
-                electronDensity:  stats.electronDensity  || 0,
-                electronVelocity: stats.electronVelocity || 0,
-                currentDensity:   stats.currentDensity   || 0,
-                ionEnergy:        plasma.ionEnergyOverride || request?.voltage || 0,
-                voltage:          request?.voltage       || plasma.voltage             || 0,
-                pressure:         request?.pressure      || plasma.pressure            || 0,
-                electronTemp:     request?.electronTemp  || plasma.electronTemperature || 0,
-                ionFlux:          stats.ionFlux || 0,
-            },
+
+            // PhysicsStats fields
+            totalTransferredEnergy:     stats.totalTransferredEnergy     || 0,
+            avgTransferredPerAtom:       stats.avgTransferredPerAtom       || 0,
+            avgT:                        stats.finalProbeTemperature       || 0,
+            minT:                        stats.finalProbeTemperature       || 0,
+            maxT:                        stats.finalProbeTemperature       || 0,
+            totalMomentum:               stats.totalMomentum               || 0,
+            totalDamage:                 stats.totalDamage                 || 0,
+            totalDisplacement:           stats.totalDisplacement           || 0,
+            fluence:                     stats.fluence                     || 0,
+            fluenceEff:                  stats.fluenceEff                  || 0,
+            ionFlux:                     stats.ionFlux                     || 0,
+            resonanceXi:                 stats.resonanceXi                 || 0,
+            dSlr:                        stats.dSlr                        || 0,
+            dRes:                        stats.dRes                        || 0,
+
+            // Новые поля PhysicsStats
+            energyGainFactor:            stats.energyGainFactor            || 0,
+            plasmaCorrectionFactor:      stats.plasmaCorrectionFactor      || 0,
+            exposureRate:                stats.exposureRate                 || 0,
+            modifiedLayerThickness:      stats.modifiedLayerThickness      || 0,
+            skinDepth:                   stats.skinDepth                   || 0,
+            skinSurfacePower:            stats.skinSurfacePower             || 0,
+            skinAccumulatedEnergy:       stats.skinAccumulatedEnergy        || 0,
+            skinTemperatureDelta:        stats.skinTemperatureDelta         || 0,
+            effectiveSurfaceTemperature: stats.effectiveSurfaceTemperature  || 0,
+
+            // DiffusionProfile — PascalCase из Java
+            diffusionCoefficient1: profile.D_effective || profile.D1 || 0,
+            diffusionCoefficient2: profile.D_thermal   || profile.D2 || 0,
             diffusionProfile: {
-                D1:          profile.d1          || profile.D1          || 0,
-                D2:          profile.d2          || profile.D2          || 0,
-                Q1:          profile.q1_ev       || profile.Q1_ev       || 0,
-                Q2:          profile.q2_ev       || profile.Q2_ev       || 0,
-                D_thermal:   profile.d_thermal   || profile.D_thermal   || 0,
-                D_effective: profile.d_effective || profile.D_effective || 0,
+                D1:          profile.D1          || 0,
+                D2:          profile.D2          || 0,
+                Q1:          profile.Q1_ev       || 0,
+                Q2:          profile.Q2_ev       || 0,
+                D_thermal:   profile.D_thermal   || 0,
+                D_effective: profile.D_effective || 0,
                 depth:       profile.meanDepth   || 0,
             },
-            perAtomTransferredEnergies: stats.perAtomTransferredEnergies || [],
-            coolingProfile:            stats.coolingProfile              || [],
+
+            plasmaParameters: {
+                electronDensity:  stats.electronDensity   || 0,
+                electronVelocity: stats.electronVelocity  || 0,
+                currentDensity:   stats.currentDensity    || 0,
+                ionEnergy:        plasma.ionEnergyOverride || request?.voltage || 0,
+                voltage:          request?.voltage         || plasma.voltage              || 0,
+                pressure:         request?.pressure        || plasma.pressure             || 0,
+                electronTemp:     request?.electronTemp    || plasma.electronTemperature  || 0,
+                ionFlux:          stats.ionFlux || 0,
+            },
         };
 
         await SimulationAPI.save(saveData);
@@ -790,17 +819,14 @@ const AutoGenerationManager = {
         return +(Math.random() * (max - min) + min).toFixed(fixed);
     },
 
-    /**
-     * @param {string} presetName
-     * @returns {Object}
-     */
+    /** @param {string} presetName @returns {Object} */
     generateParams(presetName) {
         const p = AUTOGEN_PRESETS[presetName] || AUTOGEN_PRESETS.custom;
         return {
             voltage:      this.rand(p.voltage[0],  p.voltage[1],  0),
             current:      this.rand(p.current[0],  p.current[1],  3),
             pressure:     this.rand(p.pressure[0], p.pressure[1], 3),
-            electronTemp: this.rand(p.et[0],        p.et[1],        0),
+            electronTemp: this.rand(p.et[0],       p.et[1],       0),
             chamberWidth: this.rand(p.width[0],    p.width[1],    3),
             chamberDepth: this.rand(p.depth[0],    p.depth[1],    3),
             exposureTime: this.rand(p.time[0],     p.time[1],     2),
@@ -809,18 +835,13 @@ const AutoGenerationManager = {
         };
     },
 
-    /**
-     * Pick 2–4 random atoms; fractions guaranteed to sum to exactly 1.0.
-     * @returns {AlloyComponent[]|null}
-     */
+    /** @returns {AlloyComponent[]|null} */
     generateRandomAlloy() {
         const pool = window.availableAtoms;
         if (!pool?.length) return null;
-
-        const count  = Math.min(pool.length, Math.floor(Math.random() * 3) + 2); // 2–4
+        const count  = Math.min(pool.length, Math.floor(Math.random() * 3) + 2);
         const picked = [...pool].sort(() => Math.random() - 0.5).slice(0, count);
         const fracs  = normaliseFractions(picked.map(() => Math.random() + 0.1));
-
         return picked.map((atom, i) => ({
             atomId:            atom.id,
             atomName:          atom.atomName,
@@ -830,18 +851,13 @@ const AutoGenerationManager = {
         }));
     },
 
-    /**
-     * Pick 1–3 random ions; fractions guaranteed to sum to exactly 1.0.
-     * @returns {IonComponent[]|null}
-     */
+    /** @returns {IonComponent[]|null} */
     generateRandomIons() {
         const pool = window.availableIons;
         if (!pool?.length) return null;
-
-        const count  = Math.min(pool.length, Math.floor(Math.random() * 3) + 1); // 1–3
+        const count  = Math.min(pool.length, Math.floor(Math.random() * 3) + 1);
         const picked = [...pool].sort(() => Math.random() - 0.5).slice(0, count);
         const fracs  = normaliseFractions(picked.map(() => Math.random() + 0.1));
-
         return picked.map((ion, i) => ({
             ionId:    ion.id,
             ionName:  ion.name,
@@ -954,7 +970,6 @@ const AutoGenerationManager = {
                 SimulationState.currentResult  = result;
                 SimulationState.currentRequest = requestData;
 
-                // Temporarily swap so saveResults() serialises the correct composition
                 const prevAlloy = SimulationState.alloyComponents;
                 const prevIons  = SimulationState.ionComponents;
                 SimulationState.alloyComponents = runAlloy;
@@ -982,8 +997,7 @@ const AutoGenerationManager = {
         } else {
             window.PlasmaAnimations?.ToastNotifications.show(
                 `Автогенерация завершена: ${SimulationState.autoGenResults.length} симуляций`,
-                'success',
-                6000
+                'success', 6000
             );
         }
     },
@@ -1021,4 +1035,4 @@ document.addEventListener('DOMContentLoaded', () => {
     })();
 });
 
-console.log('[Simulation] v5.4 loaded');
+console.log('[Simulation] v5.5 loaded');
