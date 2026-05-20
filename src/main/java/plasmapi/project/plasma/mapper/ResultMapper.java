@@ -81,15 +81,7 @@ public class ResultMapper{
                 : 60.0;
         double ambient = dto.avgT() > 0 ? dto.avgT() : 300.0;
 
-        SimulationIntermediateResultDto intermediate = dto.intermediate() != null
-                ? dto.intermediate()
-                : new SimulationIntermediateResultDto(
-                dto.plasmaParameters().ionEnergy(), dto.ionFlux(),
-                0, 0, 0, 0, 0, dto.fluence(), 0, 0, 0, 0, 0, 0,
-                dto.avgT(), 0, 0, dto.minT(), dto.maxT(), dto.avgT(),
-                0, 0, 0, 0, 0, 0, 0, 0
-        );
-
+        SimulationIntermediateResultDto intermediate = dto.intermediate();
         intermediate = intermediateEnrichment.enrichForSave(
                 intermediate,
                 intermediate,
@@ -99,7 +91,9 @@ public class ResultMapper{
                 exposureTime,
                 ambient
         );
-        applyIntermediate(r, intermediate);
+        if (intermediate != null) {
+            applyIntermediate(r, intermediate);
+        }
 
         // createdAt установится через @PrePersist
         return r;

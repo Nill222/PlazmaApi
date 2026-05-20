@@ -1,5 +1,6 @@
 package plasmapi.project.plasma.dto.mathDto.simulation;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import plasmapi.project.plasma.model.atom.AtomList;
 import plasmapi.project.plasma.model.res.Ion;
 import plasmapi.project.plasma.model.res.PlasmaConfiguration;
@@ -13,6 +14,7 @@ import plasmapi.project.plasma.service.math.simulation.SimulationResult;
  * Ответ {@code POST /api/simulation/run} для фронтенда:
  * плоский {@link SimulationIntermediateResultDto} и обогащённый {@link PhysicsStats} в {@code stats}.
  */
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public record SimulationRunResponse(
         DiffusionProfile profile,
         AtomList atom,

@@ -26,10 +26,23 @@ public class IntermediateResultEnrichmentService {
             double exposureTime,
             double ambientTemp
     ) {
+        if (base == null) {
+            if (cfg != null && atom != null && exposureTime > 0) {
+                double ionFlux = pickPositive(0, stats != null ? stats.ionFlux() : 0);
+                if (ionFlux > 0) {
+                    return applyThermalAndMaterialFallbacks(
+                            computeEnergyIntermediate(cfg, atom, ionFlux, exposureTime, ambientTemp, null, stats),
+                            stats, atom, cfg, exposureTime, ambientTemp
+                    );
+                }
+            }
+            return null;
+        }
+
         SimulationIntermediateResultDto computed = base;
         if (needsEnergyDeposition(base) && cfg != null && atom != null && exposureTime > 0) {
             double ionFlux = pickPositive(
-                    base != null ? base.ionFlux() : 0,
+                    base.ionFlux(),
                     stats != null ? stats.ionFlux() : 0
             );
             if (ionFlux > 0) {
@@ -42,7 +55,7 @@ public class IntermediateResultEnrichmentService {
 
     public SimulationIntermediateResultDto enrichFromResult(Result r) {
         if (r == null || r.getAtom() == null) {
-            return emptyIntermediate();
+            return null;
         }
 
         PlasmaConfiguration cfg = resolvePlasmaConfiguration(r);
@@ -64,7 +77,7 @@ public class IntermediateResultEnrichmentService {
             double exposureTime,
             double ambientTemp
     ) {
-        SimulationIntermediateResultDto merged = merge(fromClient, fromSimulation, stats);
+        SimulationIntermediateResultDto merged = merge(fromClient, fromSimulation);
         return enrich(merged, stats, atom, cfg, exposureTime, ambientTemp);
     }
 
@@ -169,6 +182,9 @@ public class IntermediateResultEnrichmentService {
             double exposureTime,
             double ambientTemp
     ) {
+        if (dto == null) {
+            return null;
+        }
         double skinDepth = pick(dto.skinDepth(), estimateSkinDepthFromAtom(atom));
         double deltaT = dto.skinTemperatureDelta();
         if (deltaT <= 0 && dto.skinAccumulatedEnergy() > 0) {
@@ -399,11 +415,10 @@ public class IntermediateResultEnrichmentService {
 
     private SimulationIntermediateResultDto merge(
             SimulationIntermediateResultDto client,
-            SimulationIntermediateResultDto simulation,
-            PhysicsStats stats
+            SimulationIntermediateResultDto simulation
     ) {
         if (client == null && simulation == null) {
-            return emptyIntermediate();
+            return null;
         }
         if (client == null) return simulation;
         if (simulation == null) return client;
@@ -446,13 +461,6 @@ public class IntermediateResultEnrichmentService {
                 || dto.skinDepth() <= 0
                 || dto.exposureRate() <= 0
                 || dto.modifiedLayerThickness() <= 0;
-    }
-
-    private static SimulationIntermediateResultDto emptyIntermediate() {
-        return new SimulationIntermediateResultDto(
-                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-                0, 0, 0, 0, 0, 0, 0, 0, 0
-        );
     }
 
     private static double val(Double v) {
