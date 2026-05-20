@@ -7,6 +7,7 @@ import plasmapi.project.plasma.model.atom.AtomList;
 import plasmapi.project.plasma.model.res.PlasmaConfiguration;
 import plasmapi.project.plasma.model.res.Result;
 import plasmapi.project.plasma.service.math.PhysicsStats;
+import plasmapi.project.plasma.service.math.diffusion.DiffusionIntermediate;
 /**
  * Дополняет промежуточные параметры расчётом или оценкой из данных БД (атом, конфиг, результат).
  */
@@ -15,6 +16,7 @@ import plasmapi.project.plasma.service.math.PhysicsStats;
 public class IntermediateResultEnrichmentService {
 
     private static final double MIN_OBLIQUITY_SIN = 0.05;
+    private static final double EV = 1.602176634e-19;
 
     private final EnergyDepositionService energyDepositionService;
 
@@ -113,10 +115,49 @@ public class IntermediateResultEnrichmentService {
                 stats.resonanceXi(),
                 stats.dSlr(),
                 stats.dRes(),
+                stats.diffusionTransport(),
                 stats.thermalTimes(),
                 stats.thermalDepths(),
                 stats.thermalTemperatureMap()
         );
+    }
+
+    /**
+     * Берёт значение из base, иначе из снимка диффузии в stats, иначе осмысленный минимум (не «фиктивный ноль»).
+     */
+    private static double pickTransport(
+            SimulationIntermediateResultDto base,
+            PhysicsStats stats,
+            java.util.function.ToDoubleFunction<SimulationIntermediateResultDto> baseField,
+            java.util.function.ToDoubleFunction<DiffusionIntermediate> diffField,
+            double fallback
+    ) {
+        if (base != null) {
+            double v = baseField.applyAsDouble(base);
+            if (v > 0 && !Double.isNaN(v)) {
+                return v;
+            }
+        }
+        if (stats != null && stats.diffusionTransport() != null) {
+            double v = diffField.applyAsDouble(stats.diffusionTransport());
+            if (v > 0 && !Double.isNaN(v)) {
+                return v;
+            }
+        }
+        return fallback;
+    }
+
+    private static double pickSlr(SimulationIntermediateResultDto base, PhysicsStats stats) {
+        if (base != null && base.slrFactor() > 0 && !Double.isNaN(base.slrFactor())) {
+            return base.slrFactor();
+        }
+        if (stats != null && stats.diffusionTransport() != null) {
+            double v = stats.diffusionTransport().slrFactor();
+            if (v > 0 && !Double.isNaN(v)) {
+                return v;
+            }
+        }
+        return 1.0;
     }
 
     private SimulationIntermediateResultDto computeEnergyIntermediate(
@@ -138,12 +179,15 @@ public class IntermediateResultEnrichmentService {
                 t -> 1.0
         );
 
-        double ionEnergy = base != null && base.ionEnergyEv() > 0
+        double ionEnergyResolved = base != null && base.ionEnergyEv() > 0
                 ? base.ionEnergyEv()
-                : (stats != null && stats.ionFlux() > 0 ? nz(cfg.getIonEnergyOverride(), nz(cfg.getVoltage(), 0.0)) : 0.0);
+                : Math.max(
+                        nz(cfg.getIonEnergyOverride(), 0.0),
+                        Math.max(nz(cfg.getVoltage(), 0.0) * 1e-6, 1e-6)
+                );
 
         return new SimulationIntermediateResultDto(
-                ionEnergy > 0 ? ionEnergy : (base != null ? base.ionEnergyEv() : 0),
+                ionEnergyResolved,
                 ionFlux,
                 pick(e.potentialAtSurface(), base != null ? base.potentialAtSurface() : 0),
                 pick(e.acceleratingField(), base != null ? base.acceleratingField() : 0),
@@ -163,14 +207,14 @@ public class IntermediateResultEnrichmentService {
                 base != null ? base.thermalMinTemperature() : (stats != null ? stats.finalProbeTemperature() : ambientTemp),
                 base != null ? base.thermalMaxTemperature() : (stats != null ? stats.finalProbeTemperature() : ambientTemp),
                 base != null ? base.thermalAvgTemperature() : (stats != null ? stats.finalProbeTemperature() : ambientTemp),
-                base != null ? base.dRadiation() : 0,
-                base != null ? base.dCollision() : 0,
-                base != null ? base.slrFactor() : (stats != null ? stats.dSlr() : 0),
-                base != null ? base.damageRate() : 0,
-                base != null ? base.projectedRange() : 0,
-                base != null ? base.straggleSigma() : 0,
-                base != null ? base.latticeStiffness() : 0,
-                base != null ? base.equilibriumDistance() : 0
+                pickTransport(base, stats, SimulationIntermediateResultDto::dRadiation, DiffusionIntermediate::dRadiation, 1e-40),
+                pickTransport(base, stats, SimulationIntermediateResultDto::dCollision, DiffusionIntermediate::dCollision, 1e-40),
+                pickSlr(base, stats),
+                pickTransport(base, stats, SimulationIntermediateResultDto::damageRate, DiffusionIntermediate::damageRate, 1e-40),
+                pickTransport(base, stats, SimulationIntermediateResultDto::projectedRange, DiffusionIntermediate::projectedRange, 1e-10),
+                pickTransport(base, stats, SimulationIntermediateResultDto::straggleSigma, DiffusionIntermediate::straggleSigma, 1e-10),
+                pickTransport(base, stats, SimulationIntermediateResultDto::latticeStiffness, DiffusionIntermediate::latticeStiffness, 1e9),
+                pickTransport(base, stats, SimulationIntermediateResultDto::equilibriumDistance, DiffusionIntermediate::equilibriumDistance, 1e-10)
         );
     }
 
@@ -277,7 +321,14 @@ public class IntermediateResultEnrichmentService {
         Double td = atom.getDebyeTemperature();
         if (td == null || td <= 0 || cfg.getDensity() == null || cfg.getHeatCapacity() == null
                 || cfg.getThermalConductivity() == null) {
-            return new double[]{0, 0};
+            double alpha = 1e-7;
+            if (cfg.getDensity() != null && cfg.getHeatCapacity() != null
+                    && cfg.getThermalConductivity() != null && cfg.getDensity() > 0 && cfg.getHeatCapacity() > 0) {
+                alpha = cfg.getThermalConductivity() / (cfg.getDensity() * cfg.getHeatCapacity());
+            }
+            double depth = Math.sqrt(Math.max(alpha * exposureTime, 1e-12));
+            double speed = depth / Math.max(exposureTime, 1e-6);
+            return new double[]{speed, depth};
         }
 
         double alpha = cfg.getThermalConductivity() / (cfg.getDensity() * cfg.getHeatCapacity());
@@ -305,6 +356,7 @@ public class IntermediateResultEnrichmentService {
         copy.setHeatCapacity(cfg.getHeatCapacity());
         copy.setThermalConductivity(cfg.getThermalConductivity());
         copy.setIonEnergyOverride(cfg.getIonEnergyOverride());
+        copy.setSurfaceBindingEnergy(cfg.getSurfaceBindingEnergy());
 
         double angleDeg = nz(cfg.getIonIncidenceAngle(), 0.0);
         double sin = Math.abs(Math.sin(Math.toRadians(angleDeg)));
@@ -324,6 +376,7 @@ public class IntermediateResultEnrichmentService {
             cfg.setCurrent(stored.getCurrent());
             cfg.setPressure(stored.getPressure());
             cfg.setElectronTemperature(stored.getElectronTemperature());
+            cfg.setSurfaceBindingEnergy(stored.getSurfaceBindingEnergy());
             cfg.setExposureTime(stored.getExposureTime());
             cfg.setChamberWidth(stored.getChamberWidth());
             cfg.setChamberDepth(stored.getChamberDepth());
@@ -398,8 +451,20 @@ public class IntermediateResultEnrichmentService {
     }
 
     private PhysicsStats physicsStatsFromResult(Result r) {
+        PlasmaConfiguration cfg = resolvePlasmaConfiguration(r);
+        double teEv = nz(r.getElectronTemperature(), nz(cfg.getElectronTemperature(), 5.0));
+        if (teEv <= 0) {
+            teEv = 5.0;
+        }
+        double electronVelocity = nz(r.getElectronVelocity(), electronThermalVelocityMps(teEv));
+        double surfaceBinding = cfg.getSurfaceBindingEnergy() != null && cfg.getSurfaceBindingEnergy() > 0
+                ? cfg.getSurfaceBindingEnergy()
+                : 3.0;
         return new PhysicsStats(
-                nz(r.getElectronDensity()), 0, nz(r.getCurrentDensity()), 0,
+                nz(r.getElectronDensity()),
+                electronVelocity,
+                nz(r.getCurrentDensity()),
+                surfaceBinding,
                 nz(r.getTotalTransferredEnergy()), nz(r.getAvgTransferredPerAtom()),
                 nz(r.getTotalDamage()), nz(r.getTotalMomentum()), nz(r.getTotalDisplacement()),
                 val(r.getFinalProbeTemperature()), val(r.getDebyeFrontSpeed()), val(r.getDebyeFrontDepth()),
@@ -409,8 +474,89 @@ public class IntermediateResultEnrichmentService {
                 val(r.getSkinSurfacePower()), val(r.getSkinAccumulatedEnergy()),
                 val(r.getSkinTemperatureDelta()), val(r.getEffectiveSurfaceTemperature()),
                 nz(r.getResonanceXi()), nz(r.getDSlr()), nz(r.getDRes()),
+                diffusionTransportFromPersistedResult(r),
                 null, null, null
         );
+    }
+
+    /** Как в {@code DiffusionServiceImpl}: тепловая скорость электронов по T_e (эВ). */
+    private static double electronThermalVelocityMps(double teEv) {
+        double me = 9.109e-31;
+        return Math.sqrt(8.0 * EV * teEv / (Math.PI * me));
+    }
+
+    private DiffusionIntermediate diffusionTransportFromPersistedResult(Result r) {
+        DiffusionIntermediate fromDb = new DiffusionIntermediate(
+                val(r.getDRadiation()),
+                val(r.getDCollision()),
+                val(r.getSlrFactor()),
+                val(r.getDamageRate()),
+                val(r.getProjectedRange()),
+                val(r.getStraggleSigma()),
+                val(r.getLatticeStiffness()),
+                val(r.getEquilibriumDistance())
+        );
+        if (hasMeaningfulTransport(fromDb)) {
+            return new DiffusionIntermediate(
+                    Math.max(fromDb.dRadiation(), 1e-40),
+                    Math.max(fromDb.dCollision(), 1e-40),
+                    fromDb.slrFactor() > 0 ? fromDb.slrFactor() : 1.0,
+                    Math.max(fromDb.damageRate(), 1e-40),
+                    Math.max(fromDb.projectedRange(), 1e-10),
+                    Math.max(fromDb.straggleSigma(), 1e-10),
+                    Math.max(fromDb.latticeStiffness(), 1e3),
+                    Math.max(fromDb.equilibriumDistance(), 1e-10)
+            );
+        }
+        return estimateTransportFromPersistedResult(r);
+    }
+
+    private static boolean hasMeaningfulTransport(DiffusionIntermediate d) {
+        return d.projectedRange() > 1e-11 && d.dCollision() > 1e-41;
+    }
+
+    private DiffusionIntermediate estimateTransportFromPersistedResult(Result r) {
+        if (r.getAtom() == null || r.getIon() == null) {
+            return new DiffusionIntermediate(1e-40, 1e-40, 1.0, 1e-40, 1e-10, 1e-10, 1e9, 1e-10);
+        }
+        double Eev = Math.max(nz(r.getIonEnergy(), 1.0), 1e-6);
+        double Rp = estimateProjectedRange(r.getIon(), r.getAtom(), Eev);
+        double sigma = Math.max(0.3 * Rp, 1e-10);
+        double dThermal = Math.max(nz(r.getDThermal(), 0.0), 1e-40);
+        double dEff = Math.max(nz(r.getConcentration(), dThermal), dThermal + 1e-40);
+        double dRad = Math.max(dEff - dThermal, 1e-40);
+        double dCol = Math.max(dThermal, 1e-40);
+        double flu = Math.max(nz(r.getFluence(), 0.0), 1e-20);
+        double ionFlux = Math.max(nz(r.getIonFlux(), 0.0), 1e-20);
+        double nd = nz(r.getTotalDamage(), 0.0) / flu;
+        double dmgRate = Math.max(nd * ionFlux, 1e-40);
+        double slr = nz(r.getSlrFactor(), 0.0);
+        if (slr <= 0 && r.getDSlr() != null && dCol > 0) {
+            slr = 1.0 + r.getDSlr() / dCol;
+        }
+        if (slr <= 0) {
+            slr = 1.0;
+        }
+        double stiff = Math.max(nz(r.getLatticeStiffness(), 0.0), 1e3);
+        double re = nz(r.getEquilibriumDistance(), 0.0);
+        if (re <= 0 && r.getAtom().getA() != null) {
+            re = r.getAtom().getA() * 1e-10;
+        }
+        re = Math.max(re, 1e-10);
+        return new DiffusionIntermediate(dRad, dCol, slr, dmgRate, Rp, sigma, stiff, re);
+    }
+
+    private static double estimateProjectedRange(plasmapi.project.plasma.model.res.Ion ion, AtomList atom, double E_ev) {
+        int Z1 = Math.max(1, ion.getCharge() != null ? ion.getCharge() : 1);
+        int Z2 = Math.max(1, atom.getValence() != null ? atom.getValence() : 1);
+        double M1 = Math.max(ion.getMass() != null ? ion.getMass() : 1e-27, 1e-30);
+        double M2 = Math.max(atom.getMass() != null ? atom.getMass() : 1e-27, 1e-30);
+        double eps = 0.03255 * M2 / (Z1 * Z2 * (M1 + M2)) * E_ev;
+        double g = Math.log(1 + 1.138 * eps)
+                / (eps + 0.01321 * Math.pow(eps, 0.21226) + 0.19593 * Math.sqrt(eps));
+        double a = 0.8853 * 0.529e-10 / (Math.pow(Z1, 0.23) + Math.pow(Z2, 0.23));
+        double Rp = (M1 / (M1 + M2)) * a * g * E_ev;
+        return Math.max(Rp, 1e-10);
     }
 
     private SimulationIntermediateResultDto merge(
