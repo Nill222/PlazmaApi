@@ -1,5 +1,6 @@
 package plasmapi.project.plasma.mapper;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import plasmapi.project.plasma.dto.mathDto.diffusion.DiffusionProfileDto;
 import plasmapi.project.plasma.dto.mathDto.plasma.PlasmaResultDto;
@@ -9,6 +10,7 @@ import plasmapi.project.plasma.service.math.PhysicsStats;
 import plasmapi.project.plasma.service.math.diffusion.DiffusionIntermediate;
 import plasmapi.project.plasma.service.math.diffusion.DiffusionProfile;
 import plasmapi.project.plasma.service.math.energy.EnergyDepositionResult;
+import plasmapi.project.plasma.service.math.energy.IntermediateResultEnrichmentService;
 import plasmapi.project.plasma.service.math.simulation.SimulationIntermediateResult;
 import plasmapi.project.plasma.service.math.simulation.SimulationResult;
 import plasmapi.project.plasma.service.math.simulation.ThermalIntermediate;
@@ -17,7 +19,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Component
+@RequiredArgsConstructor
 public class SimulationResultMapper {
+
+    private final IntermediateResultEnrichmentService intermediateEnrichment;
 
     public SimulationResultDto toDto(
             SimulationResult result,
@@ -80,7 +85,28 @@ public class SimulationResultMapper {
                 stats.resonanceXi(),
                 stats.dSlr(),
                 stats.dRes(),
-                toIntermediateDto(intermediate)
+                enrichIntermediate(result, intermediate)
+        );
+    }
+
+    private SimulationIntermediateResultDto enrichIntermediate(
+            SimulationResult result,
+            SimulationIntermediateResult intermediate
+    ) {
+        SimulationIntermediateResultDto dto = toIntermediateDto(intermediate);
+        double exposureTime = result.getPlasmaConfig().getExposureTime() != null
+                ? result.getPlasmaConfig().getExposureTime()
+                : 60.0;
+        double ambient = result.getPlasmaConfig().getTargetTemperature() != null
+                ? result.getPlasmaConfig().getTargetTemperature()
+                : 300.0;
+        return intermediateEnrichment.enrich(
+                dto,
+                result.getStats(),
+                result.getAtom(),
+                result.getPlasmaConfig(),
+                exposureTime,
+                ambient
         );
     }
 

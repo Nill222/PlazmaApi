@@ -11,6 +11,7 @@ import plasmapi.project.plasma.dto.mathDto.simulation.SimulationResultDto;
 import plasmapi.project.plasma.dto.mathDto.simulation.SimulationRunResponse;
 import plasmapi.project.plasma.mapper.SimulationResultMapper;
 import plasmapi.project.plasma.service.logik.ResultService;
+import plasmapi.project.plasma.service.math.energy.IntermediateResultEnrichmentService;
 import plasmapi.project.plasma.service.math.simulation.SimulationOrchestratorService;
 import plasmapi.project.plasma.service.math.simulation.SimulationRequest;
 import plasmapi.project.plasma.service.math.simulation.SimulationResult;
@@ -27,6 +28,7 @@ public class SimulationController {
     private final SimulationOrchestratorService simulationService;
     private final ResultService resultService;
     private final SimulationResultMapper simulationResultMapper;
+    private final IntermediateResultEnrichmentService intermediateEnrichment;
 
     /**
      * Запустить полную симуляцию (оркестратор).
@@ -39,7 +41,8 @@ public class SimulationController {
         SimulationResult result = simulationService.runSimulation(request);
         SimulationRunResponse response = SimulationRunResponse.from(
                 result,
-                simulationResultMapper.toIntermediateDto(result.getIntermediate())
+                simulationResultMapper.toIntermediateDto(result.getIntermediate()),
+                intermediateEnrichment
         );
         ApiResponse<SimulationRunResponse> resp = new ApiResponse<>(
                 response,
