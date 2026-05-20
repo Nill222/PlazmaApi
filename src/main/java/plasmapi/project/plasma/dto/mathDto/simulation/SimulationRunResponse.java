@@ -6,11 +6,12 @@ import plasmapi.project.plasma.model.res.PlasmaConfiguration;
 import plasmapi.project.plasma.service.math.PhysicsStats;
 import plasmapi.project.plasma.service.math.diffusion.DiffusionProfile;
 import plasmapi.project.plasma.service.math.plazma.PlasmaResult;
+import plasmapi.project.plasma.service.math.energy.IntermediateResultEnrichmentService;
 import plasmapi.project.plasma.service.math.simulation.SimulationResult;
 
 /**
  * Ответ {@code POST /api/simulation/run} для фронтенда:
- * плоский {@link SimulationIntermediateResultDto} и {@link PhysicsStats} в {@code stats}.
+ * плоский {@link SimulationIntermediateResultDto} и обогащённый {@link PhysicsStats} в {@code stats}.
  */
 public record SimulationRunResponse(
         DiffusionProfile profile,
@@ -21,15 +22,36 @@ public record SimulationRunResponse(
         PlasmaResult plasmaResult,
         SimulationIntermediateResultDto intermediate
 ) {
-    public static SimulationRunResponse from(SimulationResult result, SimulationIntermediateResultDto intermediate) {
+    public static SimulationRunResponse from(
+            SimulationResult result,
+            SimulationIntermediateResultDto intermediate,
+            IntermediateResultEnrichmentService enrichment
+    ) {
+        double exposureTime = result.getPlasmaConfig().getExposureTime() != null
+                ? result.getPlasmaConfig().getExposureTime()
+                : 60.0;
+        double ambient = result.getPlasmaConfig().getTargetTemperature() != null
+                ? result.getPlasmaConfig().getTargetTemperature()
+                : 300.0;
+
+        SimulationIntermediateResultDto enriched = enrichment.enrich(
+                intermediate,
+                result.getStats(),
+                result.getAtom(),
+                result.getPlasmaConfig(),
+                exposureTime,
+                ambient
+        );
+        PhysicsStats enrichedStats = enrichment.mergeStats(result.getStats(), enriched);
+
         return new SimulationRunResponse(
                 result.getProfile(),
                 result.getAtom(),
                 result.getIon(),
                 result.getPlasmaConfig(),
-                result.getStats(),
+                enrichedStats,
                 result.getPlasmaResult(),
-                intermediate
+                enriched
         );
     }
 }

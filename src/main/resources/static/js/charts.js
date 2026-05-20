@@ -483,6 +483,10 @@ class DataLoader {
                 for (const p of key.split('.')) { v = v?.[p]; if (v === undefined) break; }
                 return v || 0;
             }
+            // Промежуточные параметры из nested intermediate (ResultDTO)
+            if (item.intermediate && item.intermediate[key] != null) {
+                return item.intermediate[key];
+            }
             return item[key] || 0;
         });
     }

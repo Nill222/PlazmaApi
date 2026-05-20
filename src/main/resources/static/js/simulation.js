@@ -158,6 +158,129 @@ function normaliseFractions(weights) {
     return fracs;
 }
 
+/**
+ * Разворачивает intermediate: плоский DTO (API /run, БД) или вложенный SimulationIntermediateResult.
+ * @param {Object|null|undefined} inter
+ * @returns {Object}
+ */
+function flattenIntermediate(inter) {
+    if (!inter) return {};
+    if (inter.plasmaCorrectionFactor != null || inter.skinDepth != null) {
+        return inter;
+    }
+    const e = inter.energyDeposition || {};
+    const t = inter.thermal || {};
+    const d = inter.diffusion || {};
+    const p = inter.plasma || {};
+    return {
+        ionEnergyEv:                 p.ionEnergyEv,
+        ionFlux:                     p.ionFlux,
+        potentialAtSurface:          e.potentialAtSurface,
+        acceleratingField:           e.acceleratingField,
+        energyGainFactor:            e.energyGainFactor,
+        plasmaCorrectionFactor:      e.plasmaCorrectionFactor,
+        exposureRate:                e.exposureRate,
+        integratedFluence:           e.fluence,
+        modifiedLayerThickness:      e.modifiedLayerThickness,
+        skinDepth:                   e.skinDepth,
+        skinSurfacePower:            e.skinSurfacePower,
+        skinAccumulatedEnergy:       e.skinAccumulatedEnergy,
+        skinTemperatureDelta:        e.skinTemperatureDelta,
+        effectiveSurfaceTemperature: e.effectiveSurfaceTemperature,
+        finalProbeTemperature:       t.finalProbeTemperature,
+        debyeFrontSpeed:             t.debyeFrontSpeed,
+        debyeFrontDepth:             t.debyeFrontDepth,
+        thermalMinTemperature:       t.minTemperature,
+        thermalMaxTemperature:       t.maxTemperature,
+        thermalAvgTemperature:       t.avgTemperature,
+        dRadiation:                  d.dRadiation,
+        dCollision:                  d.dCollision,
+        slrFactor:                   d.slrFactor,
+        damageRate:                  d.damageRate,
+        projectedRange:              d.projectedRange,
+        straggleSigma:               d.straggleSigma,
+        latticeStiffness:            d.latticeStiffness,
+        equilibriumDistance:         d.equilibriumDistance,
+    };
+}
+
+/** @param {number} primary @param {number} [fallback] */
+function pickVal(primary, fallback) {
+    if (primary != null && !isNaN(+primary) && +primary > 0) return +primary;
+    if (fallback != null && !isNaN(+fallback) && +fallback > 0) return +fallback;
+    return primary != null && !isNaN(+primary) ? +primary : (fallback != null && !isNaN(+fallback) ? +fallback : 0);
+}
+
+/**
+ * @param {SimResult} result
+ * @param {PlasmaConfig} [plasma]
+ * @returns {Object}
+ */
+function buildIntermediatePayload(result, plasma) {
+    const stats = result.stats || {};
+    const flat  = flattenIntermediate(result.intermediate);
+    const p     = plasma || result.plasmaConfig || {};
+    return {
+        ionEnergyEv:                 pickVal(flat.ionEnergyEv, p.ionEnergyOverride),
+        ionFlux:                     pickVal(flat.ionFlux, stats.ionFlux),
+        potentialAtSurface:          pickVal(flat.potentialAtSurface, 0),
+        acceleratingField:           pickVal(flat.acceleratingField, 0),
+        energyGainFactor:            pickVal(stats.energyGainFactor, flat.energyGainFactor),
+        plasmaCorrectionFactor:      pickVal(stats.plasmaCorrectionFactor, flat.plasmaCorrectionFactor),
+        exposureRate:                pickVal(stats.exposureRate, flat.exposureRate),
+        integratedFluence:           pickVal(stats.fluence, flat.integratedFluence),
+        modifiedLayerThickness:      pickVal(stats.modifiedLayerThickness, flat.modifiedLayerThickness),
+        skinDepth:                   pickVal(stats.skinDepth, flat.skinDepth),
+        skinSurfacePower:            pickVal(stats.skinSurfacePower, flat.skinSurfacePower),
+        skinAccumulatedEnergy:       pickVal(stats.skinAccumulatedEnergy, flat.skinAccumulatedEnergy),
+        skinTemperatureDelta:        pickVal(stats.skinTemperatureDelta, flat.skinTemperatureDelta),
+        effectiveSurfaceTemperature: pickVal(stats.effectiveSurfaceTemperature, flat.effectiveSurfaceTemperature),
+        finalProbeTemperature:       pickVal(stats.finalProbeTemperature, flat.finalProbeTemperature),
+        debyeFrontSpeed:             pickVal(stats.debyeFrontSpeed, flat.debyeFrontSpeed),
+        debyeFrontDepth:             pickVal(stats.debyeFrontDepth, flat.debyeFrontDepth),
+        thermalMinTemperature:       pickVal(flat.thermalMinTemperature, stats.minTemperature),
+        thermalMaxTemperature:       pickVal(flat.thermalMaxTemperature, stats.maxTemperature),
+        thermalAvgTemperature:       pickVal(flat.thermalAvgTemperature, stats.avgTemperature ?? stats.finalProbeTemperature),
+        dRadiation:                  flat.dRadiation || 0,
+        dCollision:                  flat.dCollision || 0,
+        slrFactor:                   pickVal(stats.dSlr, flat.slrFactor),
+        damageRate:                  flat.damageRate || 0,
+        projectedRange:              flat.projectedRange || 0,
+        straggleSigma:               flat.straggleSigma || 0,
+        latticeStiffness:            flat.latticeStiffness || 0,
+        equilibriumDistance:         flat.equilibriumDistance || 0,
+    };
+}
+
+function normalizeSimResult(raw) {
+    if (!raw) return raw;
+    const stats = { ...(raw.stats || raw.profile?.stats || {}) };
+    const flat  = flattenIntermediate(raw.intermediate);
+    const merged = {
+        ...raw,
+        profile:      raw.profile      || {},
+        plasmaConfig: raw.plasmaConfig || {},
+        intermediate: flat,
+        stats: {
+            ...stats,
+            energyGainFactor:            pickVal(stats.energyGainFactor, flat.energyGainFactor),
+            plasmaCorrectionFactor:      pickVal(stats.plasmaCorrectionFactor, flat.plasmaCorrectionFactor),
+            exposureRate:                pickVal(stats.exposureRate, flat.exposureRate),
+            modifiedLayerThickness:      pickVal(stats.modifiedLayerThickness, flat.modifiedLayerThickness),
+            skinDepth:                   pickVal(stats.skinDepth, flat.skinDepth),
+            skinSurfacePower:            pickVal(stats.skinSurfacePower, flat.skinSurfacePower),
+            skinAccumulatedEnergy:       pickVal(stats.skinAccumulatedEnergy, flat.skinAccumulatedEnergy),
+            skinTemperatureDelta:        pickVal(stats.skinTemperatureDelta, flat.skinTemperatureDelta),
+            effectiveSurfaceTemperature: pickVal(stats.effectiveSurfaceTemperature, flat.effectiveSurfaceTemperature),
+            debyeFrontSpeed:             pickVal(stats.debyeFrontSpeed, flat.debyeFrontSpeed),
+            debyeFrontDepth:             pickVal(stats.debyeFrontDepth, flat.debyeFrontDepth),
+            finalProbeTemperature:       pickVal(stats.finalProbeTemperature, flat.finalProbeTemperature),
+        },
+    };
+    merged.intermediate = buildIntermediatePayload(merged, merged.plasmaConfig);
+    return merged;
+}
+
 // ==============================================================
 // API Client
 // ==============================================================
@@ -172,7 +295,7 @@ const SimulationAPI = {
             SIMULATION_CONFIG.API_SIMULATION, requestData, true
         );
         if (!response.ok) throw new Error(response.data?.message || 'Simulation failed');
-        return response.data?.data;
+        return normalizeSimResult(response.data?.data);
     },
 
     /**
@@ -339,6 +462,12 @@ const SimulationUI = {
         set('ps_probe_temp',         num(stats.finalProbeTemperature, 2));
         set('ps_debye_speed',        sci(stats.debyeFrontSpeed));
         set('ps_debye_depth',        sci(stats.debyeFrontDepth));
+        set('ps_plasma_correction',  num(stats.plasmaCorrectionFactor, 4));
+        set('ps_exposure_rate',      sci(stats.exposureRate));
+        set('ps_skin_depth',         sci(stats.skinDepth));
+        set('ps_skin_delta_t',       num(stats.skinTemperatureDelta, 2));
+        set('ps_t_eff',              num(stats.effectiveSurfaceTemperature, 2));
+        set('ps_layer_thickness',    sci(stats.modifiedLayerThickness));
         set('ps_electron_density',   sci(stats.electronDensity));
         set('ps_electron_velocity',  sci(stats.electronVelocity));
         set('ps_current_density',    sci(stats.currentDensity));
@@ -756,6 +885,7 @@ window.saveResults = async () => {
             },
             perAtomTransferredEnergies: stats.perAtomTransferredEnergies || [],
             coolingProfile:            stats.coolingProfile              || [],
+            intermediate: buildIntermediatePayload(result, plasma),
         };
 
         await SimulationAPI.save(saveData);

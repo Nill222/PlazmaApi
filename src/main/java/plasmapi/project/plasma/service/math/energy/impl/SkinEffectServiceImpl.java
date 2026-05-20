@@ -46,7 +46,8 @@ public class SkinEffectServiceImpl implements SkinEffectService {
         double skinDepth = Math.sqrt(2.0 / (omega * mu * conductivity));
 
         // (13)–(14): проекция на касательную плоскость, E_0 = k_ac · |E_tan| · |g(t)|
-        double sinTheta = Math.abs(Math.sin(incidenceAngleRad));
+        // При нормальном падении (θ≈0) используем минимальный sin(θ), иначе SKIN-вклад обнуляется.
+        double sinTheta = Math.max(Math.abs(Math.sin(incidenceAngleRad)), 0.05);
         double tangentialField = acceleratingField * sinTheta;
         double surfaceFieldAmplitude = acFieldFraction * tangentialField;
 

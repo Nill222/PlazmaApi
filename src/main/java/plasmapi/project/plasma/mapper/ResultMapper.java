@@ -10,11 +10,14 @@ import plasmapi.project.plasma.dto.logikDTO.ion.IonDTO;
 import plasmapi.project.plasma.dto.logikDTO.user.UserDTO;
 import plasmapi.project.plasma.dto.mathDto.simulation.SimulationIntermediateResultDto;
 import plasmapi.project.plasma.dto.mathDto.simulation.SimulationResultDto;
+import plasmapi.project.plasma.model.atom.AtomList;
+import plasmapi.project.plasma.model.res.PlasmaConfiguration;
 import plasmapi.project.plasma.model.res.Result;
 import plasmapi.project.plasma.model.security.User;
 import plasmapi.project.plasma.service.logik.AtomService;
 import plasmapi.project.plasma.service.logik.ConfigService;
 import plasmapi.project.plasma.service.logik.IonService;
+import plasmapi.project.plasma.service.math.energy.IntermediateResultEnrichmentService;
 
 @Component
 @RequiredArgsConstructor
@@ -23,6 +26,7 @@ public class ResultMapper{
     private final ConfigService configService;
     private final IonService ionService;
     private final AtomService atomListService;
+    private final IntermediateResultEnrichmentService intermediateEnrichment;
 
     /**
      * Маппинг DTO → Entity
@@ -67,9 +71,35 @@ public class ResultMapper{
         r.setDSlr(dto.dSlr());
         r.setDRes(dto.dRes());
 
-        if (dto.intermediate() != null) {
-            applyIntermediate(r, dto.intermediate());
+        AtomList atom = r.getAtom();
+        PlasmaConfiguration plasmaCfg = r.getConfig() != null ? r.getConfig().getConfig() : null;
+        if (plasmaCfg == null) {
+            plasmaCfg = plasmaConfigFromDto(dto, atom);
         }
+        double exposureTime = plasmaCfg != null && plasmaCfg.getExposureTime() != null
+                ? plasmaCfg.getExposureTime()
+                : 60.0;
+        double ambient = dto.avgT() > 0 ? dto.avgT() : 300.0;
+
+        SimulationIntermediateResultDto intermediate = dto.intermediate() != null
+                ? dto.intermediate()
+                : new SimulationIntermediateResultDto(
+                dto.plasmaParameters().ionEnergy(), dto.ionFlux(),
+                0, 0, 0, 0, 0, dto.fluence(), 0, 0, 0, 0, 0, 0,
+                dto.avgT(), 0, 0, dto.minT(), dto.maxT(), dto.avgT(),
+                0, 0, 0, 0, 0, 0, 0, 0
+        );
+
+        intermediate = intermediateEnrichment.enrichForSave(
+                intermediate,
+                intermediate,
+                null,
+                atom,
+                plasmaCfg,
+                exposureTime,
+                ambient
+        );
+        applyIntermediate(r, intermediate);
 
         // createdAt установится через @PrePersist
         return r;
@@ -101,40 +131,26 @@ public class ResultMapper{
     }
 
     private SimulationIntermediateResultDto readIntermediate(Result r) {
-        return new SimulationIntermediateResultDto(
-                r.getIonEnergy() != null ? r.getIonEnergy() : 0.0,
-                r.getIonFlux() != null ? r.getIonFlux() : 0.0,
-                nz(r.getPotentialAtSurface()),
-                nz(r.getAcceleratingField()),
-                nz(r.getEnergyGainFactor()),
-                nz(r.getPlasmaCorrectionFactor()),
-                nz(r.getExposureRate()),
-                nz(r.getFluence()),
-                nz(r.getModifiedLayerThickness()),
-                nz(r.getSkinDepth()),
-                nz(r.getSkinSurfacePower()),
-                nz(r.getSkinAccumulatedEnergy()),
-                nz(r.getSkinTemperatureDelta()),
-                nz(r.getEffectiveSurfaceTemperature()),
-                nz(r.getFinalProbeTemperature()),
-                nz(r.getDebyeFrontSpeed()),
-                nz(r.getDebyeFrontDepth()),
-                nz(r.getAvgT()),
-                nz(r.getMinT()),
-                nz(r.getMaxT()),
-                nz(r.getDRadiation()),
-                nz(r.getDCollision()),
-                nz(r.getSlrFactor()),
-                nz(r.getDamageRate()),
-                nz(r.getProjectedRange()),
-                nz(r.getStraggleSigma()),
-                nz(r.getLatticeStiffness()),
-                nz(r.getEquilibriumDistance())
-        );
+        return intermediateEnrichment.enrichFromResult(r);
     }
 
-    private static double nz(Double v) {
-        return v != null ? v : 0.0;
+    private PlasmaConfiguration plasmaConfigFromDto(SimulationResultDto dto, AtomList atom) {
+        PlasmaConfiguration cfg = new PlasmaConfiguration();
+        if (dto.plasmaParameters() != null) {
+            cfg.setVoltage(dto.plasmaParameters().voltage());
+            cfg.setPressure(dto.plasmaParameters().pressure());
+            cfg.setElectronTemperature(dto.plasmaParameters().electronTemp());
+            cfg.setIonEnergyOverride(dto.plasmaParameters().ionEnergy());
+        }
+        if (atom != null) {
+            cfg.setDensity(atom.getDsteny());
+            cfg.setHeatCapacity(atom.getHeatCapacity());
+            cfg.setThermalConductivity(atom.getThermalConductivity());
+        }
+        cfg.setExposureTime(60.0);
+        cfg.setChamberWidth(0.2);
+        cfg.setChamberDepth(0.2);
+        return cfg;
     }
 
     public ResultDTO toDTO(Result r) {

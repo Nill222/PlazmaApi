@@ -5,7 +5,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import plasmapi.project.plasma.dto.logikDTO.ResultDTO;
 import plasmapi.project.plasma.dto.mathDto.simulation.SimulationResultDto;
-import plasmapi.project.plasma.dto.mathDto.simulation.SimulationResultDto;
 import plasmapi.project.plasma.mapper.ResultMapper;
 import plasmapi.project.plasma.mapper.SimulationResultMapper;
 import plasmapi.project.plasma.model.res.Result;
@@ -48,6 +47,7 @@ public class ResultServiceImpl implements ResultService  {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<ResultDTO> findAll() {
         return resultRepository.findAll()
                 .stream()
