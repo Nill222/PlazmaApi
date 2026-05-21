@@ -2,6 +2,7 @@ package plasmapi.project.plasma.model.res;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -22,6 +23,7 @@ public class ResultIonComponent {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ion_id", nullable = false)
+    @BatchSize(size = 50)
     private Ion ion;
 
     @Column(nullable = false)

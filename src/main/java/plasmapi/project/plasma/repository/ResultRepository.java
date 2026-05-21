@@ -14,11 +14,7 @@ public interface ResultRepository extends JpaRepository<Result, Integer> {
             "config",
             "config.user",
             "atom",
-            "ion",
-            "atomComponents",
-            "atomComponents.atom",
-            "ionComponents",
-            "ionComponents.ion"
+            "ion"
     })
     @NonNull
     List<Result> findAll();
@@ -27,11 +23,7 @@ public interface ResultRepository extends JpaRepository<Result, Integer> {
             "config",
             "config.user",
             "atom",
-            "ion",
-            "atomComponents",
-            "atomComponents.atom",
-            "ionComponents",
-            "ionComponents.ion"
+            "ion"
     })
     List<Result> findByConfigId(Integer configId);
 }

@@ -2,6 +2,7 @@ package plasmapi.project.plasma.model.res;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
+import org.hibernate.annotations.BatchSize;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import plasmapi.project.plasma.model.atom.AtomList;
@@ -34,9 +35,11 @@ public class Result {
     private Ion ion;
 
     @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 50)
     private List<ResultAtomComponent> atomComponents = new ArrayList<>();
 
     @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
+    @BatchSize(size = 50)
     private List<ResultIonComponent> ionComponents = new ArrayList<>();
 
         // ------------------ Energy ---------------------
