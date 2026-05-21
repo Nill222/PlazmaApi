@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import plasmapi.project.plasma.dto.mathDto.collision.CollisionResult;
-import plasmapi.project.plasma.service.PhysicalConstants;
+import plasmapi.project.plasma.service.math.PhysicalConstants;
 import plasmapi.project.plasma.service.math.slr.SLRService;
 
 @Service

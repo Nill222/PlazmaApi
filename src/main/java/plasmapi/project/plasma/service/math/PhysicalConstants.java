@@ -1,4 +1,4 @@
-package plasmapi.project.plasma.service;
+package plasmapi.project.plasma.service.math;
 
 /**
  * Физические константы в СИ.

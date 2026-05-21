@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 import plasmapi.project.plasma.dto.mathDto.potential.PotentialParameters;
 import plasmapi.project.plasma.model.atom.AtomList;
 import plasmapi.project.plasma.model.atom.StructureType;
-import plasmapi.project.plasma.service.PhysicalConstants;
+import plasmapi.project.plasma.service.math.PhysicalConstants;
 import plasmapi.project.plasma.service.math.potential.PotentialService;
 import plasmapi.project.plasma.service.math.lattice.LatticePhysics;
 

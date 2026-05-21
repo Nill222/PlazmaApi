@@ -6,14 +6,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import plasmapi.project.plasma.dto.ApiResponse;
-import plasmapi.project.plasma.dto.logikDTO.ResultDTO;
+import plasmapi.project.plasma.dto.logikDTO.result.ResultDTO;
 import plasmapi.project.plasma.dto.mathDto.simulation.SimulationResultDto;
 import plasmapi.project.plasma.dto.mathDto.simulation.SimulationRunResponse;
-import plasmapi.project.plasma.mapper.SimulationResultMapper;
+import plasmapi.project.plasma.mapper.simulation.SimulationResultMapper;
 import plasmapi.project.plasma.service.logik.ResultService;
 import plasmapi.project.plasma.service.math.energy.IntermediateResultEnrichmentService;
 import plasmapi.project.plasma.service.math.simulation.SimulationOrchestratorService;
-import plasmapi.project.plasma.service.math.simulation.SimulationRequest;
+import plasmapi.project.plasma.dto.mathDto.simulation.SimulationRequest;
 import plasmapi.project.plasma.service.math.simulation.SimulationResult;
 
 import java.util.Map;

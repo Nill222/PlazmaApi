@@ -7,13 +7,19 @@ import plasmapi.project.plasma.model.res.Ion;
 import plasmapi.project.plasma.model.res.PlasmaConfiguration;
 import plasmapi.project.plasma.repository.AtomListRepository;
 import plasmapi.project.plasma.repository.IonRepository;
+import plasmapi.project.plasma.dto.mathDto.diffusion.AlloyComponentDto;
+import plasmapi.project.plasma.dto.mathDto.ion.IonComponentDto;
+import plasmapi.project.plasma.dto.mathDto.simulation.SimulationRequest;
 import plasmapi.project.plasma.service.math.diffusion.*;
 import plasmapi.project.plasma.service.math.ion.IonComponent;
 import plasmapi.project.plasma.service.math.ion.IonComposition;
 import plasmapi.project.plasma.service.math.PhysicsStats;
 import plasmapi.project.plasma.service.math.plazma.PlasmaResult;
 import plasmapi.project.plasma.service.math.plazma.PlasmaService;
-import plasmapi.project.plasma.service.math.simulation.*;
+import plasmapi.project.plasma.service.math.simulation.SimulationIntermediateResult;
+import plasmapi.project.plasma.service.math.simulation.SimulationOrchestratorService;
+import plasmapi.project.plasma.service.math.simulation.SimulationResult;
+import plasmapi.project.plasma.service.math.simulation.ThermalIntermediate;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -231,14 +237,14 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
     // =========================================================
     // ION COMPOSITION
     // =========================================================
-    private IonComposition buildIonComposition(List<IonComponent> dtoList) {
+    private IonComposition buildIonComposition(List<IonComponentDto> dtoList) {
 
         List<IonComponent> list = new ArrayList<>();
         double sum = 0.0;
 
-        for (IonComponent dto : dtoList) {
+        for (IonComponentDto dto : dtoList) {
 
-            Ion ion = getIonOrThrow(dto.getIon().getId());
+            Ion ion = getIonOrThrow(dto.getIonId());
 
             double x = dto.getFraction();
             if (x <= 0) {

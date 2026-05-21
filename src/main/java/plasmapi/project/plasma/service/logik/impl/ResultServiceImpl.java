@@ -3,10 +3,10 @@ package plasmapi.project.plasma.service.logik.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import plasmapi.project.plasma.dto.logikDTO.ResultDTO;
+import plasmapi.project.plasma.dto.logikDTO.result.ResultDTO;
 import plasmapi.project.plasma.dto.mathDto.simulation.SimulationResultDto;
-import plasmapi.project.plasma.mapper.ResultMapper;
-import plasmapi.project.plasma.mapper.SimulationResultMapper;
+import plasmapi.project.plasma.mapper.result.ResultMapper;
+import plasmapi.project.plasma.mapper.simulation.SimulationResultMapper;
 import plasmapi.project.plasma.model.res.Result;
 import plasmapi.project.plasma.repository.ResultRepository;
 import plasmapi.project.plasma.service.logik.ResultService;
@@ -31,7 +31,7 @@ public class ResultServiceImpl implements ResultService  {
     @Transactional
     public Optional<ResultDTO> create(SimulationResultDto dto) {
         Result entity = Objects.requireNonNull(resultMapper.toEntity(dto));
-        Result saved = resultRepository.save(entity);
+        Result saved = resultRepository.saveAndFlush(entity);
         return Optional.of(resultMapper.toDTO(saved));
     }
 

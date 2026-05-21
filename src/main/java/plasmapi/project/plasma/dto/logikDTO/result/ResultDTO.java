@@ -1,4 +1,4 @@
-package plasmapi.project.plasma.dto.logikDTO;
+package plasmapi.project.plasma.dto.logikDTO.result;
 
 import plasmapi.project.plasma.dto.logikDTO.atom.AtomListDTO;
 import plasmapi.project.plasma.dto.logikDTO.composition.ResultAtomComponentDTO;

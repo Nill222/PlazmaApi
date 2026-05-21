@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 import plasmapi.project.plasma.dto.mathDto.collision.CollisionResult;
 import plasmapi.project.plasma.model.atom.AtomList;
 import plasmapi.project.plasma.model.res.Ion;
-import plasmapi.project.plasma.service.PhysicalConstants;
+import plasmapi.project.plasma.service.math.PhysicalConstants;
 import plasmapi.project.plasma.service.math.collision.CollisionService;
 
 @Service

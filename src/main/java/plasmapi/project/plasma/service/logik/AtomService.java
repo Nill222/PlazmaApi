@@ -10,5 +10,7 @@ import java.util.List;
 public interface AtomService extends MotherService<AtomList, Integer, CreateAtomListDto>{
     List<AtomDTO> getAtomsByConfig(Integer configId);
 
+    List<AtomListDTO> getAvailableAtoms();
+
     List<AtomListDTO> getAtomProperties(String symbol);
 }

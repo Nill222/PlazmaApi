@@ -40,7 +40,8 @@ public class UserController {
 
     @GetMapping("/username/{username}")
     public ResponseEntity<ApiResponse<UserDTO>> getUserByUsername(@PathVariable String username) {
-        User user = userService.findByUsername(username).orElseThrow(() -> new NotFoundException("пользователь с таким именем: " + username + "не найден"));
+        User user = userService.findByUsername(username)
+                .orElseThrow(() -> new NotFoundException("Пользователь с именем '" + username + "' не найден"));
         return ResponseEntity.ok(new ApiResponse<>(userMapper.map(user), "Пользователь найден", HttpStatus.OK.value()));
     }
 

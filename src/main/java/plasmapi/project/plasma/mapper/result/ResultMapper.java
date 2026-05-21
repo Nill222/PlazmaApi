@@ -1,9 +1,9 @@
-package plasmapi.project.plasma.mapper;
+package plasmapi.project.plasma.mapper.result;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import plasmapi.project.plasma.controller.handler.exception.NotFoundException;
-import plasmapi.project.plasma.dto.logikDTO.ResultDTO;
+import plasmapi.project.plasma.dto.logikDTO.result.ResultDTO;
 import plasmapi.project.plasma.dto.logikDTO.atom.AtomListDTO;
 import plasmapi.project.plasma.dto.logikDTO.composition.AtomCompositionItemDTO;
 import plasmapi.project.plasma.dto.logikDTO.composition.IonCompositionItemDTO;

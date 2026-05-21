@@ -1,7 +1,6 @@
 package plasmapi.project.plasma.service.logik.impl;
 
 import org.springframework.stereotype.Service;
-import plasmapi.project.plasma.controller.handler.exception.NotFoundException;
 import plasmapi.project.plasma.dto.logikDTO.atom.AtomDTO;
 import plasmapi.project.plasma.dto.logikDTO.atom.AtomListDTO;
 import plasmapi.project.plasma.dto.logikDTO.atom.CreateAtomListDto;
@@ -24,9 +23,15 @@ public class AtomServiceImpl extends AbstractMotherService<AtomList, Integer, Cr
     private final AtomListReadMapper atomReadMapper;
     private final AtomReadMapper atomMapper;
 
-    public AtomServiceImpl(AtomRepository repository, AtomListRepository atomListRepository, AtomCreateMapper atomCreateMapper, AtomListReadMapper atomReadMapper, AtomReadMapper atomMapper) {
+    public AtomServiceImpl(
+            AtomRepository atomRepository,
+            AtomListRepository atomListRepository,
+            AtomCreateMapper atomCreateMapper,
+            AtomListReadMapper atomReadMapper,
+            AtomReadMapper atomMapper
+    ) {
         super(atomListRepository, atomCreateMapper);
-        this.atomRepository = repository;
+        this.atomRepository = atomRepository;
         this.atomListRepository = atomListRepository;
         this.atomReadMapper = atomReadMapper;
         this.atomMapper = atomMapper;
@@ -34,11 +39,7 @@ public class AtomServiceImpl extends AbstractMotherService<AtomList, Integer, Cr
 
     @Override
     public List<AtomDTO> getAtomsByConfig(Integer configId) {
-        List<Atom> atoms = atomRepository.findByConfigId(configId);
-        if(atoms.isEmpty()){
-            throw new NotFoundException("Атомы для configId " + configId + "не найдены");
-        }
-        return atoms.stream()
+        return atomRepository.findByConfigId(configId).stream()
                 .map(atomMapper::map)
                 .toList();
     }
@@ -52,11 +53,7 @@ public class AtomServiceImpl extends AbstractMotherService<AtomList, Integer, Cr
 
     @Override
     public List<AtomListDTO> getAtomProperties(String symbol) {
-        List<AtomList> atom = atomListRepository.findByAtomSymbol("%" + symbol + "%");
-        if(atom.isEmpty()){
-            throw new NotFoundException("Атомы, содержащие символ '" + symbol + "', не найдены");
-        }
-        return atom.stream()
+        return atomListRepository.findByAtomSymbol(symbol).stream()
                 .map(atomReadMapper::map)
                 .toList();
     }

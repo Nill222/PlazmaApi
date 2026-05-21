@@ -5,7 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import plasmapi.project.plasma.dto.ApiResponse;
-import plasmapi.project.plasma.dto.logikDTO.ResultDTO;
+import plasmapi.project.plasma.dto.logikDTO.result.ResultDTO;
 import plasmapi.project.plasma.service.logik.ResultService;
 
 import java.util.List;

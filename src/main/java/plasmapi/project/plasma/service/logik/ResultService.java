@@ -1,6 +1,6 @@
 package plasmapi.project.plasma.service.logik;
 
-import plasmapi.project.plasma.dto.logikDTO.ResultDTO;
+import plasmapi.project.plasma.dto.logikDTO.result.ResultDTO;
 import plasmapi.project.plasma.dto.mathDto.simulation.SimulationResultDto;
 import plasmapi.project.plasma.service.math.simulation.SimulationResult;
 

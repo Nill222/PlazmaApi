@@ -1,4 +1,4 @@
-package plasmapi.project.plasma.service.math.diffusion;
+package plasmapi.project.plasma.dto.mathDto.diffusion;
 
 import lombok.Data;
 
