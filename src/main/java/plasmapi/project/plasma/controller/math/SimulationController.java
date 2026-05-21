@@ -76,7 +76,7 @@ public class SimulationController {
         ApiResponse<Map<String, Object>> resp = new ApiResponse<>(
                 Map.of(
                         "simulation", simulation,
-                        "saved", saved.orElse(null)
+                        "saved", saved.orElseThrow()
                 ),
                 "Симуляция выполнена и сохранена",
                 HttpStatus.OK.value()

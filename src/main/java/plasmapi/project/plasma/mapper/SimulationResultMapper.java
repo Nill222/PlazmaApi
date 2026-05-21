@@ -5,7 +5,6 @@ import org.springframework.stereotype.Component;
 import plasmapi.project.plasma.dto.logikDTO.composition.AtomCompositionItemDTO;
 import plasmapi.project.plasma.dto.logikDTO.composition.IonCompositionItemDTO;
 import plasmapi.project.plasma.dto.mathDto.diffusion.DiffusionProfileDto;
-import plasmapi.project.plasma.service.math.diffusion.AlloyComponent;
 import plasmapi.project.plasma.service.math.diffusion.AlloyComposition;
 import plasmapi.project.plasma.service.math.ion.IonComposition;
 import plasmapi.project.plasma.dto.mathDto.plasma.PlasmaResultDto;

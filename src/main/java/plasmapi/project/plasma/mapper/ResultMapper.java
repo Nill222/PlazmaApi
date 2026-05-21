@@ -91,7 +91,7 @@ public class ResultMapper{
         if (plasmaCfg == null) {
             plasmaCfg = plasmaConfigFromDto(dto, atom);
         }
-        double exposureTime = plasmaCfg != null && plasmaCfg.getExposureTime() != null
+        double exposureTime = plasmaCfg.getExposureTime() != null
                 ? plasmaCfg.getExposureTime()
                 : 60.0;
         double ambient = dto.avgT() > 0 ? dto.avgT() : 300.0;
