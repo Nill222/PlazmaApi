@@ -6,6 +6,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import plasmapi.project.plasma.model.atom.AtomList;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.time.LocalDateTime;
 
 @Entity
@@ -30,6 +32,12 @@ public class Result {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "ion_id")
     private Ion ion;
+
+    @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ResultAtomComponent> atomComponents = new ArrayList<>();
+
+    @OneToMany(mappedBy = "result", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ResultIonComponent> ionComponents = new ArrayList<>();
 
         // ------------------ Energy ---------------------
 

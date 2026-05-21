@@ -1,7 +1,5 @@
 package plasmapi.project.plasma.dto.mathDto.potential;
 
-import plasmapi.project.plasma.service.math.potential.PotentialType;
-
 public record PotentialParameters(
 
          // Потенциальная энергия V(r) в точке r, Дж

@@ -115,7 +115,9 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
                 cfg,
                 stats,
                 plasma,
-                intermediate
+                intermediate,
+                alloy,
+                ionComp
         );
     }
 

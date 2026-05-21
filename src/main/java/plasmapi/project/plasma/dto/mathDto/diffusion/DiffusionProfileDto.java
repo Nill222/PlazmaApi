@@ -1,7 +1,5 @@
 package plasmapi.project.plasma.dto.mathDto.diffusion;
 
-import java.util.List;
-
 public record DiffusionProfileDto(
         double D1,
         double D2,

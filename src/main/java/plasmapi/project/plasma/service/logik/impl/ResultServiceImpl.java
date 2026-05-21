@@ -13,6 +13,7 @@ import plasmapi.project.plasma.service.logik.ResultService;
 import plasmapi.project.plasma.service.math.simulation.SimulationResult;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @Service
@@ -29,20 +30,23 @@ public class ResultServiceImpl implements ResultService  {
     @Override
     @Transactional
     public Optional<ResultDTO> create(SimulationResultDto dto) {
-        Result entity = resultMapper.toEntity(dto);
-        entity = resultRepository.save(entity);
-        return Optional.of(resultMapper.toDTO(entity));
+        Result entity = Objects.requireNonNull(resultMapper.toEntity(dto));
+        Result saved = resultRepository.save(entity);
+        return Optional.of(resultMapper.toDTO(saved));
     }
 
     @Override
     @Transactional
     public Optional<ResultDTO> saveFromSimulation(
             SimulationResult simulationResult,
-            Integer configId,
-            Integer atomId,
-            Integer ionId
+            Integer configId
     ) {
-        SimulationResultDto dto = simulationResultMapper.toDto(simulationResult, atomId, configId, ionId);
+        SimulationResultDto dto = simulationResultMapper.toDto(
+                simulationResult,
+                simulationResult.getAtom().getId(),
+                configId,
+                simulationResult.getIon().getId()
+        );
         return create(dto);
     }
 

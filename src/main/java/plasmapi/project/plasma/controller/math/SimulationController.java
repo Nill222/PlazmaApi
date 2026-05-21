@@ -32,7 +32,6 @@ public class SimulationController {
 
     /**
      * Запустить полную симуляцию (оркестратор).
-     * Тело запроса — SimulationRequestDto.
      */
     @PostMapping("/run")
     public ResponseEntity<ApiResponse<SimulationRunResponse>> runSimulation(
@@ -72,12 +71,7 @@ public class SimulationController {
             @RequestParam Integer configId
     ) {
         SimulationResult simulation = simulationService.runSimulation(request);
-        Optional<ResultDTO> saved = resultService.saveFromSimulation(
-                simulation,
-                configId,
-                request.getAtomId(),
-                request.getIonId()
-        );
+        Optional<ResultDTO> saved = resultService.saveFromSimulation(simulation, configId);
 
         ApiResponse<Map<String, Object>> resp = new ApiResponse<>(
                 Map.of(

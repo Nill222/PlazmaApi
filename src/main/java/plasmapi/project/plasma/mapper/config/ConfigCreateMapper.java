@@ -4,7 +4,6 @@ import org.springframework.stereotype.Component;
 import plasmapi.project.plasma.dto.logikDTO.config.ConfigCreateDto;
 import plasmapi.project.plasma.mapper.BaseMapper;
 import plasmapi.project.plasma.model.res.Config;
-import plasmapi.project.plasma.model.security.User;
 import plasmapi.project.plasma.repository.UserRepository;
 
 @Component
@@ -33,9 +32,9 @@ public class ConfigCreateMapper implements BaseMapper<Config, ConfigCreateDto> {
         config.setName(dto.name());
         config.setDescription(dto.description());
 
-        if (dto.userId() != null) {
-            User user = userRepository.getReferenceById(dto.userId());
-            config.setUser(user);
+        Integer userId = dto.userId();
+        if (userId != null) {
+            config.setUser(userRepository.getReferenceById(userId));
         }
     }
 }

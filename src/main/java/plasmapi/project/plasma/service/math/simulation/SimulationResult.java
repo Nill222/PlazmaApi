@@ -7,7 +7,9 @@ import plasmapi.project.plasma.model.atom.AtomList;
 import plasmapi.project.plasma.model.res.Ion;
 import plasmapi.project.plasma.model.res.PlasmaConfiguration;
 import plasmapi.project.plasma.service.math.PhysicsStats;
+import plasmapi.project.plasma.service.math.diffusion.AlloyComposition;
 import plasmapi.project.plasma.service.math.diffusion.DiffusionProfile;
+import plasmapi.project.plasma.service.math.ion.IonComposition;
 import plasmapi.project.plasma.service.math.plazma.PlasmaResult;
 
 /**
@@ -25,4 +27,6 @@ public class SimulationResult {
     private final PhysicsStats stats;
     private final PlasmaResult plasmaResult;
     private final SimulationIntermediateResult intermediate;
+    private final AlloyComposition alloy;
+    private final IonComposition ionComposition;
 }

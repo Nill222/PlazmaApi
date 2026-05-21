@@ -1,5 +1,7 @@
 package plasmapi.project.plasma.dto.mathDto.simulation;
 
+import plasmapi.project.plasma.dto.logikDTO.composition.AtomCompositionItemDTO;
+import plasmapi.project.plasma.dto.logikDTO.composition.IonCompositionItemDTO;
 import plasmapi.project.plasma.dto.mathDto.diffusion.DiffusionProfileDto;
 import plasmapi.project.plasma.dto.mathDto.plasma.PlasmaResultDto;
 
@@ -9,6 +11,8 @@ public record SimulationResultDto(
         Integer atomId,
         Integer configId,
         Integer ionId,
+        List<AtomCompositionItemDTO> atomComposition,
+        List<IonCompositionItemDTO> ionComposition,
         String atomName,                       // имя материала/атома
         String s,
         double totalTransferredEnergy,         // общая переданная энергия (из Collision)

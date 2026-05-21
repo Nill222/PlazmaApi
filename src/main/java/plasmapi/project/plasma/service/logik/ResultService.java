@@ -12,9 +12,7 @@ public interface ResultService {
 
     Optional<ResultDTO> saveFromSimulation(
             SimulationResult simulationResult,
-            Integer configId,
-            Integer atomId,
-            Integer ionId
+            Integer configId
     );
 
     List<ResultDTO> findAll();

@@ -6,7 +6,6 @@ import org.springframework.data.repository.query.Param;
 import plasmapi.project.plasma.model.atom.AtomList;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface AtomListRepository extends JpaRepository<AtomList, Integer> {
     @Query("SELECT a FROM AtomList a WHERE LOWER(a.atomName) LIKE LOWER(CONCAT('%', :symbol, '%'))")

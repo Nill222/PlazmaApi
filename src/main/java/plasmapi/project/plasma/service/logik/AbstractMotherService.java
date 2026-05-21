@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional;
 import plasmapi.project.plasma.mapper.BaseMapper;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @RequiredArgsConstructor
@@ -22,15 +23,15 @@ public abstract class AbstractMotherService<T, F, D> implements MotherService<T,
 
     @Override
     public Optional<T> findById(F id) {
-        return repository.findById(id);
+        return repository.findById(Objects.requireNonNull(id));
     }
 
     @Transactional
     @Override
     public boolean delete(F id) {
-        return repository.findById(id)
+        return repository.findById(Objects.requireNonNull(id))
                 .map(entity -> {
-                    repository.delete(entity);
+                    repository.delete(Objects.requireNonNull(entity));
                     repository.flush();
                     return true;
                 })
@@ -40,7 +41,7 @@ public abstract class AbstractMotherService<T, F, D> implements MotherService<T,
     @Transactional
     @Override
     public Optional<T> create(D dto) {
-        T entity = mapper.map(dto);
+        T entity = Objects.requireNonNull(mapper.map(dto));
         return Optional.of(repository.saveAndFlush(entity));
     }
 }

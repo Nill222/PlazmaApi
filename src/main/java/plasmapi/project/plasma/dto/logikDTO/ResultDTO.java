@@ -1,17 +1,22 @@
 package plasmapi.project.plasma.dto.logikDTO;
 
 import plasmapi.project.plasma.dto.logikDTO.atom.AtomListDTO;
+import plasmapi.project.plasma.dto.logikDTO.composition.ResultAtomComponentDTO;
+import plasmapi.project.plasma.dto.logikDTO.composition.ResultIonComponentDTO;
 import plasmapi.project.plasma.dto.logikDTO.config.ConfigDTO;
 import plasmapi.project.plasma.dto.logikDTO.ion.IonDTO;
 import plasmapi.project.plasma.dto.mathDto.simulation.SimulationIntermediateResultDto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record ResultDTO(
         Integer id,
         ConfigDTO config,
         IonDTO ion,
         AtomListDTO atom,
+        List<ResultAtomComponentDTO> atomComposition,
+        List<ResultIonComponentDTO> ionComposition,
         double totalTransferredEnergy,
         double avgTransferredPerAtom,
         double avgT,

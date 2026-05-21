@@ -3,7 +3,6 @@ package plasmapi.project.plasma.service.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import plasmapi.project.plasma.model.security.User;
 
-import java.security.Key;
+import javax.crypto.SecretKey;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
@@ -51,7 +50,7 @@ public class JwtService {
                 .subject(subject)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(now.plus(ACCESS_TOKEN_TTL)))
-                .signWith(getSigningKey(), SignatureAlgorithm.HS256)
+                .signWith(getSigningKey())
                 .compact();
     }
 
@@ -74,10 +73,10 @@ public class JwtService {
     private Claims extractAllClaims(String token) {
         try {
             return Jwts.parser()
-                    .setSigningKey(getSigningKey())
+                    .verifyWith(getSigningKey())
                     .build()
-                    .parseClaimsJws(token)
-                    .getBody();
+                    .parseSignedClaims(token)
+                    .getPayload();
         } catch (JwtException e) {
             log.debug("Failed to parse JWT: {}", e.getMessage());
             throw e;
@@ -85,19 +84,18 @@ public class JwtService {
     }
 
     public Instant extractExpiration(String token) {
-        Date expiration = extractClaim(token, Claims::getExpiration);
-        return expiration.toInstant();
+        return extractClaim(token, Claims::getExpiration).toInstant();
     }
 
     private boolean isTokenExpired(String token) {
         try {
-            return extractClaim(token, Claims::getExpiration).before(new Date());
+            return extractExpiration(token).isBefore(Instant.now());
         } catch (JwtException e) {
             return true;
         }
     }
 
-    private Key getSigningKey() {
+    private SecretKey getSigningKey() {
         if (jwtSigningKeyBase64 == null || jwtSigningKeyBase64.isBlank()) {
             throw new IllegalStateException("token.signing.key is not configured");
         }
@@ -110,6 +108,4 @@ public class JwtService {
 
         return Keys.hmacShaKeyFor(keyBytes);
     }
-
 }
-

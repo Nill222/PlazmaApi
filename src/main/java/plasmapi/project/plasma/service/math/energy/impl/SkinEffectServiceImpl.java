@@ -78,14 +78,6 @@ public class SkinEffectServiceImpl implements SkinEffectService {
         return localTemperature + skinTemperatureDelta;
     }
 
-    /**
-     * Затухание поля (7): |E(z)|/|E(0)| = exp(-z/δ) — используется при интегрировании (9).
-     */
-    @SuppressWarnings("unused")
-    private double fieldAttenuationFactor(double depth, double skinDepth) {
-        return Math.exp(-depth / Math.max(skinDepth, 1e-18));
-    }
-
     private double integrateSkinEnergy(
             double baseSurfacePower,
             double exposureTime,

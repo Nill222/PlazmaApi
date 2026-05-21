@@ -47,7 +47,9 @@ public class IonCollisionAveragingService {
         // 🔹 только сплав ионов
         // =========================
         if (alloy == null) {
-
+            if (ionComp == null) {
+                throw new IllegalArgumentException("ionComp is required when alloy is null");
+            }
             for (IonComponent ic : ionComp.getComponents()) {
 
                 double w = ic.getFraction();
@@ -73,8 +75,9 @@ public class IonCollisionAveragingService {
         // 🔹 ion × alloy (pair averaging)
         // =========================
         else {
-
-            assert ionComp != null;
+            if (ionComp == null || alloy == null) {
+                throw new IllegalArgumentException("ionComp and alloy are required for pair averaging");
+            }
             for (IonComponent ic : ionComp.getComponents()) {
                 for (AlloyComponent ac : alloy.getComponents()) {
 

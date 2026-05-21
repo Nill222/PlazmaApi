@@ -26,6 +26,7 @@ import plasmapi.project.plasma.service.math.transport.IonTransportService;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.DoubleUnaryOperator;
 
 @Service
@@ -61,6 +62,7 @@ public class DiffusionServiceImpl implements DiffusionService {
     ) {
 
         boolean isAlloy = alloy != null && !alloy.getComponents().isEmpty();
+        AlloyComposition alloyForCalc = isAlloy ? Objects.requireNonNull(alloy) : null;
 
         // =========================
         // 1. THERMAL
@@ -85,8 +87,6 @@ public class DiffusionServiceImpl implements DiffusionService {
                 adapter.getCyclePeriod(),
                 adapter.getDutyCycle()
         );
-
-        double finalT = thermal.finalProbeTemperature();
 
         // =========================
         // 2. PLASMA
@@ -127,7 +127,7 @@ public class DiffusionServiceImpl implements DiffusionService {
             D1 = atom.getPackingFactor1() != null ? atom.getPackingFactor1() : 1e-18;
             D2 = atom.getPackingFactor2() != null ? atom.getPackingFactor2() : 1e-19;
         } else {
-            for (AlloyComponent c : alloy.getComponents()) {
+            for (AlloyComponent c : Objects.requireNonNull(alloyForCalc).getComponents()) {
                 double x = c.getFraction();
                 AtomList a = c.getAtom();
 
@@ -146,7 +146,7 @@ public class DiffusionServiceImpl implements DiffusionService {
             Q1 = getActivationEnergy(atom, true);
             Q2 = getActivationEnergy(atom, false);
         } else {
-            for (AlloyComponent c : alloy.getComponents()) {
+            for (AlloyComponent c : Objects.requireNonNull(alloyForCalc).getComponents()) {
                 double x = c.getFraction();
                 Q1 += x * getActivationEnergy(c.getAtom(), true);
                 Q2 += x * getActivationEnergy(c.getAtom(), false);
@@ -164,8 +164,9 @@ public class DiffusionServiceImpl implements DiffusionService {
             stiffness = p.stiffness();
             re = p.re();
         } else {
-            stiffness = computeEffectiveStiffness(alloy);
-            re = computeEffectiveRe(alloy);
+            AlloyComposition composition = Objects.requireNonNull(alloyForCalc);
+            stiffness = computeEffectiveStiffness(composition);
+            re = computeEffectiveRe(composition);
         }
 
         // =========================

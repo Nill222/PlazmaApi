@@ -5,6 +5,10 @@ import org.springframework.stereotype.Component;
 import plasmapi.project.plasma.controller.handler.exception.NotFoundException;
 import plasmapi.project.plasma.dto.logikDTO.ResultDTO;
 import plasmapi.project.plasma.dto.logikDTO.atom.AtomListDTO;
+import plasmapi.project.plasma.dto.logikDTO.composition.AtomCompositionItemDTO;
+import plasmapi.project.plasma.dto.logikDTO.composition.IonCompositionItemDTO;
+import plasmapi.project.plasma.dto.logikDTO.composition.ResultAtomComponentDTO;
+import plasmapi.project.plasma.dto.logikDTO.composition.ResultIonComponentDTO;
 import plasmapi.project.plasma.dto.logikDTO.config.ConfigDTO;
 import plasmapi.project.plasma.dto.logikDTO.ion.IonDTO;
 import plasmapi.project.plasma.dto.logikDTO.user.UserDTO;
@@ -15,6 +19,8 @@ import plasmapi.project.plasma.dto.mathDto.plasma.PlasmaResultDto;
 import plasmapi.project.plasma.model.atom.AtomList;
 import plasmapi.project.plasma.model.res.PlasmaConfiguration;
 import plasmapi.project.plasma.model.res.Result;
+import plasmapi.project.plasma.model.res.ResultAtomComponent;
+import plasmapi.project.plasma.model.res.ResultIonComponent;
 import plasmapi.project.plasma.model.security.User;
 import plasmapi.project.plasma.service.logik.AtomService;
 import plasmapi.project.plasma.service.logik.ConfigService;
@@ -22,6 +28,8 @@ import plasmapi.project.plasma.service.logik.IonService;
 import plasmapi.project.plasma.service.math.PhysicsStats;
 import plasmapi.project.plasma.service.math.diffusion.DiffusionIntermediate;
 import plasmapi.project.plasma.service.math.energy.IntermediateResultEnrichmentService;
+
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -46,6 +54,9 @@ public class ResultMapper{
                 .orElseThrow(() -> new NotFoundException("ион с таким id не найден")));
         r.setAtom(atomListService.findById(dto.atomId())
                 .orElseThrow(() -> new NotFoundException("атом с таким id не найден")));
+
+        applyAtomComposition(r, dto.atomComposition(), dto.atomId());
+        applyIonComposition(r, dto.ionComposition(), dto.ionId());
 
         // физические параметры
         r.setTotalTransferredEnergy(dto.totalTransferredEnergy());
@@ -154,6 +165,12 @@ public class ResultMapper{
     }
 
     public ResultDTO toDTO(Result r) {
+        List<ResultAtomComponentDTO> atomComposition = mapAtomComponents(r);
+        List<ResultIonComponentDTO> ionComposition = mapIonComponents(r);
+
+        AtomList primaryAtom = resolvePrimaryAtom(r);
+        var primaryIon = resolvePrimaryIon(r);
+
         return new ResultDTO(
                 r.getId(),
                 new ConfigDTO(r.getConfig().getId(),
@@ -161,20 +178,12 @@ public class ResultMapper{
                         r.getConfig().getDescription(),
                         r.getConfig().getCreatedAt(),
                         mapUser(r.getConfig().getUser())),
-                new IonDTO(r.getIon().getId(),
-                        r.getIon().getName(),
-                        r.getIon().getMass(),
-                        r.getIon().getCharge()),
-                new AtomListDTO(
-                        r.getAtom().getId(),
-                        r.getAtom().getAtomName(),
-                        r.getAtom().getFullName(),
-                        r.getAtom().getMass(),
-                        r.getAtom().getA(),
-                        r.getAtom().getDebyeTemperature(),
-                        r.getAtom().getValence(),
-                        r.getAtom().getStructure()
-                ),
+                primaryIon != null
+                        ? new IonDTO(primaryIon.getId(), primaryIon.getName(), primaryIon.getMass(), primaryIon.getCharge())
+                        : null,
+                primaryAtom != null ? toAtomListDTO(primaryAtom) : null,
+                atomComposition,
+                ionComposition,
 
                 r.getTotalTransferredEnergy(),
                 r.getAvgTransferredPerAtom(),
@@ -290,6 +299,121 @@ public class ResultMapper{
         }
         double re = atom.getA() != null ? atom.getA() * 1e-10 : 1e-10;
         return new DiffusionIntermediate(dRad, dTh, slr, dmg, rp, sigma, 1e9, re);
+    }
+
+    private void applyAtomComposition(
+            Result r,
+            List<AtomCompositionItemDTO> items,
+            Integer fallbackAtomId
+    ) {
+        List<AtomCompositionItemDTO> resolved = resolveCompositionItems(items, fallbackAtomId);
+        for (AtomCompositionItemDTO item : resolved) {
+            ResultAtomComponent component = new ResultAtomComponent();
+            component.setResult(r);
+            component.setAtom(atomListService.findById(item.atomId())
+                    .orElseThrow(() -> new NotFoundException("атом с таким id не найден: " + item.atomId())));
+            component.setFraction(item.fraction());
+            r.getAtomComponents().add(component);
+        }
+    }
+
+    private void applyIonComposition(
+            Result r,
+            List<IonCompositionItemDTO> items,
+            Integer fallbackIonId
+    ) {
+        List<IonCompositionItemDTO> resolved = resolveIonCompositionItems(items, fallbackIonId);
+        for (IonCompositionItemDTO item : resolved) {
+            ResultIonComponent component = new ResultIonComponent();
+            component.setResult(r);
+            component.setIon(ionService.findById(item.ionId())
+                    .orElseThrow(() -> new NotFoundException("ион с таким id не найден: " + item.ionId())));
+            component.setFraction(item.fraction());
+            r.getIonComponents().add(component);
+        }
+    }
+
+    private List<AtomCompositionItemDTO> resolveCompositionItems(
+            List<AtomCompositionItemDTO> items,
+            Integer fallbackAtomId
+    ) {
+        if (items != null && !items.isEmpty()) {
+            return items;
+        }
+        if (fallbackAtomId != null) {
+            return List.of(new AtomCompositionItemDTO(fallbackAtomId, 1.0));
+        }
+        return List.of();
+    }
+
+    private List<IonCompositionItemDTO> resolveIonCompositionItems(
+            List<IonCompositionItemDTO> items,
+            Integer fallbackIonId
+    ) {
+        if (items != null && !items.isEmpty()) {
+            return items;
+        }
+        if (fallbackIonId != null) {
+            return List.of(new IonCompositionItemDTO(fallbackIonId, 1.0));
+        }
+        return List.of();
+    }
+
+    private List<ResultAtomComponentDTO> mapAtomComponents(Result r) {
+        if (r.getAtomComponents() != null && !r.getAtomComponents().isEmpty()) {
+            return r.getAtomComponents().stream()
+                    .map(c -> new ResultAtomComponentDTO(toAtomListDTO(c.getAtom()), c.getFraction()))
+                    .toList();
+        }
+        if (r.getAtom() != null) {
+            return List.of(new ResultAtomComponentDTO(toAtomListDTO(r.getAtom()), 1.0));
+        }
+        return List.of();
+    }
+
+    private List<ResultIonComponentDTO> mapIonComponents(Result r) {
+        if (r.getIonComponents() != null && !r.getIonComponents().isEmpty()) {
+            return r.getIonComponents().stream()
+                    .map(c -> new ResultIonComponentDTO(
+                            new IonDTO(c.getIon().getId(), c.getIon().getName(), c.getIon().getMass(), c.getIon().getCharge()),
+                            c.getFraction()
+                    ))
+                    .toList();
+        }
+        if (r.getIon() != null) {
+            return List.of(new ResultIonComponentDTO(
+                    new IonDTO(r.getIon().getId(), r.getIon().getName(), r.getIon().getMass(), r.getIon().getCharge()),
+                    1.0
+            ));
+        }
+        return List.of();
+    }
+
+    private AtomList resolvePrimaryAtom(Result r) {
+        if (r.getAtomComponents() != null && !r.getAtomComponents().isEmpty()) {
+            return r.getAtomComponents().get(0).getAtom();
+        }
+        return r.getAtom();
+    }
+
+    private plasmapi.project.plasma.model.res.Ion resolvePrimaryIon(Result r) {
+        if (r.getIonComponents() != null && !r.getIonComponents().isEmpty()) {
+            return r.getIonComponents().get(0).getIon();
+        }
+        return r.getIon();
+    }
+
+    private AtomListDTO toAtomListDTO(AtomList atom) {
+        return new AtomListDTO(
+                atom.getId(),
+                atom.getAtomName(),
+                atom.getFullName(),
+                atom.getMass(),
+                atom.getA(),
+                atom.getDebyeTemperature(),
+                atom.getValence(),
+                atom.getStructure()
+        );
     }
 
     private UserDTO mapUser(User user) {

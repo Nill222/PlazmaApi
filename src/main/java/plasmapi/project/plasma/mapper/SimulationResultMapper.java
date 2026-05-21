@@ -2,7 +2,12 @@ package plasmapi.project.plasma.mapper;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import plasmapi.project.plasma.dto.logikDTO.composition.AtomCompositionItemDTO;
+import plasmapi.project.plasma.dto.logikDTO.composition.IonCompositionItemDTO;
 import plasmapi.project.plasma.dto.mathDto.diffusion.DiffusionProfileDto;
+import plasmapi.project.plasma.service.math.diffusion.AlloyComponent;
+import plasmapi.project.plasma.service.math.diffusion.AlloyComposition;
+import plasmapi.project.plasma.service.math.ion.IonComposition;
 import plasmapi.project.plasma.dto.mathDto.plasma.PlasmaResultDto;
 import plasmapi.project.plasma.dto.mathDto.simulation.SimulationIntermediateResultDto;
 import plasmapi.project.plasma.dto.mathDto.simulation.SimulationResultDto;
@@ -63,6 +68,8 @@ public class SimulationResultMapper {
                 atomId,
                 configId,
                 ionId,
+                buildAtomComposition(result, atomId),
+                buildIonComposition(result, ionId),
                 result.getAtom().getAtomName(),
                 result.getAtom().getStructure() != null ? result.getAtom().getStructure().name() : "",
                 stats.totalTransferredEnergy(),
@@ -145,6 +152,38 @@ public class SimulationResultMapper {
                 d.latticeStiffness(),
                 d.equilibriumDistance()
         );
+    }
+
+    private List<AtomCompositionItemDTO> buildAtomComposition(SimulationResult result, Integer fallbackAtomId) {
+        AlloyComposition alloy = result.getAlloy();
+        if (alloy != null && alloy.getComponents() != null && !alloy.getComponents().isEmpty()) {
+            return alloy.getComponents().stream()
+                    .map(c -> new AtomCompositionItemDTO(c.getAtom().getId(), c.getFraction()))
+                    .toList();
+        }
+        if (fallbackAtomId != null) {
+            return List.of(new AtomCompositionItemDTO(fallbackAtomId, 1.0));
+        }
+        if (result.getAtom() != null) {
+            return List.of(new AtomCompositionItemDTO(result.getAtom().getId(), 1.0));
+        }
+        return List.of();
+    }
+
+    private List<IonCompositionItemDTO> buildIonComposition(SimulationResult result, Integer fallbackIonId) {
+        IonComposition ionComp = result.getIonComposition();
+        if (ionComp != null && ionComp.getComponents() != null && !ionComp.getComponents().isEmpty()) {
+            return ionComp.getComponents().stream()
+                    .map(c -> new IonCompositionItemDTO(c.getIon().getId(), c.getFraction()))
+                    .toList();
+        }
+        if (fallbackIonId != null) {
+            return List.of(new IonCompositionItemDTO(fallbackIonId, 1.0));
+        }
+        if (result.getIon() != null) {
+            return List.of(new IonCompositionItemDTO(result.getIon().getId(), 1.0));
+        }
+        return List.of();
     }
 
     private List<Double> extractCoolingProfile(PhysicsStats stats) {
