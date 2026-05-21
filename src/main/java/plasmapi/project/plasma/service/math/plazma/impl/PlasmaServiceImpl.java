@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import plasmapi.project.plasma.model.res.Ion;
 import plasmapi.project.plasma.model.res.PlasmaConfiguration;
 import plasmapi.project.plasma.service.math.PhysicalConstants;
+import plasmapi.project.plasma.service.math.PhysicsMath;
 import plasmapi.project.plasma.service.math.plazma.PlasmaResult;
 import plasmapi.project.plasma.service.math.plazma.PlasmaService;
 import plasmapi.project.plasma.service.math.ion.IonComposition;
@@ -103,7 +104,7 @@ public class PlasmaServiceImpl implements PlasmaService {
                         throw new IllegalArgumentException("Ion charge must be set");
                     }
 
-                    double ionChargeCoulombs = i.getCharge() * PhysicalConstants.E_CHARGE;
+                    double ionChargeCoulombs = PhysicsMath.safeIonCharge(i.getCharge()) * PhysicalConstants.E_CHARGE;
 
                     fluxSum += xi * (currentDensity / ionChargeCoulombs);
                 }
@@ -116,12 +117,12 @@ public class PlasmaServiceImpl implements PlasmaService {
                     throw new IllegalArgumentException("Ion charge must be set");
                 }
 
-                double ionChargeCoulombs = ion.getCharge() * PhysicalConstants.E_CHARGE;
+                double ionChargeCoulombs = PhysicsMath.safeIonCharge(ion.getCharge()) * PhysicalConstants.E_CHARGE;
 
                 ionFlux = currentDensity / ionChargeCoulombs;
             }
         }
 
-        return new PlasmaResult(ionEnergyEv, ionFlux);
+        return new PlasmaResult(ionEnergyEv, PhysicsMath.sanitizeIonFlux(ionFlux));
     }
 }

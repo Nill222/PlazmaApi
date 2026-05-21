@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import plasmapi.project.plasma.model.atom.AtomList;
 import plasmapi.project.plasma.model.res.PlasmaConfiguration;
+import plasmapi.project.plasma.service.math.PhysicsMath;
 import plasmapi.project.plasma.service.math.energy.*;
 
 import java.util.function.DoubleUnaryOperator;
@@ -86,13 +87,13 @@ public class EnergyDepositionServiceImpl implements EnergyDepositionService {
         );
 
         return new EnergyDepositionResult(
-                phiSurface,
-                eAccel,
-                energyGain,
-                plasmaCorrection,
-                baseExposureRate,
-                fluence,
-                thickness,
+                PhysicsMath.finiteOrZero(phiSurface),
+                PhysicsMath.finiteOrZero(eAccel),
+                PhysicsMath.finiteOrZero(energyGain),
+                PhysicsMath.finiteOrZero(plasmaCorrection),
+                PhysicsMath.sanitizeExposureRate(baseExposureRate),
+                PhysicsMath.sanitizeFluence(fluence),
+                PhysicsMath.finiteOrZero(thickness),
                 skin.skinDepth(),
                 skin.surfacePowerDensity(),
                 skin.accumulatedEnergy(),

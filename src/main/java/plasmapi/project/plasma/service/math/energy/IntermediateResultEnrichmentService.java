@@ -6,6 +6,7 @@ import plasmapi.project.plasma.dto.mathDto.simulation.SimulationIntermediateResu
 import plasmapi.project.plasma.model.atom.AtomList;
 import plasmapi.project.plasma.model.res.PlasmaConfiguration;
 import plasmapi.project.plasma.model.res.Result;
+import plasmapi.project.plasma.service.math.PhysicsMath;
 import plasmapi.project.plasma.service.math.PhysicsStats;
 import plasmapi.project.plasma.service.math.diffusion.DiffusionIntermediate;
 /**
@@ -610,23 +611,32 @@ public class IntermediateResultEnrichmentService {
     }
 
     private static double val(Double v) {
-        return v != null ? v : 0.0;
+        return PhysicsMath.finiteOrZero(v != null ? v : 0.0);
     }
 
     private static double nz(Double v) {
-        return v != null ? v : 0.0;
+        return PhysicsMath.finiteOrZero(v != null ? v : 0.0);
     }
 
     private static double nz(Double v, double fallback) {
-        return v != null ? v : fallback;
+        double raw = v != null ? v : fallback;
+        return PhysicsMath.finiteOrDefault(raw, fallback);
     }
 
     private static double pick(double primary, double fallback) {
-        return primary > 0 ? primary : fallback;
+        if (Double.isFinite(primary) && primary > 0) {
+            return primary;
+        }
+        return PhysicsMath.finiteOrZero(fallback);
     }
 
     private static double pickPositive(double primary, double fallback) {
-        if (primary > 0) return primary;
-        return fallback > 0 ? fallback : 0;
+        if (Double.isFinite(primary) && primary > 0) {
+            return primary;
+        }
+        if (Double.isFinite(fallback) && fallback > 0) {
+            return fallback;
+        }
+        return 0.0;
     }
 }

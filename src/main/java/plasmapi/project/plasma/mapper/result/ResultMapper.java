@@ -25,6 +25,7 @@ import plasmapi.project.plasma.model.security.User;
 import plasmapi.project.plasma.service.logik.AtomService;
 import plasmapi.project.plasma.service.logik.ConfigService;
 import plasmapi.project.plasma.service.logik.IonService;
+import plasmapi.project.plasma.service.math.PhysicsMath;
 import plasmapi.project.plasma.service.math.PhysicsStats;
 import plasmapi.project.plasma.service.math.diffusion.DiffusionIntermediate;
 import plasmapi.project.plasma.service.math.energy.IntermediateResultEnrichmentService;
@@ -185,33 +186,33 @@ public class ResultMapper{
                 atomComposition,
                 ionComposition,
 
-                r.getTotalTransferredEnergy(),
-                r.getAvgTransferredPerAtom(),
-                r.getAvgT(),
-                r.getMinT(),
-                r.getMaxT(),
-                r.getDiffusionCoefficient1(),
-                r.getDiffusionCoefficient2(),
-                r.getVoltage(),
-                r.getElectronTemperature(),
-                r.getIonEnergy(),
-                r.getPressure(),
-                r.getElectronDensity(),
-                r.getElectronVelocity(),
-                r.getCurrentDensity(),
-                r.getDepths(),
-                r.getConcentration(),
-                r.getDThermal(),
-                r.getTotalMomentum(),
-                r.getTotalDamage(),
-                r.getTotalDisplacement(),
-                r.getFluence(),
-                r.getFluenceEff(),
-                r.getIonFlux(),
-                r.getResonanceXi(),
-                r.getDSlr(),
-                r.getDRes(),
-                readIntermediate(r),
+                PhysicsMath.sanitizeEnergy(nz(r.getTotalTransferredEnergy())),
+                PhysicsMath.finiteOrZero(nz(r.getAvgTransferredPerAtom())),
+                PhysicsMath.finiteOrZero(nz(r.getAvgT())),
+                PhysicsMath.finiteOrZero(nz(r.getMinT())),
+                PhysicsMath.finiteOrZero(nz(r.getMaxT())),
+                PhysicsMath.finiteOrZero(nz(r.getDiffusionCoefficient1())),
+                PhysicsMath.finiteOrZero(nz(r.getDiffusionCoefficient2())),
+                PhysicsMath.finiteOrZero(nz(r.getVoltage())),
+                PhysicsMath.finiteOrZero(nz(r.getElectronTemperature())),
+                PhysicsMath.finiteOrZero(nz(r.getIonEnergy())),
+                PhysicsMath.finiteOrZero(nz(r.getPressure())),
+                PhysicsMath.sanitizeElectronDensity(nz(r.getElectronDensity())),
+                PhysicsMath.finiteOrZero(nz(r.getElectronVelocity())),
+                PhysicsMath.finiteOrZero(nz(r.getCurrentDensity())),
+                PhysicsMath.sanitizeDepth(nz(r.getDepths())),
+                PhysicsMath.finiteOrZero(nz(r.getConcentration())),
+                PhysicsMath.finiteOrZero(nz(r.getDThermal())),
+                PhysicsMath.sanitizeMomentum(nz(r.getTotalMomentum())),
+                PhysicsMath.sanitizeDamage(nz(r.getTotalDamage())),
+                PhysicsMath.sanitizeDisplacement(nz(r.getTotalDisplacement())),
+                PhysicsMath.sanitizeFluence(nz(r.getFluence())),
+                PhysicsMath.sanitizeFluence(nz(r.getFluenceEff())),
+                PhysicsMath.sanitizeIonFlux(nz(r.getIonFlux())),
+                PhysicsMath.finiteOrDefault(nz(r.getResonanceXi()), 1.0),
+                PhysicsMath.finiteOrZero(nz(r.getDSlr())),
+                PhysicsMath.finiteOrZero(nz(r.getDRes())),
+                sanitizeIntermediate(readIntermediate(r)),
                 r.getCreatedAt()
         );
     }
@@ -423,6 +424,46 @@ public class ResultMapper{
                 user.getUsername(),
                 user.getEmail(),
                 user.getRole()
+        );
+    }
+
+    private static double nz(Double v) {
+        return v != null ? v : 0.0;
+    }
+
+    private SimulationIntermediateResultDto sanitizeIntermediate(SimulationIntermediateResultDto dto) {
+        if (dto == null) {
+            return null;
+        }
+        return new SimulationIntermediateResultDto(
+                PhysicsMath.finiteOrZero(dto.ionEnergyEv()),
+                PhysicsMath.sanitizeIonFlux(dto.ionFlux()),
+                PhysicsMath.finiteOrZero(dto.potentialAtSurface()),
+                PhysicsMath.finiteOrZero(dto.acceleratingField()),
+                PhysicsMath.finiteOrZero(dto.energyGainFactor()),
+                PhysicsMath.finiteOrZero(dto.plasmaCorrectionFactor()),
+                PhysicsMath.sanitizeExposureRate(dto.exposureRate()),
+                PhysicsMath.sanitizeFluence(dto.integratedFluence()),
+                PhysicsMath.finiteOrZero(dto.modifiedLayerThickness()),
+                PhysicsMath.finiteOrZero(dto.skinDepth()),
+                PhysicsMath.finiteOrZero(dto.skinSurfacePower()),
+                PhysicsMath.finiteOrZero(dto.skinAccumulatedEnergy()),
+                PhysicsMath.finiteOrZero(dto.skinTemperatureDelta()),
+                PhysicsMath.finiteOrZero(dto.effectiveSurfaceTemperature()),
+                PhysicsMath.finiteOrZero(dto.finalProbeTemperature()),
+                PhysicsMath.finiteOrZero(dto.debyeFrontSpeed()),
+                PhysicsMath.finiteOrZero(dto.debyeFrontDepth()),
+                PhysicsMath.finiteOrZero(dto.thermalMinTemperature()),
+                PhysicsMath.finiteOrZero(dto.thermalMaxTemperature()),
+                PhysicsMath.finiteOrZero(dto.thermalAvgTemperature()),
+                PhysicsMath.finiteOrZero(dto.dRadiation()),
+                PhysicsMath.finiteOrZero(dto.dCollision()),
+                PhysicsMath.finiteOrZero(dto.slrFactor()),
+                PhysicsMath.finiteOrZero(dto.damageRate()),
+                PhysicsMath.finiteOrZero(dto.projectedRange()),
+                PhysicsMath.sanitizeStraggle(dto.straggleSigma()),
+                PhysicsMath.finiteOrZero(dto.latticeStiffness()),
+                PhysicsMath.finiteOrZero(dto.equilibriumDistance())
         );
     }
 

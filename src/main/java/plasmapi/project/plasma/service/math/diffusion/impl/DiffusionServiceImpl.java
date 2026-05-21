@@ -8,6 +8,7 @@ import plasmapi.project.plasma.model.atom.AtomList;
 import plasmapi.project.plasma.model.res.Ion;
 import plasmapi.project.plasma.model.res.PlasmaConfiguration;
 import plasmapi.project.plasma.service.math.PhysicalConstants;
+import plasmapi.project.plasma.service.math.PhysicsMath;
 import plasmapi.project.plasma.service.math.PhysicsStats;
 import plasmapi.project.plasma.service.math.diffusion.*;
 import plasmapi.project.plasma.service.math.ion.IonCollisionAveragingService;
@@ -288,9 +289,10 @@ public class DiffusionServiceImpl implements DiffusionService {
         double maxDepth = 5 * (Rp + sigma);
         double dx = maxDepth / 199;
 
-        if (fluence <= 0) {
-            fluence = 1e10;
+        if (!Double.isFinite(fluence) || fluence <= 0) {
+            fluence = Math.max(ionFlux * exposureTime, 1e-6);
         }
+        fluence = PhysicsMath.sanitizeFluence(fluence);
 
         double norm = fluence / (Math.sqrt(2 * Math.PI) * sigma);
         for (int i = 0; i < 200; i++) {
@@ -304,7 +306,11 @@ public class DiffusionServiceImpl implements DiffusionService {
             conc.add(c);
         }
 
-        double meanDepth = Math.max(Rp, energyDeposition.modifiedLayerThickness());
+        double meanDepth = PhysicsMath.sanitizeDepth(
+                Math.max(Rp, energyDeposition.modifiedLayerThickness())
+        );
+        fluenceEff = PhysicsMath.sanitizeFluence(fluenceEff);
+        ionFlux = PhysicsMath.sanitizeIonFlux(ionFlux);
 
         // =========================
 // 13. РАСЧЕТ ДОП. ПАРАМЕТРОВ (NEW)
@@ -326,21 +332,25 @@ public class DiffusionServiceImpl implements DiffusionService {
         double electronVelocity = Math.sqrt(8.0 * EV * Te_ev / (Math.PI * me));
 
 // n_e ≈ ionFlux / v_ion (м⁻³)
-        double v_ion = Math.sqrt(2.0 * ionEnergyEv * EV / ion.getMass());
-        double electronDensity = ionFlux / Math.max(v_ion, 1e-6);
+        double ionMassKg = PhysicsMath.safeIonMassKg(ion.getMass());
+        double v_ion = Math.sqrt(2.0 * ionEnergyEv * EV / ionMassKg);
+        double electronDensity = PhysicsMath.sanitizeElectronDensity(
+                ionFlux / Math.max(v_ion, PhysicsMath.MIN_ION_VELOCITY)
+        );
 
-// 3. Энергетика
-        double totalTransferred = collision.transferredEnergy() * fluence;
-        double avgTransferred = collision.transferredEnergy();
+// 3. Энергетика (Дж·м⁻² = энергия на ион [Дж] × флюенс [м⁻²])
+        double transferredJPerIon = collision.transferredEnergy() * EV;
+        double totalTransferred = PhysicsMath.sanitizeEnergy(transferredJPerIon * fluence);
+        double avgTransferred = PhysicsMath.finiteOrZero(collision.transferredEnergy());
 
 // 4. Повреждения и смещения
-        double totalDamage = Nd * fluence; // суммарные дефекты на м²
-        double totalDisplacement = totalDamage * re; // "суммарный путь" смещенных атомов
+        double totalDamage = PhysicsMath.sanitizeDamage(Nd * fluence);
+        double totalDisplacement = PhysicsMath.sanitizeDisplacement(totalDamage * re);
 
 // 5. Импульс
 // p = sqrt(2 * m * E_kin)
-        double momentumPerIon = Math.sqrt(2.0 * ion.getMass() * (collision.transferredEnergy() * EV));
-        double totalMomentum = momentumPerIon * fluence;
+        double momentumPerIon = Math.sqrt(2.0 * ionMassKg * transferredJPerIon);
+        double totalMomentum = PhysicsMath.sanitizeMomentum(momentumPerIon * fluence);
 
         List<Double> thermalTimes = thermal.times();
         List<Double> thermalDepths = new ArrayList<>();
@@ -359,35 +369,35 @@ public class DiffusionServiceImpl implements DiffusionService {
         }
 
         DiffusionIntermediate diffusionIntermediate = new DiffusionIntermediate(
-                D_rad,
-                D_collision,
-                slrFactor,
-                damageRate,
-                Rp,
-                sigma,
-                stiffness,
-                re
+                PhysicsMath.finiteOrZero(D_rad),
+                PhysicsMath.finiteOrZero(D_collision),
+                PhysicsMath.finiteOrZero(slrFactor),
+                PhysicsMath.finiteOrZero(damageRate),
+                PhysicsMath.finiteOrZero(Rp),
+                PhysicsMath.sanitizeStraggle(sigma),
+                PhysicsMath.finiteOrZero(stiffness),
+                PhysicsMath.finiteOrZero(re)
         );
 
         PhysicsStats stats = new PhysicsStats(
                 electronDensity,
-                electronVelocity,
-                currentDensityValue,
+                PhysicsMath.finiteOrZero(electronVelocity),
+                PhysicsMath.finiteOrZero(currentDensityValue),
                 Esurf,
                 totalTransferred,
                 avgTransferred,
                 totalDamage,
                 totalMomentum,
                 totalDisplacement,
-                thermal.finalProbeTemperature(),
-                thermal.debyeFrontSpeed(),
-                thermal.debyeFrontDepth(),
+                PhysicsMath.finiteOrZero(thermal.finalProbeTemperature()),
+                PhysicsMath.finiteOrZero(thermal.debyeFrontSpeed()),
+                PhysicsMath.finiteOrZero(thermal.debyeFrontDepth()),
                 fluence,
                 fluenceEff,
                 ionFlux,
-                energyDeposition.energyGainFactor(),
-                energyDeposition.plasmaCorrectionFactor(),
-                energyDeposition.exposureRate(),
+                PhysicsMath.finiteOrZero(energyDeposition.energyGainFactor()),
+                PhysicsMath.finiteOrZero(energyDeposition.plasmaCorrectionFactor()),
+                PhysicsMath.sanitizeExposureRate(energyDeposition.exposureRate()),
                 energyDeposition.modifiedLayerThickness(),
                 energyDeposition.skinDepth(),
                 energyDeposition.skinSurfacePower(),
