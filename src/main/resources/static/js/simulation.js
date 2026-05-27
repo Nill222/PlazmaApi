@@ -5,18 +5,56 @@
 // ==============================================================
 
 const SIMULATION_CONFIG = {
-    API_SIMULATION: '/api/simulation/run',
-    API_SAVE:       '/api/simulation/create',
-    API_ATOMS:      '/atoms',
-    API_IONS:       '/ions',
+    API_SIMULATION: '/api/simulation/run', API_SAVE: '/api/simulation/create', API_ATOMS: '/atoms', API_IONS: '/ions',
 };
 
 const AUTOGEN_PRESETS = {
-    magnetron: { voltage:[200,800],   current:[0.2,3.0],   pressure:[0.1,5],     et:[11600,34800],  width:[0.1,0.4],  depth:[0.1,0.4],  time:[5,120],   angle:[0,20]  },
-    etching:   { voltage:[100,400],   current:[0.05,1.0],  pressure:[1,50],      et:[23200,69600],  width:[0.1,0.3],  depth:[0.1,0.3],  time:[10,300],  angle:[0,45]  },
-    implant:   { voltage:[500,2000],  current:[0.001,0.1], pressure:[0.001,1],   et:[58000,116000], width:[0.05,0.2], depth:[0.05,0.2], time:[0.1,5],   angle:[0,30]  },
-    cvd:       { voltage:[50,300],    current:[0.5,5.0],   pressure:[10,200],    et:[5800,23200],   width:[0.15,0.5], depth:[0.15,0.5], time:[30,600],  angle:[0,10]  },
-    custom:    { voltage:[100,2000],  current:[0.01,5.0],  pressure:[0.01,200],  et:[5800,116000],  width:[0.05,0.5], depth:[0.05,0.5], time:[0.5,120], angle:[0,60]  },
+    cvd: {
+        voltage: [50, 300],
+        current: [0.5, 5.0],
+        pressure: [10, 200],
+        et: [5800, 23200],
+        width: [0.15, 0.5],
+        depth: [0.15, 0.5],
+        time: [30, 600],
+        angle: [0, 10]
+    }, magnetron: {
+        voltage: [1200, 4000],
+        current: [0.005, 0.05],
+        pressure: [0.1, 8],
+        et: [4000, 4000],
+        width: [0.55, 0.55],
+        depth: [0.55, 0.55],
+        time: [1800, 1800],
+        angle: [0, 60]
+    }, etching: {
+        voltage: [600, 1500],
+        current: [0.05, 0.1],
+        pressure: [4, 20],
+        et: [4000, 4000],
+        width: [0.55, 0.55],
+        depth: [0.55, 0.55],
+        time: [1800, 1800],
+        angle: [0, 60]
+    }, implant: {
+        voltage: [150, 1000],
+        current: [0.01, 5.0],
+        pressure: [10, 110],
+        et: [4000, 4000],
+        width: [0.55, 0.55],
+        depth: [0.55, 0.55],
+        time: [1800, 1800],
+        angle: [0, 60]
+    }, custom: {
+        voltage: [100, 2000],
+        current: [0.01, 5.0],
+        pressure: [0.01, 200],
+        et: [5800, 116000],
+        width: [0.05, 0.5],
+        depth: [0.05, 0.5],
+        time: [0.5, 120],
+        angle: [0, 60]
+    },
 };
 
 // ==============================================================
@@ -41,7 +79,6 @@ const AUTOGEN_PRESETS = {
  */
 
 /**
- * Соответствует Java-классу DiffusionProfile
  * @typedef {Object} DiffusionProfile
  * @property {number} d1
  * @property {number} d2
@@ -55,7 +92,6 @@ const AUTOGEN_PRESETS = {
  */
 
 /**
- * Соответствует Java-record PhysicsStats
  * @typedef {Object} PhysicsStats
  * @property {number}     electronDensity
  * @property {number}     electronVelocity
@@ -90,7 +126,6 @@ const AUTOGEN_PRESETS = {
  */
 
 /**
- * Соответствует Java-классу PlasmaConfiguration
  * @typedef {Object} PlasmaConfig
  * @property {number} [id]
  * @property {number} [voltage]
@@ -108,7 +143,6 @@ const AUTOGEN_PRESETS = {
  */
 
 /**
- * Соответствует Java-классу SimulationResult
  * @typedef {Object} SimResult
  * @property {DiffusionProfile} profile
  * @property {PhysicsStats}     stats
@@ -142,17 +176,17 @@ const AUTOGEN_PRESETS = {
 
 const SimulationState = {
     /** @type {SimResult|null} */
-    currentResult:    null,
+    currentResult: null,
     /** @type {SimRequest|null} */
-    currentRequest:   null,
+    currentRequest: null,
     /** @type {AlloyComponent[]} */
-    alloyComponents:  [],
+    alloyComponents: [],
     /** @type {IonComponent[]} */
-    ionComponents:    [],
-    autoGenRunning:   false,
+    ionComponents: [],
+    autoGenRunning: false,
     autoGenCancelled: false,
     /** @type {Array<{request: SimRequest, result: SimResult}>} */
-    autoGenResults:   [],
+    autoGenResults: [],
 };
 
 // ==============================================================
@@ -164,12 +198,48 @@ const SimulationState = {
  * @returns {number[]}
  */
 function normaliseFractions(weights) {
-    const total   = weights.reduce((s, w) => s + w, 0);
-    const SCALE   = 1e6;
-    const fracs   = weights.map(w => Math.round((w / total) * SCALE) / SCALE);
+    const total = weights.reduce((s, w) => s + w, 0);
+    const SCALE = 1e6;
+    const fracs = weights.map(w => Math.round((w / total) * SCALE) / SCALE);
     const partial = fracs.slice(0, -1).reduce((s, f) => s + f, 0);
     fracs[fracs.length - 1] = Math.round((1 - partial) * SCALE) / SCALE;
     return fracs;
+}
+
+// ==============================================================
+// Request builders
+// ==============================================================
+
+/**
+ * Builds AlloyComponentDto — matches Java class AlloyComponentDto fields exactly.
+ * Tries both atomId and atom.id to be safe; sends debyeTemperature (camelCase).
+ * @param {AlloyComponent} c
+ * @returns {Object}
+ */
+function buildAlloyComponentDto(c) {
+    return {
+        atomId: Number(c.atomId),
+        atomName: c.atomName || '',
+        fraction: c.fraction,
+        debyeTemperature: c.debye_temperature ?? 400,
+    };
+}
+
+/**
+ * Builds IonComponentDto — matches Java class IonComponentDto fields.
+ * Sends both top-level ionId AND nested ion.id since we don't know the exact
+ * field name without seeing IonComponentDto.java.
+ * @param {IonComponent} c
+ * @returns {Object}
+ */
+function buildIonComponentDto(c) {
+    return {
+        ionId: Number(c.ionId),
+        ion: {id: Number(c.ionId)},
+        ionName: c.ionName || '',
+        charge: c.charge ?? 0,
+        fraction: c.fraction,
+    };
 }
 
 // ==============================================================
@@ -182,11 +252,8 @@ const SimulationAPI = {
      * @returns {Promise<SimResult>}
      */
     async run(requestData) {
-        const response = await window.PlasmaAuth.apiRequest(
-            SIMULATION_CONFIG.API_SIMULATION, requestData, true
-        );
+        const response = await window.PlasmaAuth.apiRequest(SIMULATION_CONFIG.API_SIMULATION, requestData, true);
         if (!response.ok) throw new Error(response.data?.message || 'Simulation failed');
-        // Бэкенд возвращает SimulationResult напрямую в data
         return response.data?.data ?? response.data;
     },
 
@@ -195,29 +262,22 @@ const SimulationAPI = {
      * @returns {Promise<Object>}
      */
     async save(resultData) {
-        if (!resultData.atomId || !resultData.ionId)
-            throw new Error('atomId и ionId обязательны для сохранения');
-        const response = await window.PlasmaAuth.apiRequest(
-            SIMULATION_CONFIG.API_SAVE, resultData, true
-        );
+        if (!resultData.atomId || !resultData.ionId) throw new Error('atomId и ionId обязательны для сохранения');
+        const response = await window.PlasmaAuth.apiRequest(SIMULATION_CONFIG.API_SAVE, resultData, true);
         if (!response.ok) throw new Error(response.data?.message || 'Failed to save');
         return response.data?.data ?? response.data;
     },
 
     /** @returns {Promise<Object[]>} */
     async getAtoms() {
-        const response = await window.PlasmaAuth.apiRequest(
-            SIMULATION_CONFIG.API_ATOMS, null, true
-        );
+        const response = await window.PlasmaAuth.apiRequest(SIMULATION_CONFIG.API_ATOMS, null, true);
         if (!response.ok) throw new Error('Failed to fetch atoms');
         return response.data?.data || response.data || [];
     },
 
     /** @returns {Promise<Object[]>} */
     async getIons() {
-        const response = await window.PlasmaAuth.apiRequest(
-            SIMULATION_CONFIG.API_IONS, null, true
-        );
+        const response = await window.PlasmaAuth.apiRequest(SIMULATION_CONFIG.API_IONS, null, true);
         if (!response.ok) throw new Error('Failed to fetch ions');
         return response.data?.data || response.data || [];
     },
@@ -229,29 +289,37 @@ const SimulationAPI = {
 
 const SimulationUI = {
     showLoading() {
-        document.getElementById('initialState').style.display   = 'none';
-        document.getElementById('loadingState').style.display   = 'flex';
-        document.getElementById('resultsState').style.display   = 'none';
+        document.getElementById('initialState').style.display = 'none';
+        document.getElementById('loadingState').style.display = 'flex';
+        document.getElementById('resultsState').style.display = 'none';
 
         const btn = document.getElementById('runBtn');
-        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Расчёт...'; }
+        if (btn) {
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Расчёт...';
+        }
 
         const steps = document.querySelectorAll('.loading-step');
         steps.forEach(s => s.classList.remove('active'));
         let stepIdx = 0;
         const iv = setInterval(() => {
-            if (stepIdx < steps.length) { steps[stepIdx].classList.add('active'); stepIdx++; }
-            else clearInterval(iv);
+            if (stepIdx < steps.length) {
+                steps[stepIdx].classList.add('active');
+                stepIdx++;
+            } else clearInterval(iv);
         }, 600);
     },
 
     showResults() {
-        document.getElementById('initialState').style.display   = 'none';
-        document.getElementById('loadingState').style.display   = 'none';
-        document.getElementById('resultsState').style.display   = 'flex';
+        document.getElementById('initialState').style.display = 'none';
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('resultsState').style.display = 'flex';
 
         const btn = document.getElementById('runBtn');
-        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-play"></i> Запустить симуляцию'; }
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-play"></i> Запустить симуляцию';
+        }
 
         const ts = document.getElementById('resultTimestamp');
         if (ts) ts.textContent = new Date().toLocaleTimeString('ru-RU');
@@ -259,11 +327,14 @@ const SimulationUI = {
 
     /** @param {string} message */
     showError(message) {
-        document.getElementById('loadingState').style.display  = 'none';
-        document.getElementById('initialState').style.display  = 'flex';
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('initialState').style.display = 'flex';
 
         const btn = document.getElementById('runBtn');
-        if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-play"></i> Запустить симуляцию'; }
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-play"></i> Запустить симуляцию';
+        }
 
         window.PlasmaAnimations?.ToastNotifications.show(message, 'error', 5000);
     },
@@ -274,37 +345,34 @@ const SimulationUI = {
      */
     fillResults(result, simReq) {
         /** @type {DiffusionProfile} */
-        const profile = result.profile      || {};
+        const profile = result.profile || {};
         /** @type {PhysicsStats} */
-        const stats   = result.stats        || {};
+        const stats = result.stats || {};
         /** @type {PlasmaConfig} */
-        const plasma  = result.plasmaConfig  || {};
+        const plasma = result.plasmaConfig || {};
+        /** @type {EnergyDepositionResult} */
+        const energy = profile.energyDeposition || result.intermediate?.energyDeposition || {};
+        /** @type {ThermalIntermediate} */
+        const thermal = result.intermediate?.thermal || {};
+        /** @type {DiffusionIntermediate} */
+        const diffInt = profile.diffusionIntermediate || result.intermediate?.diffusion || {};
+        /** @type {AlloyComposition} */
+        const alloy = result.alloy || {};
+        /** @type {IonComposition} */
+        const ionComp = result.ionComposition || {};
 
-        /** @param {number|null|undefined} v */
         const sci = (v) => (v == null || isNaN(+v)) ? '—' : (+v).toExponential(3);
-
-        /**
-         * @param {number|null|undefined} v
-         * @param {number} [d]
-         */
         const num = (v, d = 2) => (v == null || isNaN(+v)) ? '—' : (+v).toFixed(d);
-
-        /**
-         * @param {string} id
-         * @param {string} val
-         */
         const set = (id, val) => {
             const el = document.getElementById(id);
             if (el) el.textContent = val != null ? val : '—';
         };
 
-        /** @param {AlloyComponent[]|undefined} arr */
         const fmtComp = (arr) => {
             if (!arr?.length) return '—';
             return arr.map(c => `${c.atomName || c.atomId || '?'} ${((c.fraction ?? 0) * 100).toFixed(1)}%`).join(' · ');
         };
 
-        /** @param {Object[]|undefined} arr */
         const fmtIon = (arr) => {
             if (!arr?.length) return '—';
             return arr.map(c => {
@@ -313,73 +381,109 @@ const SimulationUI = {
             }).join(' · ');
         };
 
-        // ── Входные параметры ──────────────────────────────────
+        // ══════════════════════════════════════════════════════════
+        // 1. ВХОДНЫЕ ПАРАМЕТРЫ
+        // ══════════════════════════════════════════════════════════
         if (simReq) {
-            set('r_composition',     fmtComp(simReq.composition));
+            set('r_composition', fmtComp(simReq.composition));
             set('r_ion_composition', fmtIon(simReq.ionComposition));
-            set('r_voltage',         num(simReq.voltage, 0));
-            set('r_current',         num(simReq.current, 2));
-            set('r_pressure',        num(simReq.pressure, 2));
-            set('r_electron_temp',   num(simReq.electronTemp, 0));
-            set('r_chamber_width',   num(simReq.chamberWidth, 3));
-            set('r_chamber_depth',   num(simReq.chamberDepth, 3));
-            set('r_exposure_time',   num(simReq.exposureTime, 0));
-            set('r_angle',           num(simReq.angle, 1));
+            set('r_voltage', num(simReq.voltage, 0));
+            set('r_current', num(simReq.current, 3));
+            set('r_pressure', num(simReq.pressure, 2));
+            set('r_electron_temp', num(simReq.electronTemp, 0));
+            set('r_chamber_width', num(simReq.chamberWidth, 3));
+            set('r_chamber_depth', num(simReq.chamberDepth, 3));
+            set('r_exposure_time', num(simReq.exposureTime, 0));
+            set('r_angle', num(simReq.angle, 1));
         }
 
-        // ── Диффузия (поля Java DiffusionProfile — PascalCase) ─
+        // ══════════════════════════════════════════════════════════
+        // 2. ДИФФУЗИЯ (вкладка diffusion-tab)
+        // ══════════════════════════════════════════════════════════
         set('r_d_effective', sci(profile.d_effective));
-        set('r_d_thermal',   sci(profile.d_thermal));
-        set('r_mean_depth',  sci(profile.meanDepth));
-        set('r_d1',          sci(profile.d1));
-        set('r_d2',          sci(profile.d2));
-        set('r_q1',          num(profile.q1_ev, 3));
-        set('r_q2',          num(profile.q2_ev, 3));
+        set('r_d_thermal', sci(profile.d_thermal));
+        set('r_mean_depth', sci(profile.meanDepth));
+        set('r_d1', sci(profile.d1));
+        set('r_d2', sci(profile.d2));
+        set('r_q1', num(profile.q1_ev, 3));
+        set('r_q2', num(profile.q2_ev, 3));
 
-        // ── Энергия ────────────────────────────────────────────
-        set('ps_total_energy',   sci(stats.totalTransferredEnergy));
-        set('ps_avg_energy',     sci(stats.avgTransferredPerAtom));
+        // Дополнительные параметры диффузии из diffusionIntermediate
+        set('diff_d_radiation', sci(diffInt.dRadiation));
+        set('diff_d_collision', sci(diffInt.dCollision));
+        set('diff_slr_factor', num(diffInt.slrFactor, 4));
+        set('diff_damage_rate', sci(diffInt.damageRate));
+        set('diff_projected_range', sci(diffInt.projectedRange));
+        set('diff_straggle_sigma', sci(diffInt.straggleSigma));
+        set('diff_lattice_stiffness', sci(diffInt.latticeStiffness));
+        set('diff_equilibrium_dist', sci(diffInt.equilibriumDistance));
+
+        // Резонансные параметры из stats
+        set('diff_resonance_xi', num(stats.resonanceXi, 4));
+        set('diff_d_slr', sci(stats.dSlr));
+        set('diff_d_res', sci(stats.dRes));
+
+        // ══════════════════════════════════════════════════════════
+        // 3. ЭНЕРГИЯ (вкладка energy-tab)
+        // ══════════════════════════════════════════════════════════
+
+        // Основные энергетические параметры
+        set('ps_total_energy', sci(stats.totalTransferredEnergy));
+        set('ps_avg_energy', sci(stats.avgTransferredPerAtom));
         set('ps_binding_energy', num(stats.surfaceBindingEnergy, 3));
-        set('pc_ion_energy',     num(plasma.ionEnergyOverride, 3));
+        set('pc_ion_energy', num(plasma.ionEnergyOverride, 3));
 
-        // ── Температура и физика ───────────────────────────────
-        set('ps_probe_temp',         num(stats.finalProbeTemperature, 2));
-        set('ps_debye_speed',        sci(stats.debyeFrontSpeed));
-        set('ps_debye_depth',        sci(stats.debyeFrontDepth));
-        set('ps_electron_density',   sci(stats.electronDensity));
-        set('ps_electron_velocity',  sci(stats.electronVelocity));
-        set('ps_current_density',    sci(stats.currentDensity));
-        set('ps_total_damage',       sci(stats.totalDamage));
-        set('ps_total_momentum',     sci(stats.totalMomentum));
-        set('ps_total_displacement', sci(stats.totalDisplacement));
-        set('ps_fluence',            sci(stats.fluence));
-        set('ps_fluence_eff',        sci(stats.fluenceEff));
-        set('ps_ion_flux',           sci(stats.ionFlux));
-        set('ps_resonance_xi',       sci(stats.resonanceXi));
-        set('ps_d_slr',              sci(stats.dSlr));
-        set('ps_d_res',              sci(stats.dRes));
+        // Формулы (2)–(5) из EnergyDepositionResult
+        set('energy_gain_factor', num(energy.energyGainFactor, 4));
+        set('plasma_correction_factor', num(energy.plasmaCorrectionFactor, 4));
+        set('exposure_rate', sci(energy.exposureRate));
+        set('fluence', sci(energy.fluence));
+        set('modified_layer_thickness', sci(energy.modifiedLayerThickness));
 
-        // ── Новые поля (skin-слой, энергетика, плазма) ────────
-        set('ps_skin_depth',               sci(stats.skinDepth));
-        set('ps_skin_surface_power',       sci(stats.skinSurfacePower));
-        set('ps_skin_accumulated_energy',  sci(stats.skinAccumulatedEnergy));
-        set('ps_skin_temperature_delta',   num(stats.skinTemperatureDelta, 2));
-        set('ps_effective_surface_temp',   num(stats.effectiveSurfaceTemperature, 2));
-        set('ps_energy_gain_factor',       num(stats.energyGainFactor, 4));
-        set('ps_plasma_correction_factor', num(stats.plasmaCorrectionFactor, 4));
-        set('ps_modified_layer_thickness', sci(stats.modifiedLayerThickness));
-        set('ps_exposure_rate',            sci(stats.exposureRate));
+        // Потенциал и поле
+        set('energy_potential_surface', num(energy.potentialAtSurface, 2));
+        set('energy_accelerating_field', sci(energy.acceleratingField));
 
-        // ── 3D-движок ─────────────────────────────────────────
+        // ══════════════════════════════════════════════════════════
+        // 4. ТЕМПЕРАТУРА (вкладка thermal-tab)
+        // ══════════════════════════════════════════════════════════
+
+        // 4.1 Температурные параметры (из ThermalIntermediate)
+        set('thermal_probe_temp', num(stats.finalProbeTemperature, 2));
+        set('thermal_debye_speed', sci(stats.debyeFrontSpeed));
+        set('thermal_debye_depth', sci(stats.debyeFrontDepth));
+
+        // 4.2 Скин-эффект (формулы 6–12 из EnergyDepositionResult)
+        set('skin_depth', sci(energy.skinDepth));
+        set('skin_surface_power', sci(energy.skinSurfacePower));
+        set('skin_accumulated_energy', sci(energy.skinAccumulatedEnergy));
+        set('skin_temperature_delta', num(energy.skinTemperatureDelta, 2));
+        set('skin_effective_temp', num(energy.effectiveSurfaceTemperature, 2));
+
+        // 4.3 Параметры плазмы
+        set('plasma_electron_density', sci(stats.electronDensity));
+        set('plasma_electron_velocity', sci(stats.electronVelocity));
+        set('plasma_current_density', sci(stats.currentDensity));
+
+        // 4.4 Радиационное повреждение
+        set('damage_total', sci(stats.totalDamage));
+        set('damage_momentum', sci(stats.totalMomentum));
+        set('damage_displacement', sci(stats.totalDisplacement));
+        set('damage_fluence', sci(stats.fluence));
+        set('damage_fluence_eff', sci(stats.fluenceEff));
+        set('damage_ion_flux', sci(stats.ionFlux));
+
+        // ══════════════════════════════════════════════════════════
+        // 5. 3D ВИЗУАЛИЗАЦИЯ
+        // ══════════════════════════════════════════════════════════
         if (window.addPhysics3DData) {
-            window.addPhysics3DData(/** @type {Object} */ (stats), simReq);
-        } else {
-            console.error('[Simulation] addPhysics3DData not found — is plasma3d.js loaded?');
+            window.addPhysics3DData(stats, simReq);
         }
         if (window.renderPhysicsStats3D) {
             window.renderPhysicsStats3D(window.current3DViewType || 'surface');
         }
     },
+
 };
 
 // ==============================================================
@@ -388,11 +492,11 @@ const SimulationUI = {
 
 const AlloyManager = {
     addComponent() {
-        const atomIdEl   = /** @type {HTMLSelectElement|null} */ (document.getElementById('alloyAtomId'));
+        const atomIdEl = /** @type {HTMLSelectElement|null} */ (document.getElementById('alloyAtomId'));
         const fractionEl = /** @type {HTMLInputElement|null}  */ (document.getElementById('alloyFraction'));
 
-        const atomId = atomIdEl   ? atomIdEl.value   : '';
-        const pct    = fractionEl ? parseFloat(fractionEl.value) : NaN;
+        const atomId = atomIdEl ? atomIdEl.value : '';
+        const pct = fractionEl ? parseFloat(fractionEl.value) : NaN;
 
         if (!atomId || isNaN(pct) || pct <= 0 || pct > 100) {
             window.PlasmaAnimations?.ToastNotifications.show('Выберите атом и укажите долю (1–100%)', 'error');
@@ -402,7 +506,7 @@ const AlloyManager = {
         const atom = window.availableAtoms?.find(a => a.id === parseInt(atomId, 10));
         if (!atom) return;
 
-        const fraction     = pct / 100;
+        const fraction = pct / 100;
         const currentTotal = SimulationState.alloyComponents.reduce((s, c) => s + c.fraction, 0);
         if (currentTotal + fraction > 1.0001) {
             window.PlasmaAnimations?.ToastNotifications.show('Сумма долей не может превышать 100%', 'error');
@@ -410,9 +514,9 @@ const AlloyManager = {
         }
 
         SimulationState.alloyComponents.push({
-            atomId:            atom.id,
-            atomName:          atom.atomName,
-            fullName:          atom.fullName,
+            atomId: atom.id,
+            atomName: atom.atomName,
+            fullName: atom.fullName,
             debye_temperature: atom.debye_temperature ?? 400,
             fraction,
         });
@@ -463,11 +567,11 @@ const AlloyManager = {
 
 const IonCompositionManager = {
     addComponent() {
-        const ionIdEl    = /** @type {HTMLSelectElement|null} */ (document.getElementById('ionCompIonId'));
+        const ionIdEl = /** @type {HTMLSelectElement|null} */ (document.getElementById('ionCompIonId'));
         const fractionEl = /** @type {HTMLInputElement|null}  */ (document.getElementById('ionCompFraction'));
 
-        const ionId = ionIdEl    ? ionIdEl.value    : '';
-        const pct   = fractionEl ? parseFloat(fractionEl.value) : NaN;
+        const ionId = ionIdEl ? ionIdEl.value : '';
+        const pct = fractionEl ? parseFloat(fractionEl.value) : NaN;
 
         if (!ionId || isNaN(pct) || pct <= 0 || pct > 100) {
             window.PlasmaAnimations?.ToastNotifications.show('Выберите ион и укажите долю (1–100%)', 'error');
@@ -477,7 +581,7 @@ const IonCompositionManager = {
         const ion = window.availableIons?.find(n => n.id === parseInt(ionId, 10));
         if (!ion) return;
 
-        const fraction     = pct / 100;
+        const fraction = pct / 100;
         const currentTotal = SimulationState.ionComponents.reduce((s, c) => s + c.fraction, 0);
         if (currentTotal + fraction > 1.0001) {
             window.PlasmaAnimations?.ToastNotifications.show('Сумма долей не может превышать 100%', 'error');
@@ -485,10 +589,7 @@ const IonCompositionManager = {
         }
 
         SimulationState.ionComponents.push({
-            ionId:    ion.id,
-            ionName:  ion.name,
-            charge:   ion.charge,
-            fraction,
+            ionId: ion.id, ionName: ion.name, charge: ion.charge, fraction,
         });
 
         this.renderComponents();
@@ -535,10 +636,10 @@ const IonCompositionManager = {
 // Global helpers
 // ==============================================================
 
-window.addAlloyComponent    = () => AlloyManager.addComponent();
+window.addAlloyComponent = () => AlloyManager.addComponent();
 window.removeAlloyComponent = (idx) => AlloyManager.removeComponent(idx);
-window.addIonComponent      = () => IonCompositionManager.addComponent();
-window.removeIonComponent   = (idx) => IonCompositionManager.removeComponent(idx);
+window.addIonComponent = () => IonCompositionManager.addComponent();
+window.removeIonComponent = (idx) => IonCompositionManager.removeComponent(idx);
 
 // ==============================================================
 // Tab Manager
@@ -599,42 +700,40 @@ const FormHandler = {
         }
 
         const fd = new FormData(form);
-        /** @param {string} name @returns {string} */
         const getField = (name) => String(fd.get(name) ?? '');
 
         const primaryAtom = SimulationState.alloyComponents[0];
-        const primaryIon  = SimulationState.ionComponents[0];
+        const primaryIon = SimulationState.ionComponents[0];
 
         /** @type {SimRequest} */
-        const requestData = /** @type {SimRequest} */ ({
-            atomId:       Number(primaryAtom.atomId),
-            ionId:        Number(primaryIon.ionId),
-            voltage:      parseFloat(getField('voltage')),
-            current:      parseFloat(getField('current')),
-            pressure:     parseFloat(getField('pressure')),
+        const requestData = {
+            // top-level ids — SimulationRequest.atomId / ionId
+            atomId: Number(primaryAtom.atomId),
+            ionId: Number(primaryIon.ionId),
+
+            voltage: parseFloat(getField('voltage')),
+            current: parseFloat(getField('current')),
+            pressure: parseFloat(getField('pressure')),
             electronTemp: parseFloat(getField('electronTemp')),
             chamberWidth: parseFloat(getField('chamberWidth')),
             chamberDepth: parseFloat(getField('chamberDepth')),
-            angle:        parseFloat(getField('angle')),
+            angle: parseFloat(getField('angle')),
             exposureTime: parseFloat(getField('exposureTime')),
-            ambientTemp:  parseFloat(getField('ambientTemp')) || 300,
-            composition: SimulationState.alloyComponents.map(c => ({
-                atomId:            Number(c.atomId),
-                atomName:          c.atomName,
-                fraction:          c.fraction,
-                debye_temperature: c.debye_temperature,
-            })),
-            ionComposition: SimulationState.ionComponents.map(c => ({
-                ion:      { id: Number(c.ionId) },
-                ionName:  c.ionName,
-                fraction: c.fraction,
-            })),
-        });
+            ambientTemp: parseFloat(getField('ambientTemp')) || 300,
+
+            // List<AlloyComponentDto>
+            composition: SimulationState.alloyComponents.map(buildAlloyComponentDto),
+
+            // List<IonComponentDto>
+            ionComposition: SimulationState.ionComponents.map(buildIonComponentDto),
+        };
+
+        console.log('[Simulation] Request:', JSON.stringify(requestData, null, 2));
 
         try {
             SimulationUI.showLoading();
             const result = await SimulationAPI.run(requestData);
-            SimulationState.currentResult  = result;
+            SimulationState.currentResult = result;
             SimulationState.currentRequest = requestData;
             SimulationUI.showResults();
             SimulationUI.fillResults(result, requestData);
@@ -649,14 +748,18 @@ const FormHandler = {
         try {
             window.availableAtoms = await SimulationAPI.getAtoms();
             this.populateAlloySelect();
-        } catch (e) { console.error('[Simulation] Failed to load atoms:', e); }
+        } catch (e) {
+            console.error('[Simulation] Failed to load atoms:', e);
+        }
     },
 
     async loadIons() {
         try {
             window.availableIons = await SimulationAPI.getIons();
             this.populateIonCompSelect();
-        } catch (e) { console.error('[Simulation] Failed to load ions:', e); }
+        } catch (e) {
+            console.error('[Simulation] Failed to load ions:', e);
+        }
     },
 
     populateAlloySelect() {
@@ -669,7 +772,7 @@ const FormHandler = {
         select.innerHTML = '<option value="">Выберите атом...</option>';
         window.availableAtoms.forEach(atom => {
             const o = document.createElement('option');
-            o.value       = String(atom.id);
+            o.value = String(atom.id);
             o.textContent = `${atom.atomName} — ${atom.fullName}`;
             select.appendChild(o);
         });
@@ -684,8 +787,8 @@ const FormHandler = {
         }
         select.innerHTML = '<option value="">Выберите ион...</option>';
         window.availableIons.forEach(ion => {
-            const o    = document.createElement('option');
-            o.value    = String(ion.id);
+            const o = document.createElement('option');
+            o.value = String(ion.id);
             const sign = ion.charge > 0 ? '+' : '';
             o.textContent = `${ion.name} (${sign}${ion.charge})`;
             select.appendChild(o);
@@ -704,103 +807,120 @@ window.saveResults = async () => {
     }
 
     const saveBtn = /** @type {HTMLButtonElement|null} */ (document.getElementById('saveBtn'));
-    if (saveBtn) { saveBtn.disabled = true; saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Сохранение...'; }
+    if (saveBtn) {
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Сохранение...';
+    }
 
     try {
         /** @type {SimResult} */
-        const result    = SimulationState.currentResult;
+        const result = SimulationState.currentResult;
         /** @type {SimRequest|null} */
-        const request   = SimulationState.currentRequest;
+        const request = SimulationState.currentRequest;
+
         const firstAtom = SimulationState.alloyComponents[0];
-        const firstIon  = SimulationState.ionComponents[0];
+        const firstIon = SimulationState.ionComponents[0];
 
         if (!firstAtom?.atomId || !firstIon?.ionId) {
-            window.PlasmaAnimations?.ToastNotifications.show(
-                'Не удалось определить атом и ион для сохранения', 'error'
-            );
+            window.PlasmaAnimations?.ToastNotifications.show('Не удалось определить атом и ион для сохранения', 'error');
             return;
         }
 
         /** @type {DiffusionProfile} */
-        const profile = result.profile      || {};
+        const profile = result.profile || {};
         /** @type {PhysicsStats} */
-        const stats   = result.stats        || {};
+        const stats = result.stats || {};
         /** @type {PlasmaConfig} */
-        const plasma  = result.plasmaConfig  || {};
+        const plasma = result.plasmaConfig || {};
+
+        // AtomCompositionItemDTO
+        const atomComposition = SimulationState.alloyComponents.map(c => ({
+            atomId: Number(c.atomId), fraction: c.fraction,
+        }));
+
+        // IonCompositionItemDTO
+        const ionComposition = SimulationState.ionComponents.map(c => ({
+            ionId: Number(c.ionId), fraction: c.fraction,
+        }));
 
         const saveData = {
-            atomId:   firstAtom.atomId,
-            ionId:    firstIon.ionId,
+            atomId: Number(firstAtom.atomId),
+            ionId: Number(firstIon.ionId),
             configId: plasma.id || 1,
+
+            atomComposition,
+            ionComposition,
+
             atomName: firstAtom.atomName || 'Unknown',
             s: `${firstAtom.atomName} ${(firstAtom.fraction * 100).toFixed(1)}%`,
 
-            // PhysicsStats fields
-            totalTransferredEnergy:     stats.totalTransferredEnergy     || 0,
-            avgTransferredPerAtom:       stats.avgTransferredPerAtom       || 0,
-            avgT:                        stats.finalProbeTemperature       || 0,
-            minT:                        stats.finalProbeTemperature       || 0,
-            maxT:                        stats.finalProbeTemperature       || 0,
-            totalMomentum:               stats.totalMomentum               || 0,
-            totalDamage:                 stats.totalDamage                 || 0,
-            totalDisplacement:           stats.totalDisplacement           || 0,
-            fluence:                     stats.fluence                     || 0,
-            fluenceEff:                  stats.fluenceEff                  || 0,
-            ionFlux:                     stats.ionFlux                     || 0,
-            resonanceXi:                 stats.resonanceXi                 || 0,
-            dSlr:                        stats.dSlr                        || 0,
-            dRes:                        stats.dRes                        || 0,
+            totalTransferredEnergy: stats.totalTransferredEnergy || 0,
+            avgTransferredPerAtom: stats.avgTransferredPerAtom || 0,
+            avgT: stats.finalProbeTemperature || 0,
+            minT: stats.finalProbeTemperature || 0,
+            maxT: stats.finalProbeTemperature || 0,
 
-            // Новые поля PhysicsStats
-            energyGainFactor:            stats.energyGainFactor            || 0,
-            plasmaCorrectionFactor:      stats.plasmaCorrectionFactor      || 0,
-            exposureRate:                stats.exposureRate                 || 0,
-            modifiedLayerThickness:      stats.modifiedLayerThickness      || 0,
-            skinDepth:                   stats.skinDepth                   || 0,
-            skinSurfacePower:            stats.skinSurfacePower             || 0,
-            skinAccumulatedEnergy:       stats.skinAccumulatedEnergy        || 0,
-            skinTemperatureDelta:        stats.skinTemperatureDelta         || 0,
-            effectiveSurfaceTemperature: stats.effectiveSurfaceTemperature  || 0,
 
-            // DiffusionProfile — PascalCase из Java
-            diffusionCoefficient1: profile.D_effective || profile.D1 || 0,
-            diffusionCoefficient2: profile.D_thermal   || profile.D2 || 0,
+            totalMomentum: stats.totalMomentum || 0,
+            totalDamage: stats.totalDamage || 0,
+            totalDisplacement: stats.totalDisplacement || 0,
+
+            fluence: stats.fluence || 0,
+            fluenceEff: stats.fluenceEff || 0,
+            ionFlux: stats.ionFlux || 0,
+            resonanceXi: stats.resonanceXi || 0,
+            dSlr: stats.dSlr || 0,
+            dRes: stats.dRes || 0,
+
+            diffusionCoefficient1: profile.d_effective || profile.d1 || 0,
+            diffusionCoefficient2: profile.d_thermal || profile.d2 || 0,
+
+            depths: profile.meanDepth || 0,
+            concentration: profile.concentration?.length ? profile.concentration.reduce((a, b) => a + b, 0) / profile.concentration.length : 0,
+            dThermal: profile.d_thermal || 0,
+
             diffusionProfile: {
-                D1:          profile.D1          || 0,
-                D2:          profile.D2          || 0,
-                Q1:          profile.Q1_ev       || 0,
-                Q2:          profile.Q2_ev       || 0,
-                D_thermal:   profile.D_thermal   || 0,
-                D_effective: profile.D_effective || 0,
-                depth:       profile.meanDepth   || 0,
+                D1: profile.d1 || 0,
+                D2: profile.d2 || 0,
+                Q1: profile.q1_ev || 0,
+                Q2: profile.q2_ev || 0,
+                D_thermal: profile.d_thermal || 0,
+                D_effective: profile.d_effective || 0,
+                depth: profile.meanDepth || 0,
             },
 
             plasmaParameters: {
-                electronDensity:  stats.electronDensity   || 0,
-                electronVelocity: stats.electronVelocity  || 0,
-                currentDensity:   stats.currentDensity    || 0,
-                ionEnergy:        plasma.ionEnergyOverride || request?.voltage || 0,
-                voltage:          request?.voltage         || plasma.voltage              || 0,
-                pressure:         request?.pressure        || plasma.pressure             || 0,
-                electronTemp:     request?.electronTemp    || plasma.electronTemperature  || 0,
-                ionFlux:          stats.ionFlux || 0,
+                electronDensity: stats.electronDensity || 0,
+                electronVelocity: stats.electronVelocity || 0,
+                currentDensity: stats.currentDensity || 0,
+                ionEnergy: plasma.ionEnergyOverride || request?.voltage || 0,
+                voltage: request?.voltage || plasma.voltage || 0,
+                pressure: request?.pressure || plasma.pressure || 0,
+                electronTemp: request?.electronTemp || plasma.electronTemperature || 0,
+                ionFlux: stats.ionFlux || 0,
             },
+
+            perAtomTransferredEnergies: [],
+            coolingProfile: stats.thermalTimes || [],
+            intermediate: result.intermediate || null,
         };
 
         await SimulationAPI.save(saveData);
 
         let msg = 'Результаты сохранены успешно!';
-        if (SimulationState.alloyComponents.length > 1)
+        if (SimulationState.alloyComponents.length > 1) {
             msg = `Сохранён ${firstAtom.atomName} (первый из ${SimulationState.alloyComponents.length} компонентов)`;
-
+        }
         window.PlasmaAnimations?.ToastNotifications.show(msg, 'success', 5000);
+
     } catch (error) {
         console.error('[Simulation] Save error:', error);
-        window.PlasmaAnimations?.ToastNotifications.show(
-            error instanceof Error ? error.message : 'Ошибка сохранения результатов', 'error'
-        );
+        window.PlasmaAnimations?.ToastNotifications.show(error instanceof Error ? error.message : 'Ошибка сохранения результатов', 'error');
     } finally {
-        if (saveBtn) { saveBtn.disabled = false; saveBtn.innerHTML = '<i class="fas fa-save"></i> Сохранить результаты'; }
+        if (saveBtn) {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = '<i class="fas fa-save"></i> Сохранить результаты';
+        }
     }
 };
 
@@ -823,15 +943,15 @@ const AutoGenerationManager = {
     generateParams(presetName) {
         const p = AUTOGEN_PRESETS[presetName] || AUTOGEN_PRESETS.custom;
         return {
-            voltage:      this.rand(p.voltage[0],  p.voltage[1],  0),
-            current:      this.rand(p.current[0],  p.current[1],  3),
-            pressure:     this.rand(p.pressure[0], p.pressure[1], 3),
-            electronTemp: this.rand(p.et[0],       p.et[1],       0),
-            chamberWidth: this.rand(p.width[0],    p.width[1],    3),
-            chamberDepth: this.rand(p.depth[0],    p.depth[1],    3),
-            exposureTime: this.rand(p.time[0],     p.time[1],     2),
-            angle:        this.rand(p.angle[0],    p.angle[1],    1),
-            ambientTemp:  300,
+            voltage: this.rand(p.voltage[0], p.voltage[1], 0),
+            current: this.rand(p.current[0], p.current[1], 3),
+            pressure: this.rand(p.pressure[0], p.pressure[1], 3),
+            electronTemp: this.rand(p.et[0], p.et[1], 0),
+            chamberWidth: this.rand(p.width[0], p.width[1], 3),
+            chamberDepth: this.rand(p.depth[0], p.depth[1], 3),
+            exposureTime: this.rand(p.time[0], p.time[1], 2),
+            angle: this.rand(p.angle[0], p.angle[1], 1),
+            ambientTemp: 300,
         };
     },
 
@@ -839,15 +959,15 @@ const AutoGenerationManager = {
     generateRandomAlloy() {
         const pool = window.availableAtoms;
         if (!pool?.length) return null;
-        const count  = Math.min(pool.length, Math.floor(Math.random() * 3) + 2);
+        const count = Math.min(pool.length, Math.floor(Math.random() * 3) + 2);
         const picked = [...pool].sort(() => Math.random() - 0.5).slice(0, count);
-        const fracs  = normaliseFractions(picked.map(() => Math.random() + 0.1));
+        const fracs = normaliseFractions(picked.map(() => Math.random() + 0.1));
         return picked.map((atom, i) => ({
-            atomId:            atom.id,
-            atomName:          atom.atomName,
-            fullName:          atom.fullName,
+            atomId: atom.id,
+            atomName: atom.atomName,
+            fullName: atom.fullName,
             debye_temperature: atom.debye_temperature ?? 400,
-            fraction:          fracs[i],
+            fraction: fracs[i],
         }));
     },
 
@@ -855,14 +975,11 @@ const AutoGenerationManager = {
     generateRandomIons() {
         const pool = window.availableIons;
         if (!pool?.length) return null;
-        const count  = Math.min(pool.length, Math.floor(Math.random() * 3) + 1);
+        const count = Math.min(pool.length, Math.floor(Math.random() * 3) + 1);
         const picked = [...pool].sort(() => Math.random() - 0.5).slice(0, count);
-        const fracs  = normaliseFractions(picked.map(() => Math.random() + 0.1));
+        const fracs = normaliseFractions(picked.map(() => Math.random() + 0.1));
         return picked.map((ion, i) => ({
-            ionId:    ion.id,
-            ionName:  ion.name,
-            charge:   ion.charge,
-            fraction: fracs[i],
+            ionId: ion.id, ionName: ion.name, charge: ion.charge, fraction: fracs[i],
         }));
     },
 
@@ -883,32 +1000,28 @@ const AutoGenerationManager = {
 
     async start() {
         const randomCheckbox = /** @type {HTMLInputElement|null} */ (document.getElementById('autogenRandomAlloy'));
-        const useRandom      = randomCheckbox ? randomCheckbox.checked : false;
+        const useRandom = randomCheckbox ? randomCheckbox.checked : false;
 
         if (!useRandom) {
             if (!SimulationState.alloyComponents.length || !SimulationState.ionComponents.length) {
-                window.PlasmaAnimations?.ToastNotifications.show(
-                    'Сначала задайте состав сплава и ионов (или включите «Случайный сплав и ион»)', 'error'
-                );
+                window.PlasmaAnimations?.ToastNotifications.show('Сначала задайте состав сплава и ионов (или включите «Случайный сплав и ион»)', 'error');
                 return;
             }
         } else {
             if (!window.availableAtoms?.length || !window.availableIons?.length) {
-                window.PlasmaAnimations?.ToastNotifications.show(
-                    'Список атомов/ионов ещё не загружен, попробуйте позже', 'error'
-                );
+                window.PlasmaAnimations?.ToastNotifications.show('Список атомов/ионов ещё не загружен, попробуйте позже', 'error');
                 return;
             }
         }
 
         const presetEl = /** @type {HTMLSelectElement|null} */ (document.getElementById('autogenPreset'));
-        const countEl  = /** @type {HTMLInputElement|null}  */ (document.getElementById('autogenCount'));
-        const preset   = presetEl ? presetEl.value : 'custom';
-        const count    = Math.max(1, parseInt(countEl ? countEl.value : '1', 10));
+        const countEl = /** @type {HTMLInputElement|null}  */ (document.getElementById('autogenCount'));
+        const preset = presetEl ? presetEl.value : 'custom';
+        const count = Math.max(1, parseInt(countEl ? countEl.value : '1', 10));
 
-        SimulationState.autoGenRunning   = true;
+        SimulationState.autoGenRunning = true;
         SimulationState.autoGenCancelled = false;
-        SimulationState.autoGenResults   = [];
+        SimulationState.autoGenResults = [];
 
         const cancelBtn = /** @type {HTMLButtonElement|null} */ (document.getElementById('cancelAutogenBtn'));
         if (cancelBtn) cancelBtn.disabled = false;
@@ -926,61 +1039,54 @@ const AutoGenerationManager = {
 
                 if (useRandom) {
                     const genAlloy = this.generateRandomAlloy();
-                    const genIons  = this.generateRandomIons();
+                    const genIons = this.generateRandomIons();
                     if (!genAlloy || !genIons) {
                         this.updateProgress(i, count, `Ошибка генерации состава на шаге ${i}`);
                         continue;
                     }
                     runAlloy = genAlloy;
-                    runIons  = genIons;
+                    runIons = genIons;
                 } else {
                     runAlloy = SimulationState.alloyComponents;
-                    runIons  = SimulationState.ionComponents;
+                    runIons = SimulationState.ionComponents;
                 }
 
                 const gen = this.generateParams(preset);
 
                 /** @type {SimRequest} */
-                const requestData = /** @type {SimRequest} */ ({
-                    atomId:       Number(runAlloy[0].atomId),
-                    ionId:        Number(runIons[0].ionId),
-                    voltage:      gen.voltage,
-                    current:      gen.current,
-                    pressure:     gen.pressure,
+                const requestData = {
+                    atomId: Number(runAlloy[0].atomId),
+                    ionId: Number(runIons[0].ionId),
+
+                    voltage: gen.voltage,
+                    current: gen.current,
+                    pressure: gen.pressure,
                     electronTemp: gen.electronTemp,
                     chamberWidth: gen.chamberWidth,
                     chamberDepth: gen.chamberDepth,
                     exposureTime: gen.exposureTime,
-                    angle:        gen.angle,
-                    ambientTemp:  gen.ambientTemp,
-                    composition: runAlloy.map(c => ({
-                        atomId:            Number(c.atomId),
-                        atomName:          c.atomName,
-                        fraction:          c.fraction,
-                        debye_temperature: c.debye_temperature,
-                    })),
-                    ionComposition: runIons.map(c => ({
-                        ion:      { id: Number(c.ionId) },
-                        ionName:  c.ionName,
-                        fraction: c.fraction,
-                    })),
-                });
+                    angle: gen.angle,
+                    ambientTemp: gen.ambientTemp,
+
+                    composition: runAlloy.map(buildAlloyComponentDto),
+                    ionComposition: runIons.map(buildIonComponentDto),
+                };
 
                 const result = await SimulationAPI.run(requestData);
-                SimulationState.currentResult  = result;
+                SimulationState.currentResult = result;
                 SimulationState.currentRequest = requestData;
 
                 const prevAlloy = SimulationState.alloyComponents;
-                const prevIons  = SimulationState.ionComponents;
+                const prevIons = SimulationState.ionComponents;
                 SimulationState.alloyComponents = runAlloy;
-                SimulationState.ionComponents   = runIons;
+                SimulationState.ionComponents = runIons;
 
                 await window.saveResults();
 
                 SimulationState.alloyComponents = prevAlloy;
-                SimulationState.ionComponents   = prevIons;
+                SimulationState.ionComponents = prevIons;
 
-                SimulationState.autoGenResults.push({ request: requestData, result });
+                SimulationState.autoGenResults.push({request: requestData, result});
                 this.updateProgress(i, count, `Сохранено ${i}/${count}`);
 
             } catch (err) {
@@ -995,10 +1101,7 @@ const AutoGenerationManager = {
         if (SimulationState.autoGenCancelled) {
             window.PlasmaAnimations?.ToastNotifications.show('Автогенерация отменена', 'warning');
         } else {
-            window.PlasmaAnimations?.ToastNotifications.show(
-                `Автогенерация завершена: ${SimulationState.autoGenResults.length} симуляций`,
-                'success', 6000
-            );
+            window.PlasmaAnimations?.ToastNotifications.show(`Автогенерация завершена: ${SimulationState.autoGenResults.length} симуляций`, 'success', 6000);
         }
     },
 
@@ -1007,7 +1110,7 @@ const AutoGenerationManager = {
     },
 };
 
-window.startAutoGeneration  = () => void AutoGenerationManager.start();
+window.startAutoGeneration = () => void AutoGenerationManager.start();
 window.cancelAutoGeneration = () => AutoGenerationManager.cancel();
 
 // ==============================================================
@@ -1035,4 +1138,4 @@ document.addEventListener('DOMContentLoaded', () => {
     })();
 });
 
-console.log('[Simulation] v5.5 loaded');
+console.log('[Simulation] loaded');

@@ -327,131 +327,451 @@
 
                     <div class="tab-content">
 
-                        <!-- Диффузия -->
+                        <!-- ═════════════════════════════════════════════════════ -->
+                        <!-- 1. ДИФФУЗИЯ -->
+                        <!-- ═════════════════════════════════════════════════════ -->
                         <div class="tab-pane active" id="diffusion-tab">
+
+                            <!-- Основные коэффициенты диффузии -->
                             <div class="result-block">
                                 <div class="result-block-header diffusion-header">
                                     <div class="block-icon"><i class="fas fa-chart-line"></i></div>
-                                    <div><h4>Диффузионный профиль</h4><p>Коэффициенты диффузии и глубина проникновения</p></div>
+                                    <div>
+                                        <h4>Коэффициенты диффузии</h4>
+                                        <p>Эффективная и термическая диффузия</p>
+                                    </div>
                                 </div>
                                 <div class="result-grid cols-3">
-                                    <div class="result-card accent-purple hero-card"><div class="rc-icon"><i class="fas fa-chart-line"></i></div><div class="rc-label">D эффективный</div><div class="rc-value" id="r_d_effective">—</div><div class="rc-unit">м²/с</div></div>
-                                    <div class="result-card accent-purple hero-card"><div class="rc-icon"><i class="fas fa-temperature-high"></i></div><div class="rc-label">D термический</div><div class="rc-value" id="r_d_thermal">—</div><div class="rc-unit">м²/с</div></div>
-                                    <div class="result-card accent-purple hero-card"><div class="rc-icon"><i class="fas fa-arrows-alt-v"></i></div><div class="rc-label">Средняя глубина</div><div class="rc-value" id="r_mean_depth">—</div><div class="rc-unit">м</div></div>
-                                    <div class="result-card accent-indigo"><div class="rc-icon"><i class="fas fa-superscript"></i></div><div class="rc-label">D₁ предэкспонента</div><div class="rc-value" id="r_d1">—</div><div class="rc-unit">м²/с</div></div>
-                                    <div class="result-card accent-indigo"><div class="rc-icon"><i class="fas fa-superscript"></i></div><div class="rc-label">D₂ предэкспонента</div><div class="rc-value" id="r_d2">—</div><div class="rc-unit">м²/с</div></div>
-                                    <div class="result-card accent-indigo"><div class="rc-icon"><i class="fas fa-fire"></i></div><div class="rc-label">Q₁ активации</div><div class="rc-value" id="r_q1">—</div><div class="rc-unit">эВ</div></div>
-                                    <div class="result-card accent-indigo"><div class="rc-icon"><i class="fas fa-fire-alt"></i></div><div class="rc-label">Q₂ активации</div><div class="rc-value" id="r_q2">—</div><div class="rc-unit">эВ</div></div>
+                                    <div class="result-card accent-purple hero-card">
+                                        <div class="rc-icon"><i class="fas fa-chart-line"></i></div>
+                                        <div class="rc-label">D эффективный</div>
+                                        <div class="rc-value" id="r_d_effective">—</div>
+                                        <div class="rc-unit">м²/с</div>
+                                    </div>
+                                    <div class="result-card accent-purple hero-card">
+                                        <div class="rc-icon"><i class="fas fa-temperature-high"></i></div>
+                                        <div class="rc-label">D термический</div>
+                                        <div class="rc-value" id="r_d_thermal">—</div>
+                                        <div class="rc-unit">м²/с</div>
+                                    </div>
+                                    <div class="result-card accent-purple hero-card">
+                                        <div class="rc-icon"><i class="fas fa-arrows-alt-v"></i></div>
+                                        <div class="rc-label">Средняя глубина</div>
+                                        <div class="rc-value" id="r_mean_depth">—</div>
+                                        <div class="rc-unit">м</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Параметры активации (двухканальная модель) -->
+                            <div class="result-block" style="margin-top:1.5rem;">
+                                <div class="result-block-header diffusion-header">
+                                    <div class="block-icon"><i class="fas fa-layer-group"></i></div>
+                                    <div>
+                                        <h4>Двухканальная модель</h4>
+                                        <p>Предэкспоненты и энергии активации</p>
+                                    </div>
+                                </div>
+                                <div class="result-grid cols-4">
+                                    <div class="result-card accent-indigo">
+                                        <div class="rc-icon"><i class="fas fa-superscript"></i></div>
+                                        <div class="rc-label">D₁ предэкспонента</div>
+                                        <div class="rc-value" id="r_d1">—</div>
+                                        <div class="rc-unit">м²/с</div>
+                                    </div>
+                                    <div class="result-card accent-indigo">
+                                        <div class="rc-icon"><i class="fas fa-superscript"></i></div>
+                                        <div class="rc-label">D₂ предэкспонента</div>
+                                        <div class="rc-value" id="r_d2">—</div>
+                                        <div class="rc-unit">м²/с</div>
+                                    </div>
+                                    <div class="result-card accent-indigo">
+                                        <div class="rc-icon"><i class="fas fa-fire"></i></div>
+                                        <div class="rc-label">Q₁ активации</div>
+                                        <div class="rc-value" id="r_q1">—</div>
+                                        <div class="rc-unit">эВ</div>
+                                    </div>
+                                    <div class="result-card accent-indigo">
+                                        <div class="rc-icon"><i class="fas fa-fire-alt"></i></div>
+                                        <div class="rc-label">Q₂ активации</div>
+                                        <div class="rc-value" id="r_q2">—</div>
+                                        <div class="rc-unit">эВ</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Механизмы диффузии (DiffusionIntermediate) -->
+                            <div class="result-block" style="margin-top:1.5rem;">
+                                <div class="result-block-header diffusion-header">
+                                    <div class="block-icon"><i class="fas fa-cogs"></i></div>
+                                    <div>
+                                        <h4>Механизмы диффузии</h4>
+                                        <p>Радиационная, коллизионная и резонансная компоненты</p>
+                                    </div>
+                                </div>
+                                <div class="result-grid cols-3">
+                                    <div class="result-card accent-cyan">
+                                        <div class="rc-icon"><i class="fas fa-radiation"></i></div>
+                                        <div class="rc-label">D радиационная</div>
+                                        <div class="rc-value" id="diff_d_radiation">—</div>
+                                        <div class="rc-unit">м²/с</div>
+                                    </div>
+                                    <div class="result-card accent-cyan">
+                                        <div class="rc-icon"><i class="fas fa-atom"></i></div>
+                                        <div class="rc-label">D коллизионная</div>
+                                        <div class="rc-value" id="diff_d_collision">—</div>
+                                        <div class="rc-unit">м²/с</div>
+                                    </div>
+                                    <div class="result-card accent-cyan">
+                                        <div class="rc-icon"><i class="fas fa-broadcast-tower"></i></div>
+                                        <div class="rc-label">SLR фактор</div>
+                                        <div class="rc-value" id="diff_slr_factor">—</div>
+                                        <div class="rc-unit">—</div>
+                                    </div>
+
+                                    <div class="result-card accent-teal">
+                                        <div class="rc-icon"><i class="fas fa-expand"></i></div>
+                                        <div class="rc-label">D<sub>SLR</sub> (баллистич.)</div>
+                                        <div class="rc-value" id="diff_d_slr">—</div>
+                                        <div class="rc-unit">м²/с</div>
+                                    </div>
+                                    <div class="result-card accent-teal">
+                                        <div class="rc-icon"><i class="fas fa-expand-arrows-alt"></i></div>
+                                        <div class="rc-label">D<sub>res</sub> (резонансн.)</div>
+                                        <div class="rc-value" id="diff_d_res">—</div>
+                                        <div class="rc-unit">м²/с</div>
+                                    </div>
+                                    <div class="result-card accent-teal">
+                                        <div class="rc-icon"><i class="fas fa-wave-square"></i></div>
+                                        <div class="rc-label">Резонансный ξ</div>
+                                        <div class="rc-value" id="diff_resonance_xi">—</div>
+                                        <div class="rc-unit">—</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Ионный транспорт и повреждения -->
+                            <div class="result-block" style="margin-top:1.5rem;">
+                                <div class="result-block-header diffusion-header">
+                                    <div class="block-icon"><i class="fas fa-bolt"></i></div>
+                                    <div>
+                                        <h4>Ионный транспорт</h4>
+                                        <p>Пробег, разброс и решёточные параметры</p>
+                                    </div>
+                                </div>
+                                <div class="result-grid cols-4">
+                                    <div class="result-card accent-blue">
+                                        <div class="rc-icon"><i class="fas fa-ruler"></i></div>
+                                        <div class="rc-label">Проектированный пробег</div>
+                                        <div class="rc-value" id="diff_projected_range">—</div>
+                                        <div class="rc-unit">м</div>
+                                    </div>
+                                    <div class="result-card accent-blue">
+                                        <div class="rc-icon"><i class="fas fa-random"></i></div>
+                                        <div class="rc-label">Разброс σ</div>
+                                        <div class="rc-value" id="diff_straggle_sigma">—</div>
+                                        <div class="rc-unit">м</div>
+                                    </div>
+                                    <div class="result-card accent-blue">
+                                        <div class="rc-icon"><i class="fas fa-wrench"></i></div>
+                                        <div class="rc-label">Скорость повреждений</div>
+                                        <div class="rc-value" id="diff_damage_rate">—</div>
+                                        <div class="rc-unit">1/с</div>
+                                    </div>
+                                    <div class="result-card accent-blue">
+                                        <div class="rc-icon"><i class="fas fa-grip-lines"></i></div>
+                                        <div class="rc-label">Жёсткость решётки</div>
+                                        <div class="rc-value" id="diff_lattice_stiffness">—</div>
+                                        <div class="rc-unit">Н/м</div>
+                                    </div>
+                                    <div class="result-card accent-blue">
+                                        <div class="rc-icon"><i class="fas fa-compress"></i></div>
+                                        <div class="rc-label">Равновесное расстояние</div>
+                                        <div class="rc-value" id="diff_equilibrium_dist">—</div>
+                                        <div class="rc-unit">м</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Энергия -->
+                        <!-- ═════════════════════════════════════════════════════ -->
+                        <!-- 2. ЭНЕРГИЯ -->
+                        <!-- ═════════════════════════════════════════════════════ -->
                         <div class="tab-pane" id="energy-tab" style="display:none;">
+
+                            <!-- Основные энергетические параметры -->
                             <div class="result-block">
                                 <div class="result-block-header energy-header">
                                     <div class="block-icon"><i class="fas fa-fire"></i></div>
-                                    <div><h4>Энергетические параметры</h4><p>Перенос энергии и взаимодействие с поверхностью</p></div>
+                                    <div>
+                                        <h4>Энергия взаимодействия</h4>
+                                        <p>Перенос энергии и связь с поверхностью</p>
+                                    </div>
+                                </div>
+                                <div class="result-grid cols-4">
+                                    <div class="result-card accent-orange hero-card">
+                                        <div class="rc-icon"><i class="fas fa-bolt"></i></div>
+                                        <div class="rc-label">Суммарная энергия</div>
+                                        <div class="rc-value" id="ps_total_energy">—</div>
+                                        <div class="rc-unit">эВ</div>
+                                    </div>
+                                    <div class="result-card accent-orange hero-card">
+                                        <div class="rc-icon"><i class="fas fa-atom"></i></div>
+                                        <div class="rc-label">Средняя на атом</div>
+                                        <div class="rc-value" id="ps_avg_energy">—</div>
+                                        <div class="rc-unit">эВ</div>
+                                    </div>
+                                    <div class="result-card accent-orange hero-card">
+                                        <div class="rc-icon"><i class="fas fa-radiation"></i></div>
+                                        <div class="rc-label">Энергия иона</div>
+                                        <div class="rc-value" id="pc_ion_energy">—</div>
+                                        <div class="rc-unit">эВ</div>
+                                    </div>
+                                    <div class="result-card accent-orange hero-card">
+                                        <div class="rc-icon"><i class="fas fa-link"></i></div>
+                                        <div class="rc-label">Энергия связи</div>
+                                        <div class="rc-value" id="ps_binding_energy">—</div>
+                                        <div class="rc-unit">эВ</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Формулы (2)–(5): усиление и модификация -->
+                            <div class="result-block" style="margin-top:1.5rem;">
+                                <div class="result-block-header energy-header">
+                                    <div class="block-icon"><i class="fas fa-calculator"></i></div>
+                                    <div>
+                                        <h4>Энергетическое усиление (формулы 2–5)</h4>
+                                        <p>Коэффициенты усиления и характеристики воздействия</p>
+                                    </div>
+                                </div>
+                                <div class="result-grid cols-3">
+                                    <div class="result-card accent-red">
+                                        <div class="rc-icon"><i class="fas fa-chart-line"></i></div>
+                                        <div class="rc-label">G — энергет. усиление (2)</div>
+                                        <div class="rc-value" id="energy_gain_factor">—</div>
+                                        <div class="rc-unit">—</div>
+                                    </div>
+                                    <div class="result-card accent-red">
+                                        <div class="rc-icon"><i class="fas fa-adjust"></i></div>
+                                        <div class="rc-label">M<sub>p</sub> — плазм. множитель (3)</div>
+                                        <div class="rc-value" id="plasma_correction_factor">—</div>
+                                        <div class="rc-unit">—</div>
+                                    </div>
+                                    <div class="result-card accent-red">
+                                        <div class="rc-icon"><i class="fas fa-tachometer-alt"></i></div>
+                                        <div class="rc-label">v(t) — скорость возд. (4)</div>
+                                        <div class="rc-value" id="exposure_rate">—</div>
+                                        <div class="rc-unit">1/с</div>
+                                    </div>
+
+                                    <div class="result-card accent-pink">
+                                        <div class="rc-icon"><i class="fas fa-wave-square"></i></div>
+                                        <div class="rc-label">Φ — флюенс (4)</div>
+                                        <div class="rc-value" id="fluence">—</div>
+                                        <div class="rc-unit">1/м²</div>
+                                    </div>
+                                    <div class="result-card accent-pink">
+                                        <div class="rc-icon"><i class="fas fa-layer-group"></i></div>
+                                        <div class="rc-label">h — толщина слоя (5)</div>
+                                        <div class="rc-value" id="modified_layer_thickness">—</div>
+                                        <div class="rc-unit">м</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Электромагнитные параметры -->
+                            <div class="result-block" style="margin-top:1.5rem;">
+                                <div class="result-block-header energy-header">
+                                    <div class="block-icon"><i class="fas fa-bolt"></i></div>
+                                    <div>
+                                        <h4>Электромагнитные характеристики</h4>
+                                        <p>Потенциал и ускоряющее поле</p>
+                                    </div>
                                 </div>
                                 <div class="result-grid cols-2">
-                                    <div class="result-card accent-orange hero-card"><div class="rc-icon"><i class="fas fa-bolt"></i></div><div class="rc-label">Суммарная переданная энергия</div><div class="rc-value" id="ps_total_energy">—</div><div class="rc-unit">эВ</div></div>
-                                    <div class="result-card accent-orange hero-card"><div class="rc-icon"><i class="fas fa-atom"></i></div><div class="rc-label">Средняя энергия на атом</div><div class="rc-value" id="ps_avg_energy">—</div><div class="rc-unit">эВ</div></div>
-                                    <div class="result-card accent-red"><div class="rc-icon"><i class="fas fa-link"></i></div><div class="rc-label">Энергия связи поверхности</div><div class="rc-value" id="ps_binding_energy">—</div><div class="rc-unit">эВ</div></div>
-                                    <div class="result-card accent-red"><div class="rc-icon"><i class="fas fa-radiation"></i></div><div class="rc-label">Энергия иона</div><div class="rc-value" id="pc_ion_energy">—</div><div class="rc-unit">эВ</div></div>
+                                    <div class="result-card accent-yellow">
+                                        <div class="rc-icon"><i class="fas fa-plug"></i></div>
+                                        <div class="rc-label">φ — потенциал на поверхности</div>
+                                        <div class="rc-value" id="energy_potential_surface">—</div>
+                                        <div class="rc-unit">В</div>
+                                    </div>
+                                    <div class="result-card accent-yellow">
+                                        <div class="rc-icon"><i class="fas fa-arrows-alt-h"></i></div>
+                                        <div class="rc-label">E<sub>accel</sub> — ускоряющее поле</div>
+                                        <div class="rc-value" id="energy_accelerating_field">—</div>
+                                        <div class="rc-unit">В/м</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Температура -->
+                        <!-- ═════════════════════════════════════════════════════ -->
+                        <!-- 3. ТЕМПЕРАТУРА -->
+                        <!-- ═════════════════════════════════════════════════════ -->
                         <div class="tab-pane" id="thermal-tab" style="display:none;">
+
+                            <!-- Температурный профиль -->
                             <div class="result-block">
                                 <div class="result-block-header thermal-header">
                                     <div class="block-icon"><i class="fas fa-thermometer-half"></i></div>
-                                    <div><h4>Температурные параметры</h4><p>Тепловые характеристики и фронт Дебая</p></div>
+                                    <div>
+                                        <h4>Температурный профиль</h4>
+                                        <p>Распределение температуры и фронт Дебая</p>
+                                    </div>
                                 </div>
                                 <div class="result-grid cols-3">
-                                    <div class="result-card accent-teal hero-card"><div class="rc-icon"><i class="fas fa-thermometer-full"></i></div><div class="rc-label">T в точке зонда</div><div class="rc-value" id="ps_probe_temp">—</div><div class="rc-unit">К</div></div>
-                                    <div class="result-card accent-teal"><div class="rc-icon"><i class="fas fa-tachometer-alt"></i></div><div class="rc-label">Скорость фронта Дебая</div><div class="rc-value" id="ps_debye_speed">—</div><div class="rc-unit">м/с</div></div>
-                                    <div class="result-card accent-teal"><div class="rc-icon"><i class="fas fa-ruler-vertical"></i></div><div class="rc-label">Глубина фронта Дебая</div><div class="rc-value" id="ps_debye_depth">—</div><div class="rc-unit">м</div></div>
+                                    <div class="result-card accent-teal hero-card">
+                                        <div class="rc-icon"><i class="fas fa-thermometer-full"></i></div>
+                                        <div class="rc-label">T в точке зонда</div>
+                                        <div class="rc-value" id="thermal_probe_temp">—</div>
+                                        <div class="rc-unit">К</div>
+                                    </div>
+                                    <div class="result-card accent-teal">
+                                        <div class="rc-icon"><i class="fas fa-tachometer-alt"></i></div>
+                                        <div class="rc-label">Скорость фронта Дебая</div>
+                                        <div class="rc-value" id="thermal_debye_speed">—</div>
+                                        <div class="rc-unit">м/с</div>
+                                    </div>
+                                    <div class="result-card accent-teal">
+                                        <div class="rc-icon"><i class="fas fa-ruler-vertical"></i></div>
+                                        <div class="rc-label">Глубина фронта Дебая</div>
+                                        <div class="rc-value" id="thermal_debye_depth">—</div>
+                                        <div class="rc-unit">м</div>
+                                    </div>
+
                                 </div>
                             </div>
 
-                            <!-- Skin-слой и поверхностные эффекты -->
+                            <!-- Скин-эффект (формулы 6–12) -->
                             <div class="result-block" style="margin-top:1.5rem;">
                                 <div class="result-block-header skin-header">
                                     <div class="block-icon"><i class="fas fa-bolt"></i></div>
-                                    <div><h4>Скин-эффект и поверхностный нагрев</h4><p>Параметры электромагнитного взаимодействия с поверхностью</p></div>
+                                    <div>
+                                        <h4>Скин-эффект и поверхностный нагрев (формулы 6–12)</h4>
+                                        <p>Электромагнитное взаимодействие с поверхностью</p>
+                                    </div>
                                 </div>
                                 <div class="result-grid cols-3">
-                                    <div class="result-card accent-yellow"><div class="rc-icon"><i class="fas fa-wave-square"></i></div><div class="rc-label">δ — глубина скин-слоя</div><div class="rc-value" id="ps_skin_depth">—</div><div class="rc-unit">м</div></div>
-                                    <div class="result-card accent-yellow"><div class="rc-icon"><i class="fas fa-power-off"></i></div><div class="rc-label">P_skin (???)</div><div class="rc-value" id="ps_skin_surface_power">—</div><div class="rc-unit">Вт/м²</div></div>
-                                    <div class="result-card accent-yellow"><div class="rc-icon"><i class="fas fa-battery-full"></i></div><div class="rc-label">Накопленная энергия (???)</div><div class="rc-value" id="ps_skin_accumulated_energy">—</div><div class="rc-unit">Дж/м²</div></div>
-                                    <div class="result-card accent-yellow"><div class="rc-icon"><i class="fas fa-temperature-high"></i></div><div class="rc-label">ΔT_skin</div><div class="rc-value" id="ps_skin_temperature_delta">—</div><div class="rc-unit">К</div></div>
-                                    <div class="result-card accent-yellow"><div class="rc-icon"><i class="fas fa-thermometer-full"></i></div><div class="rc-label">эффективная температура поверхности</div><div class="rc-value" id="ps_effective_surface_temp">—</div><div class="rc-unit">К</div></div>
+                                    <div class="result-card accent-yellow">
+                                        <div class="rc-icon"><i class="fas fa-wave-square"></i></div>
+                                        <div class="rc-label">δ — глубина скин-слоя (6)</div>
+                                        <div class="rc-value" id="skin_depth">—</div>
+                                        <div class="rc-unit">м</div>
+                                    </div>
+                                    <div class="result-card accent-yellow">
+                                        <div class="rc-icon"><i class="fas fa-power-off"></i></div>
+                                        <div class="rc-label">P<sub>skin</sub> — мощность (9)</div>
+                                        <div class="rc-value" id="skin_surface_power">—</div>
+                                        <div class="rc-unit">Вт/м²</div>
+                                    </div>
+                                    <div class="result-card accent-yellow">
+                                        <div class="rc-icon"><i class="fas fa-battery-full"></i></div>
+                                        <div class="rc-label">W<sub>skin</sub> — накопл. энергия (10)</div>
+                                        <div class="rc-value" id="skin_accumulated_energy">—</div>
+                                        <div class="rc-unit">Дж/м²</div>
+                                    </div>
+
+                                    <div class="result-card accent-yellow">
+                                        <div class="rc-icon"><i class="fas fa-temperature-high"></i></div>
+                                        <div class="rc-label">ΔT<sub>skin</sub> — нагрев (11)</div>
+                                        <div class="rc-value" id="skin_temperature_delta">—</div>
+                                        <div class="rc-unit">К</div>
+                                    </div>
+                                    <div class="result-card accent-yellow">
+                                        <div class="rc-icon"><i class="fas fa-thermometer-full"></i></div>
+                                        <div class="rc-label">T<sub>eff</sub> — эффект. темп. (12)</div>
+                                        <div class="rc-value" id="skin_effective_temp">—</div>
+                                        <div class="rc-unit">К</div>
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- Энергетические коэффициенты -->
-                            <div class="result-block" style="margin-top:1.5rem;">
-                                <div class="result-block-header gain-header">
-                                    <div class="block-icon"><i class="fas fa-chart-line"></i></div>
-                                    <div><h4>Коэффициенты усиления и динамика</h4><p>Параметры энерговыделения и модификации слоя</p></div>
-                                </div>
-                                <div class="result-grid cols-3">
-                                    <div class="result-card accent-lime"><div class="rc-icon"><i class="fas fa-arrow-up"></i></div><div class="rc-label">Энергетическое усиление G</div><div class="rc-value" id="ps_energy_gain_factor">—</div><div class="rc-unit">—</div></div>
-                                    <div class="result-card accent-lime"><div class="rc-icon"><i class="fas fa-adjust"></i></div><div class="rc-label">M_p — плазменный множитель</div><div class="rc-value" id="ps_plasma_correction_factor">—</div><div class="rc-unit">—</div></div>
-                                    <div class="result-card accent-lime"><div class="rc-icon"><i class="fas fa-tachometer-alt"></i></div><div class="rc-label">Скорость воздействия v(t)</div><div class="rc-value" id="ps_exposure_rate">—</div><div class="rc-unit">1/с</div></div>
-                                    <div class="result-card accent-lime"><div class="rc-icon"><i class="fas fa-layer-group"></i></div><div class="rc-label">Толщина модифицированного слоя</div><div class="rc-value" id="ps_modified_layer_thickness">—</div><div class="rc-unit">м</div></div>
-                                </div>
-                            </div>
-
-                            <div class="result-block" style="margin-top:1.5rem;">
-                                <div class="result-block-header thermal-header">
-                                    <div class="block-icon"><i class="fas fa-layer-group"></i></div>
-                                    <div><h4>Энерговклад и SKIN-эффект</h4><p>Формулы (3)–(12)</p></div>
-                                </div>
-                                <div class="result-grid cols-3">
-                                    <div class="result-card accent-teal"><div class="rc-icon"><i class="fas fa-adjust"></i></div><div class="rc-label">M_p</div><div class="rc-value" id="ps_plasma_correction">—</div><div class="rc-unit">—</div></div>
-                                    <div class="result-card accent-teal"><div class="rc-icon"><i class="fas fa-ruler-combined"></i></div><div class="rc-label">Толщина h</div><div class="rc-value" id="ps_layer_thickness">—</div><div class="rc-unit">м</div></div>
-                                    <div class="result-card accent-teal"><div class="rc-icon"><i class="fas fa-temperature-high"></i></div><div class="rc-label">ΔT_skin</div><div class="rc-value" id="ps_skin_delta_t">—</div><div class="rc-unit">К</div></div>
-                                    <div class="result-card accent-teal"><div class="rc-icon"><i class="fas fa-thermometer-half"></i></div><div class="rc-label">T_eff</div><div class="rc-value" id="ps_t_eff">—</div><div class="rc-unit">К</div></div>
-                                </div>
-                            </div>
+                            <!-- Параметры плазмы -->
                             <div class="result-block" style="margin-top:1.5rem;">
                                 <div class="result-block-header plasma-header">
                                     <div class="block-icon"><i class="fas fa-atom"></i></div>
-                                    <div><h4>Параметры плазмы</h4><p>Электронные характеристики разряда</p></div>
+                                    <div>
+                                        <h4>Параметры плазмы</h4>
+                                        <p>Электронные характеристики разряда</p>
+                                    </div>
                                 </div>
                                 <div class="result-grid cols-3">
-                                    <div class="result-card accent-cyan"><div class="rc-icon"><i class="fas fa-dot-circle"></i></div><div class="rc-label">Плотность электронов</div><div class="rc-value" id="ps_electron_density">—</div><div class="rc-unit">м⁻³</div></div>
-                                    <div class="result-card accent-cyan"><div class="rc-icon"><i class="fas fa-fighter-jet"></i></div><div class="rc-label">Скорость электронов</div><div class="rc-value" id="ps_electron_velocity">—</div><div class="rc-unit">м/с</div></div>
-                                    <div class="result-card accent-cyan"><div class="rc-icon"><i class="fas fa-water"></i></div><div class="rc-label">Плотность тока</div><div class="rc-value" id="ps_current_density">—</div><div class="rc-unit">А/м²</div></div>
+                                    <div class="result-card accent-cyan">
+                                        <div class="rc-icon"><i class="fas fa-dot-circle"></i></div>
+                                        <div class="rc-label">Плотность электронов</div>
+                                        <div class="rc-value" id="plasma_electron_density">—</div>
+                                        <div class="rc-unit">м⁻³</div>
+                                    </div>
+                                    <div class="result-card accent-cyan">
+                                        <div class="rc-icon"><i class="fas fa-fighter-jet"></i></div>
+                                        <div class="rc-label">Скорость электронов</div>
+                                        <div class="rc-value" id="plasma_electron_velocity">—</div>
+                                        <div class="rc-unit">м/с</div>
+                                    </div>
+                                    <div class="result-card accent-cyan">
+                                        <div class="rc-icon"><i class="fas fa-water"></i></div>
+                                        <div class="rc-label">Плотность тока</div>
+                                        <div class="rc-value" id="plasma_current_density">—</div>
+                                        <div class="rc-unit">А/м²</div>
+                                    </div>
                                 </div>
                             </div>
+
+                            <!-- Радиационное повреждение -->
                             <div class="result-block" style="margin-top:1.5rem;">
                                 <div class="result-block-header damage-header">
                                     <div class="block-icon"><i class="fas fa-radiation-alt"></i></div>
-                                    <div><h4>Радиационное повреждение</h4><p>Дефекты, импульс и смещение атомов</p></div>
+                                    <div>
+                                        <h4>Радиационное повреждение</h4>
+                                        <p>Дефекты, импульс и флюенс</p>
+                                    </div>
                                 </div>
                                 <div class="result-grid cols-3">
-                                    <div class="result-card accent-pink"><div class="rc-icon"><i class="fas fa-wrench"></i></div><div class="rc-label">Суммарные дефекты</div><div class="rc-value" id="ps_total_damage">—</div><div class="rc-unit">вакансии/м²</div></div>
-                                    <div class="result-card accent-pink"><div class="rc-icon"><i class="fas fa-arrows-alt"></i></div><div class="rc-label">Суммарный импульс</div><div class="rc-value" id="ps_total_momentum">—</div><div class="rc-unit">кг·м/с</div></div>
-                                    <div class="result-card accent-pink"><div class="rc-icon"><i class="fas fa-compress-arrows-alt"></i></div><div class="rc-label">Смещение атомов</div><div class="rc-value" id="ps_total_displacement">—</div><div class="rc-unit">м</div></div>
-                                </div>
-                                <div class="result-grid cols-3">
-                                    <div class="result-card accent-pink"><div class="rc-icon"><i class="fas fa-wrench"></i></div><div class="rc-label">Fluence</div><div class="rc-value" id="ps_fluence">—</div><div class="rc-unit">1/м²</div></div>
-                                    <div class="result-card accent-pink"><div class="rc-icon"><i class="fas fa-arrows-alt"></i></div><div class="rc-label">FluenceEff</div><div class="rc-value" id="ps_fluence_eff">—</div><div class="rc-unit">1/м²</div></div>
-                                    <div class="result-card accent-pink"><div class="rc-icon"><i class="fas fa-compress-arrows-alt"></i></div><div class="rc-label">IonFlux</div><div class="rc-value" id="ps_ion_flux">—</div><div class="rc-unit">1/(м²·с)</div></div>
-                                </div>
-                                <div class="result-grid cols-3">
-                                    <div class="result-card accent-pink"><div class="rc-icon"><i class="fas fa-wrench"></i></div><div class="rc-label">Resonance ξ</div><div class="rc-value" id="ps_resonance_xi">—</div><div class="rc-unit">—</div></div>
-                                    <div class="result-card accent-pink"><div class="rc-icon"><i class="fas fa-arrows-alt"></i></div><div class="rc-label">D_slr</div><div class="rc-value" id="ps_d_slr">—</div><div class="rc-unit">м²</div></div>
-                                    <div class="result-card accent-pink"><div class="rc-icon"><i class="fas fa-compress-arrows-alt"></i></div><div class="rc-label">D_res</div><div class="rc-value" id="ps_d_res">—</div><div class="rc-unit">м²/с</div></div>
+                                    <div class="result-card accent-pink">
+                                        <div class="rc-icon"><i class="fas fa-wrench"></i></div>
+                                        <div class="rc-label">Суммарные дефекты</div>
+                                        <div class="rc-value" id="damage_total">—</div>
+                                        <div class="rc-unit">вакансии/м²</div>
+                                    </div>
+                                    <div class="result-card accent-pink">
+                                        <div class="rc-icon"><i class="fas fa-arrows-alt"></i></div>
+                                        <div class="rc-label">Переданный импульс</div>
+                                        <div class="rc-value" id="damage_momentum">—</div>
+                                        <div class="rc-unit">кг·м/с</div>
+                                    </div>
+                                    <div class="result-card accent-pink">
+                                        <div class="rc-icon"><i class="fas fa-compress-arrows-alt"></i></div>
+                                        <div class="rc-label">Смещение атомов</div>
+                                        <div class="rc-value" id="damage_displacement">—</div>
+                                        <div class="rc-unit">м</div>
+                                    </div>
+
+                                    <div class="result-card accent-pink">
+                                        <div class="rc-icon"><i class="fas fa-wave-square"></i></div>
+                                        <div class="rc-label">Флюенс Φ</div>
+                                        <div class="rc-value" id="damage_fluence">—</div>
+                                        <div class="rc-unit">1/м²</div>
+                                    </div>
+                                    <div class="result-card accent-pink">
+                                        <div class="rc-icon"><i class="fas fa-wave-square"></i></div>
+                                        <div class="rc-label">Эффективный флюенс</div>
+                                        <div class="rc-value" id="damage_fluence_eff">—</div>
+                                        <div class="rc-unit">1/м²</div>
+                                    </div>
+                                    <div class="result-card accent-pink">
+                                        <div class="rc-icon"><i class="fas fa-water"></i></div>
+                                        <div class="rc-label">Ионный поток j<sub>ion</sub></div>
+                                        <div class="rc-value" id="damage_ion_flux">—</div>
+                                        <div class="rc-unit">1/(м²·с)</div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- 3D Визуализация -->
+                        <!-- ═════════════════════════════════════════════════════ -->
+                        <!-- 4. 3D ВИЗУАЛИЗАЦИЯ -->
+                        <!-- ═════════════════════════════════════════════════════ -->
                         <div class="tab-pane" id="debye3d-tab" style="display:none;">
                             <div class="result-block">
                                 <div class="result-block-header viz3d-header">
