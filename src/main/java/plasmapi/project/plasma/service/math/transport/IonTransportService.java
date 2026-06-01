@@ -11,4 +11,12 @@ public interface IonTransportService {
             double ionEnergyEv,
             int particles
     );
+
+    TransportResult simulate(
+            Ion ion,
+            AtomList atom,
+            double ionEnergyEv,
+            int particles,
+            LorentzContext lorentzContext
+    );
 }

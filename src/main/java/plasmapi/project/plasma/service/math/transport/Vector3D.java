@@ -2,6 +2,8 @@ package plasmapi.project.plasma.service.math.transport;
 
 public class Vector3D {
 
+    public static final Vector3D ZERO = new Vector3D(0, 0, 0);
+
     private final double x;
     private final double y;
     private final double z;

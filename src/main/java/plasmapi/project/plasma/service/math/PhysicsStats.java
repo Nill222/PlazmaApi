@@ -32,6 +32,9 @@ public record PhysicsStats(
     double resonanceXi,            // Резонансный коэффициент усиления
     double dSlr,                   // Вклад SLR в D (м²/с)
     double dRes,                   // Резонансный вклад в D (м²/с)
+    double magneticFieldMagnitude, // |B|, Тл
+    double lorentzGyroradius,      // r_L = m v / (q B), м
+    double lorentzMeanDeflectionDeg, // среднее отклонение траектории от v × B, °
     DiffusionIntermediate diffusionTransport, // снимок диффузии/транспорта (не нулевой при полном расчёте)
     List<Double> thermalTimes,     // Шкала времени для температурного поля (с)
     List<Double> thermalDepths,    // Шкала глубины для температурного поля (м)

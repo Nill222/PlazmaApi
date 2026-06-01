@@ -116,6 +116,9 @@ public class IntermediateResultEnrichmentService {
                 stats.resonanceXi(),
                 stats.dSlr(),
                 stats.dRes(),
+                stats.magneticFieldMagnitude(),
+                stats.lorentzGyroradius(),
+                stats.lorentzMeanDeflectionDeg(),
                 stats.diffusionTransport(),
                 stats.thermalTimes(),
                 stats.thermalDepths(),
@@ -475,6 +478,7 @@ public class IntermediateResultEnrichmentService {
                 val(r.getSkinSurfacePower()), val(r.getSkinAccumulatedEnergy()),
                 val(r.getSkinTemperatureDelta()), val(r.getEffectiveSurfaceTemperature()),
                 nz(r.getResonanceXi()), nz(r.getDSlr()), nz(r.getDRes()),
+                0.0, 0.0, 0.0,
                 diffusionTransportFromPersistedResult(r),
                 null, null, null
         );

@@ -14,6 +14,7 @@ import plasmapi.project.plasma.model.security.User;
 import javax.crypto.SecretKey;
 import java.time.Duration;
 import java.time.Instant;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -100,12 +101,26 @@ public class JwtService {
             throw new IllegalStateException("token.signing.key is not configured");
         }
 
-        byte[] keyBytes = Decoders.BASE64.decode(jwtSigningKeyBase64);
+        byte[] keyBytes = decodeSigningKey(jwtSigningKeyBase64.trim());
 
         if (keyBytes.length < 32) {
             throw new IllegalStateException("JWT key is too short — need at least 256 bits (32 bytes)");
         }
 
         return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    /**
+     * Plain text secret by default (safe for .env values with '-' and other symbols).
+     * Optional prefixes: base64:... or base64url:...
+     */
+    private static byte[] decodeSigningKey(String key) {
+        if (key.startsWith("base64:")) {
+            return Decoders.BASE64.decode(key.substring("base64:".length()).trim());
+        }
+        if (key.startsWith("base64url:")) {
+            return Decoders.BASE64URL.decode(key.substring("base64url:".length()).trim());
+        }
+        return key.getBytes(StandardCharsets.UTF_8);
     }
 }
