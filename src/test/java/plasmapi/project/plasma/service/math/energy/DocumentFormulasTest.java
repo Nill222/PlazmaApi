@@ -9,7 +9,6 @@ import plasmapi.project.plasma.service.math.energy.impl.FluenceIntegrationServic
 import plasmapi.project.plasma.service.math.energy.impl.ModifiedLayerThicknessServiceImpl;
 import plasmapi.project.plasma.service.math.parallel.MathParallelSupport;
 
-import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -24,11 +23,7 @@ class DocumentFormulasTest {
     private static MathParallelSupport sequentialParallelSupport() {
         MathParallelProperties props = new MathParallelProperties();
         props.setEnabled(false);
-        return new MathParallelSupport(
-                props,
-                Executors.newSingleThreadExecutor(),
-                new Semaphore(1)
-        );
+        return new MathParallelSupport(props, new Semaphore(1));
     }
     private final ModifiedLayerThicknessServiceImpl layerService = new ModifiedLayerThicknessServiceImpl();
 

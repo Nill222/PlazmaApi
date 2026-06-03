@@ -93,11 +93,11 @@ slr:
   k: 5.0e-3
   fluence0: 1.0e20
 
-# Параллельные расчёты в math-сервисах (пул потоков + семафор симуляций)
+# Параллельные расчёты: семафор симуляций + ForkJoin только для крупных пакетов
 plasma:
   math:
     parallel:
       enabled: true
-      pool-size: 0
       simulation-max-concurrent: 4
-      min-parallel-items: 32
+      # Порог для parallelFor/sum (MC-ионы 200, профиль 200 — ниже, без лишнего overhead)
+      min-parallel-items: 512

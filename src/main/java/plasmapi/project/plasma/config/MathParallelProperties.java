@@ -16,24 +16,12 @@ public class MathParallelProperties {
     private boolean enabled = true;
 
     /**
-     * Размер пула для расчётов (0 — число доступных процессоров).
-     */
-    private int poolSize = 0;
-
-    /**
      * Максимум одновременных полных симуляций (семафор).
      */
     private int simulationMaxConcurrent = 4;
 
     /**
-     * Минимальное число итераций, при котором имеет смысл распараллеливание.
+     * Минимальное число итераций, при котором имеет смысл ForkJoin-parallel.
      */
-    private int minParallelItems = 32;
-
-    public int resolvePoolSize() {
-        if (poolSize > 0) {
-            return poolSize;
-        }
-        return Math.max(1, Runtime.getRuntime().availableProcessors());
-    }
+    private int minParallelItems = 512;
 }
