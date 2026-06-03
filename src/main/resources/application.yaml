@@ -29,11 +29,11 @@ spring:
     clean-disabled: true
     url: jdbc:postgresql://localhost:5432/postgres
     user: postgres
-    password: 1234
+    password: 1488
 
   token:
     signing:
-      key: "53A73E5F1C4E0A2D3B5F2D784E6A1B423D6F247D1F6E5C3A596D635A75327855"
+      key: "plazmaapi_local_jwt_secret_min_32_chars_2026"
 
 # Модель энерговклада ионного воздействия (формулы 1–14)
 energy-deposition:
@@ -81,3 +81,9 @@ energy-deposition:
     surface-heat-capacity: 4.0e6
     default-conductivity: 1.0e7
     relative-permeability: 1.0
+  lorentz:
+    enabled: true
+    axial-current-factor: 1.0
+    return-current-axial-fraction: 0.3
+    current-density-factor: 0.5
+    pressure-damping-pa: 50.0

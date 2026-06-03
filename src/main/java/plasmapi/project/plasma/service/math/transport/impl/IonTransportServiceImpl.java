@@ -6,8 +6,11 @@ import plasmapi.project.plasma.dto.mathDto.collision.CollisionResult;
 import plasmapi.project.plasma.model.atom.AtomList;
 import plasmapi.project.plasma.model.res.Ion;
 import plasmapi.project.plasma.service.math.PhysicalConstants;
+import plasmapi.project.plasma.service.math.PhysicsMath;
 import plasmapi.project.plasma.service.math.collision.CollisionService;
 import plasmapi.project.plasma.service.math.transport.IonTransportService;
+import plasmapi.project.plasma.service.math.transport.LorentzContext;
+import plasmapi.project.plasma.service.math.transport.LorentzForceService;
 import plasmapi.project.plasma.service.math.transport.TransportResult;
 import plasmapi.project.plasma.service.math.transport.Vector3D;
 
@@ -19,6 +22,7 @@ import java.util.List;
 public class IonTransportServiceImpl implements IonTransportService {
 
     private final CollisionService collisionService;
+    private final LorentzForceService lorentzForceService;
 
     private static final double EV = PhysicalConstants.EV;
     private static final double E_MIN = 1.0; // eV
@@ -30,16 +34,37 @@ public class IonTransportServiceImpl implements IonTransportService {
             double ionEnergyEv,
             int particles
     ) {
+        return simulate(ion, atom, ionEnergyEv, particles, LorentzContext.disabled());
+    }
+
+    @Override
+    public TransportResult simulate(
+            Ion ion,
+            AtomList atom,
+            double ionEnergyEv,
+            int particles,
+            LorentzContext lorentzContext
+    ) {
 
         List<Double> ranges = new ArrayList<>();
+        double deflectionSumRad = 0.0;
+        int deflectionCount = 0;
+
+        double massKg = PhysicsMath.safeIonMassKg(ion.getMass());
+        int charge = PhysicsMath.safeIonCharge(ion.getCharge());
+        double initialSpeed = Math.sqrt(2.0 * ionEnergyEv * EV / massKg);
+        double bMag = lorentzContext != null ? lorentzContext.magneticFieldMagnitude() : 0.0;
+        double gyroradius = lorentzForceService.gyroradius(initialSpeed, charge, massKg, bMag);
+
+        LorentzContext ctx = lorentzContext != null ? lorentzContext : LorentzContext.disabled();
 
         for (int i = 0; i < particles; i++) {
-            double depth = simulatePrimaryIon(
-                    ion,
-                    atom,
-                    ionEnergyEv * EV
-            );
-            ranges.add(depth);
+            double[] run = simulatePrimaryIon(ion, atom, ionEnergyEv * EV, ctx);
+            ranges.add(run[0]);
+            if (run[1] > 0) {
+                deflectionSumRad += run[1];
+                deflectionCount++;
+            }
         }
 
         double mean = ranges.stream().mapToDouble(d -> d).average().orElse(0.0);
@@ -50,25 +75,32 @@ public class IonTransportServiceImpl implements IonTransportService {
                 .orElse(0.0);
 
         double sigma = Math.sqrt(variance);
+        double meanDeflectionDeg = deflectionCount > 0
+                ? Math.toDegrees(deflectionSumRad / deflectionCount)
+                : 0.0;
 
-        return new TransportResult(mean, sigma, ranges);
+        return new TransportResult(mean, sigma, ranges, gyroradius, meanDeflectionDeg);
     }
 
     // =========================================
     // PRIMARY ION TRANSPORT (3D)
     // =========================================
-    private double simulatePrimaryIon(Ion ion, AtomList atom, double E) {
+    /**
+     * @return [depth, accumulated Lorentz deflection angle, rad]
+     */
+    private double[] simulatePrimaryIon(Ion ion, AtomList atom, double E, LorentzContext lorentz) {
 
         Vector3D dir = new Vector3D(0, 0, 1);
         double depth = 0.0;
+        double lorentzDeflectionRad = 0.0;
 
         double density = computeAtomicDensity(atom);
 
         int Z1 = Math.max(1, ion.getCharge());
         int Z2 = Math.max(1, atom.getValence());
 
-        double M1 = ion.getMass();
-        double M2 = atom.getMass();
+        double M1 = PhysicsMath.safeIonMassKg(ion.getMass());
+        double M2 = Math.max(atom.getMass(), 1e-30);
 
         double a = 0.8853 * 0.529e-10 /
                 (Math.pow(Z1, 0.23) + Math.pow(Z2, 0.23));
@@ -115,6 +147,22 @@ public class IonTransportServiceImpl implements IonTransportService {
             dir = rotate(dir, thetaLab, phi);
 
             // =========================
+            // 3b. Lorentz: F = q(E + v × B)
+            // =========================
+            if (lorentz.active()) {
+                double speed = Math.sqrt(2.0 * E / M1);
+                if (speed > 0) {
+                    double dt = step / speed;
+                    Vector3D velocity = dir.scale(speed);
+                    Vector3D before = dir;
+                    velocity = lorentzForceService.advanceVelocity(velocity, lorentz, Z1, M1, dt);
+                    Vector3D after = velocity.normalize();
+                    lorentzDeflectionRad += before.angle(after);
+                    dir = after;
+                }
+            }
+
+            // =========================
             // 4. stopping (✔ FIXED)
             // =========================
             double Sn = col.nuclearStopping() * density;
@@ -157,7 +205,7 @@ public class IonTransportServiceImpl implements IonTransportService {
             }
         }
 
-        return Math.max(depth, 0.0);
+        return new double[]{Math.max(depth, 0.0), lorentzDeflectionRad};
     }
     // =========================================
     // CASCADE (не влияет на глубину)

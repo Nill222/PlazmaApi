@@ -24,6 +24,8 @@ import plasmapi.project.plasma.service.math.thermal.impl.ThermalServiceImpl;
 import plasmapi.project.plasma.service.math.energy.EnergyDepositionResult;
 import plasmapi.project.plasma.service.math.energy.EnergyDepositionService;
 import plasmapi.project.plasma.service.math.transport.IonTransportService;
+import plasmapi.project.plasma.service.math.transport.LorentzContext;
+import plasmapi.project.plasma.service.math.transport.MagneticFieldEstimationService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +44,7 @@ public class DiffusionServiceImpl implements DiffusionService {
     private final IonCollisionAveragingService ionCollisionAveragingService;
     private final IonTransportService ionTransportService;
     private final EnergyDepositionService energyDepositionService;
+    private final MagneticFieldEstimationService magneticFieldEstimationService;
 
     private static final double R = PhysicalConstants.R;
     private static final double NA = PhysicalConstants.NA;
@@ -258,11 +261,25 @@ public class DiffusionServiceImpl implements DiffusionService {
 // 11. RANGE (🔥 главное исправление)
 // =========================
 
+        double chamberArea = (plasmaConfig.getChamberWidth() != null && plasmaConfig.getChamberDepth() != null)
+                ? plasmaConfig.getChamberWidth() * plasmaConfig.getChamberDepth()
+                : 1.0;
+        double currentDensityForLorentz = (plasmaConfig.getCurrent() != null)
+                ? plasmaConfig.getCurrent() / chamberArea
+                : 0.0;
+
+        var magneticField = magneticFieldEstimationService.estimate(plasmaConfig, currentDensityForLorentz);
+        LorentzContext lorentz = LorentzContext.from(
+                energyDeposition.acceleratingField(),
+                magneticField.field()
+        );
+
         var transport = ionTransportService.simulate(
                 ion,
                 atom,
                 ionEnergyEv,
-                200
+                200,
+                lorentz
         );
 
         double Rp_mc = transport.meanRange();
@@ -319,12 +336,8 @@ public class DiffusionServiceImpl implements DiffusionService {
 // =========================
 
 // 1. Плотность тока
-        double area = (plasmaConfig.getChamberWidth() != null && plasmaConfig.getChamberDepth() != null)
-                ? plasmaConfig.getChamberWidth() * plasmaConfig.getChamberDepth()
-                : 1.0;
-        double currentDensityValue = (plasmaConfig.getCurrent() != null)
-                ? plasmaConfig.getCurrent() / area
-                : 0.0;
+        double area = chamberArea;
+        double currentDensityValue = currentDensityForLorentz;
 
 // 2. Параметры электронов
         double Te_ev = (plasmaConfig.getElectronTemperature() != null)
@@ -409,6 +422,9 @@ public class DiffusionServiceImpl implements DiffusionService {
                 xi,
                 D_slr,
                 D_res,
+                lorentz.magneticFieldMagnitude(),
+                transport.lorentzGyroradius(),
+                transport.lorentzMeanDeflectionDeg(),
                 diffusionIntermediate,
                 thermalTimes,
                 thermalDepths,

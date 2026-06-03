@@ -6,8 +6,10 @@
     <title>Графики результатов | PlasmaLab</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600&display=swap"
+          rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+          crossorigin="anonymous" referrerpolicy="no-referrer"/>
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/charts.css">
     <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
@@ -27,11 +29,13 @@
             <form id="loginForm" class="auth-form active" data-form="login">
                 <div class="auth-field">
                     <label for="login-username"><i class="fas fa-user"></i> Имя пользователя</label>
-                    <input type="text" id="login-username" name="username" required autocomplete="username" placeholder="Введите имя пользователя">
+                    <input type="text" id="login-username" name="username" required autocomplete="username"
+                           placeholder="Введите имя пользователя">
                 </div>
                 <div class="auth-field">
                     <label for="login-password"><i class="fas fa-lock"></i> Пароль</label>
-                    <input type="password" id="login-password" name="password" required autocomplete="current-password" placeholder="Введите пароль">
+                    <input type="password" id="login-password" name="password" required autocomplete="current-password"
+                           placeholder="Введите пароль">
                 </div>
                 <div id="login_msg" class="auth-message" role="alert"></div>
                 <button type="submit" class="btn btn-primary full"><i class="fas fa-sign-in-alt"></i> Войти</button>
@@ -39,18 +43,22 @@
             <form id="registerForm" class="auth-form" data-form="register">
                 <div class="auth-field">
                     <label for="register-username"><i class="fas fa-user"></i> Имя пользователя</label>
-                    <input type="text" id="register-username" name="username" required autocomplete="username" placeholder="Минимум 5 символов">
+                    <input type="text" id="register-username" name="username" required autocomplete="username"
+                           placeholder="Минимум 5 символов">
                 </div>
                 <div class="auth-field">
                     <label for="register-email"><i class="fas fa-envelope"></i> Email</label>
-                    <input type="email" id="register-email" name="email" required autocomplete="email" placeholder="your@email.com">
+                    <input type="email" id="register-email" name="email" required autocomplete="email"
+                           placeholder="your@email.com">
                 </div>
                 <div class="auth-field">
                     <label for="register-password"><i class="fas fa-lock"></i> Пароль</label>
-                    <input type="password" id="register-password" name="password" required autocomplete="new-password" placeholder="Минимум 8 символов">
+                    <input type="password" id="register-password" name="password" required autocomplete="new-password"
+                           placeholder="Минимум 8 символов">
                 </div>
                 <div id="signup_msg" class="auth-message" role="alert"></div>
-                <button type="submit" class="btn btn-primary full"><i class="fas fa-user-plus"></i> Создать аккаунт</button>
+                <button type="submit" class="btn btn-primary full"><i class="fas fa-user-plus"></i> Создать аккаунт
+                </button>
             </form>
         </div>
     </div>
@@ -69,10 +77,12 @@
         </nav>
         <div class="auth">
             <div class="auth-buttons">
-                <button class="btn btn-primary" onclick="showAuthModal()"><i class="fas fa-sign-in-alt"></i> Войти</button>
+                <button class="btn btn-primary" onclick="showAuthModal()"><i class="fas fa-sign-in-alt"></i> Войти
+                </button>
             </div>
             <div class="user-menu" style="display:none;">
-                <div class="user-info"><i class="fas fa-user-circle"></i><span class="user-name" id="usernameDisplay"></span></div>
+                <div class="user-info"><i class="fas fa-user-circle"></i><span class="user-name"
+                                                                               id="usernameDisplay"></span></div>
                 <button class="btn btn-secondary" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Выйти</button>
             </div>
         </div>

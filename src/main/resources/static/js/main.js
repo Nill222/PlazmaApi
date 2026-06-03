@@ -35,9 +35,7 @@ const NavigationManager = {
      * @returns {boolean}
      */
     _isActiveLink(href, currentPage) {
-        return href === currentPage ||
-            (currentPage === '' && href === 'index.html') ||
-            (currentPage === '/' && href === 'index.html');
+        return href === currentPage || (currentPage === '' && href === 'index.html') || (currentPage === '/' && href === 'index.html');
     },
 };
 
@@ -75,8 +73,7 @@ const SmoothScrollManager = {
         const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
 
         window.scrollTo({
-            top: offsetPosition,
-            behavior: 'smooth',
+            top: offsetPosition, behavior: 'smooth',
         });
     },
 };
@@ -92,8 +89,7 @@ const ScrollAnimationsManager = {
      */
     _observeElements() {
         const observerOptions = {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px',
+            threshold: 0.1, rootMargin: '0px 0px -50px 0px',
         };
 
         const observer = new IntersectionObserver((entries) => {
@@ -135,8 +131,7 @@ const CardAnimationsManager = {
                 }
             });
         }, {
-            threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px',
+            threshold: 0.1, rootMargin: '0px 0px -50px 0px',
         });
 
         cards.forEach(card => observer.observe(card));
@@ -173,9 +168,7 @@ const PerformanceOptimizer = {
      */
     preloadResources() {
         // Preload fonts
-        const fonts = [
-            'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap',
-        ];
+        const fonts = ['https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap',];
 
         fonts.forEach(href => {
             const link = document.createElement('link');
@@ -199,9 +192,7 @@ const AccessibilityManager = {
         // Tab trap in modal
         const modal = document.querySelector('.auth-modal');
         if (modal) {
-            const focusableElements = modal.querySelectorAll(
-                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-            );
+            const focusableElements = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
 
             if (focusableElements.length > 0) {
                 const firstElement = focusableElements[0];

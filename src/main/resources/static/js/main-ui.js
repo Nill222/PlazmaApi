@@ -98,24 +98,15 @@ const ProtectedLinksManager = {
     /**
      * Pages that require authentication
      */
-    protectedPages: [
-        {
-            href: 'atoms.html',
-            message: 'Для доступа к модулю "Атомы" необходимо войти в систему',
-        },
-        {
-            href: 'ions.html',
-            message: 'Для доступа к модулю "Ионы" необходимо войти в систему',
-        },
-        {
-            href: 'simulation.html',
-            message: 'Для доступа к модулю "Методы" необходимо войти в систему',
-        },
-        {
-            href: 'charts.html',
-            message: 'Для доступа к модулю "Графики" необходимо войти в систему',
-        },
-    ],
+    protectedPages: [{
+        href: 'atoms.html', message: 'Для доступа к модулю "Атомы" необходимо войти в систему',
+    }, {
+        href: 'ions.html', message: 'Для доступа к модулю "Ионы" необходимо войти в систему',
+    }, {
+        href: 'simulation.html', message: 'Для доступа к модулю "Методы" необходимо войти в систему',
+    }, {
+        href: 'charts.html', message: 'Для доступа к модулю "Графики" необходимо войти в систему',
+    },],
 
     /**
      * Setup protection for authenticated pages
