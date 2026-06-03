@@ -3,9 +3,11 @@ package plasmapi.project.plasma.service.math.energy;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 import plasmapi.project.plasma.model.res.PlasmaConfiguration;
+import plasmapi.project.plasma.service.math.PhysicsMath;
 import plasmapi.project.plasma.service.math.energy.impl.FluenceIntegrationServiceImpl;
 import plasmapi.project.plasma.service.math.energy.impl.ModifiedLayerThicknessServiceImpl;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DocumentFormulasTest {
@@ -52,5 +54,14 @@ class DocumentFormulasTest {
         double hOblique = layerService.computeThickness(oblique);
 
         assertTrue(hNormal > hOblique);
+    }
+
+    @Test
+    void transportFluenceUsesBeamWhenDocumentFluenceIsTiny() {
+        double ionFlux = 1.0e18;
+        double exposureTime = 3600.0;
+        double beam = ionFlux * exposureTime;
+        double resolved = PhysicsMath.resolveIonFluenceForTransport(5000.0, ionFlux, exposureTime, 1.0);
+        assertEquals(beam, resolved, beam * 1e-6);
     }
 }

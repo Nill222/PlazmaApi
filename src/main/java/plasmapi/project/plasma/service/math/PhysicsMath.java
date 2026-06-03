@@ -59,6 +59,22 @@ public final class PhysicsMath {
         return clampPositive(fluence, MAX_FLUENCE);
     }
 
+    /**
+     * Флюенс для SLR, повреждений и профиля: пучковый Γ·t·cos(θ), если Φ по формуле (4)
+     * на порядки меньше (текущая реализация (4) не в ион·с/м²).
+     */
+    public static double resolveIonFluenceForTransport(double documentFluence, double ionFlux, double exposureTime, double cosTheta) {
+        double beam = sanitizeFluence(ionFlux * exposureTime * Math.max(cosTheta, 1e-6));
+        if (!Double.isFinite(documentFluence) || documentFluence <= 0) {
+            return beam;
+        }
+        double doc = sanitizeFluence(documentFluence);
+        if (doc < beam * 1e-3) {
+            return beam;
+        }
+        return doc;
+    }
+
     public static double sanitizeElectronDensity(double density) {
         return clampPositive(density, MAX_ELECTRON_DENSITY);
     }

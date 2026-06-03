@@ -120,8 +120,17 @@ public class DiffusionServiceImpl implements DiffusionService {
                 timeModulation
         );
 
-        double fluence = energyDeposition.fluence();
+        double fluenceDocument = energyDeposition.fluence();
         double effectiveSurfaceTemp = energyDeposition.effectiveSurfaceTemperature();
+        double thetaRad = Math.toRadians(
+                plasmaConfig.getIonIncidenceAngle() != null ? plasmaConfig.getIonIncidenceAngle() : 0.0
+        );
+        double fluence = PhysicsMath.resolveIonFluenceForTransport(
+                fluenceDocument,
+                ionFlux,
+                exposureTime,
+                Math.cos(thetaRad)
+        );
 
         // =========================
         // 3. D0 (alloy-aware)
@@ -225,8 +234,6 @@ public class DiffusionServiceImpl implements DiffusionService {
 // 8. SLR
 // =========================
 
-        double thetaRad = Math.toRadians(plasmaConfig.getIonIncidenceAngle());
-
         double slrFactor = slrService.computeFactor(
                 fluence,
                 thetaRad,
@@ -307,11 +314,6 @@ public class DiffusionServiceImpl implements DiffusionService {
 
         double maxDepth = 5 * (Rp + sigma);
         double dx = maxDepth / 199;
-
-        if (!Double.isFinite(fluence) || fluence <= 0) {
-            fluence = Math.max(ionFlux * exposureTime, 1e-6);
-        }
-        fluence = PhysicsMath.sanitizeFluence(fluence);
 
         double norm = fluence / (Math.sqrt(2 * Math.PI) * sigma);
         for (int i = 0; i < 200; i++) {

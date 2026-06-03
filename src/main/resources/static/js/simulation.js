@@ -681,17 +681,47 @@ const SimulationUI = {
     },
 
     fillResults(result, simReq) {
-        const profile = result.profile || {};
-        const stats = result.stats || {};
-        const plasma = result.plasmaConfig || {};
-        const im = result.intermediate || {};
+        try {
+            this._fillResultsImpl(result, simReq);
+        } catch (err) {
+            console.error('[Simulation] fillResults failed:', err, result);
+            window.PlasmaAnimations?.ToastNotifications.show(
+                'Ошибка отображения результатов: ' + (err?.message || err),
+                'error',
+                6000
+            );
+        }
+    },
+
+    _fillResultsImpl(result, simReq) {
+        const raw = result?.data && result.profile == null ? result.data : result;
+        const profile = raw?.profile || {};
+        const stats = raw?.stats || profile.stats || {};
+        const plasma = raw?.plasmaConfig || {};
+        const im = raw?.intermediate || {};
         const energy = profile.energyDeposition || {};
-        const diffInt = profile.diffusionIntermediate || im.diffusion || {};
+        const transport = stats.diffusionTransport || profile.diffusionIntermediate || {};
+        const diffInt = profile.diffusionIntermediate || transport;
+
+        const num = (...vals) => {
+            for (const v of vals) {
+                const n = Number(v);
+                if (v != null && v !== '' && !isNaN(n)) return n;
+            }
+            return null;
+        };
 
         const pick = (...vals) => {
             for (const v of vals) {
                 const n = Number(v);
                 if (v != null && !isNaN(n) && n > 0) return n;
+            }
+            return null;
+        };
+
+        const pf = (key, ...aliases) => {
+            for (const k of [key, ...aliases]) {
+                if (profile[k] != null) return profile[k];
             }
             return null;
         };
@@ -739,13 +769,14 @@ const SimulationUI = {
             set('r_exposure_time', fmtNum(simReq.exposureTime, 0));
             set('r_angle', fmtNum(simReq.angle, 1));
         }
-        set('r_electrode_distance', fmtNum(result.electrodeDistance, 3));
-        set('r_ion_incidence_angle', fmtNum(result.ionIncidenceAngle, 1));
+        const plasmaResult = raw?.plasmaResult || {};
+        set('r_electrode_distance', fmtNum(num(plasma.electrodeDistance), 3));
+        set('r_ion_incidence_angle', fmtNum(num(plasma.ionIncidenceAngle, simReq?.angle), 1));
 
-        set('r_voltage', fmtNum(result.voltage || simReq?.voltage, 0));
-        set('r_pressure', fmtNum(result.pressure || simReq?.pressure, 2));
-        set('r_electron_temp', fmtNum(result.electronTemperature || simReq?.electronTemp, 0));
-        set('pc_ion_energy', fmtNum(result.ionEnergy || plasma.ionEnergyOverride, 3));
+        set('r_voltage', fmtNum(num(plasma.voltage, simReq?.voltage), 0));
+        set('r_pressure', fmtNum(num(plasma.pressure, simReq?.pressure), 2));
+        set('r_electron_temp', fmtNum(num(plasma.electronTemperature, simReq?.electronTemp), 0));
+        set('pc_ion_energy', fmtNum(num(plasmaResult.ionEnergyEv, plasma.ionEnergyOverride), 3));
         set('plasma_electron_density', fmtSci(stats.electronDensity));
         set('plasma_electron_velocity', fmtSci(stats.electronVelocity));
         set('plasma_current_density', fmtSci(stats.currentDensity));
@@ -788,15 +819,15 @@ const SimulationUI = {
         set('skin_temperature_delta', fmtNum(energy.skinTemperatureDelta, 2));
         set('skin_effective_temp', fmtNum(pick(im.effectiveSurfaceTemperature, energy.effectiveSurfaceTemperature, stats.effectiveSurfaceTemperature), 2));
 
-        set('r_d_effective', fmtSci(profile.d_effective));
-        set('r_d_thermal', fmtSci(profile.d_thermal));
-        set('r_mean_depth', fmtDepth(profile.meanDepth));
-        set('diff_concentration', fmtSci(result.concentration || profile.concentration));
+        set('r_d_effective', fmtSci(num(pf('d_effective', 'dEffective', 'D_effective'))));
+        set('r_d_thermal', fmtSci(num(pf('d_thermal', 'dThermal', 'D_thermal'))));
+        set('r_mean_depth', fmtDepth(num(pf('meanDepth'))));
+        set('diff_concentration', fmtSci(num(raw?.concentration, pf('concentration'))));
 
-        set('r_d1', fmtSci(profile.d1));
-        set('r_d2', fmtSci(profile.d2));
-        set('r_q1', fmtNum(profile.q1_ev, 3));
-        set('r_q2', fmtNum(profile.q2_ev, 3));
+        set('r_d1', fmtSci(num(pf('d1', 'D1'))));
+        set('r_d2', fmtSci(num(pf('d2', 'D2'))));
+        set('r_q1', fmtNum(num(pf('q1_ev', 'q1Ev', 'Q1_ev')), 3));
+        set('r_q2', fmtNum(num(pf('q2_ev', 'q2Ev', 'Q2_ev')), 3));
 
         set('energy_gain_factor', fmtNum(energyGain, 4));
         set('plasma_correction_factor', fmtNum(plasmaCorrection, 4));
@@ -811,21 +842,28 @@ const SimulationUI = {
         set('damage_fluence', fmtSci(integratedFluence ?? stats.fluence));
         set('damage_fluence_eff', fmtSci(stats.fluenceEff));
 
-        set('diff_d_radiation', fmtSci(diffInt.dRadiation));
-        set('diff_d_collision', fmtSci(diffInt.dCollision));
-        set('diff_slr_factor', fmtNum(diffInt.slrFactor, 4));
-        set('diff_damage_rate', fmtSci(diffInt.damageRate));
-        set('diff_d_slr', fmtSci(stats.dSlr));
-        set('diff_d_res', fmtSci(stats.dRes));
-        set('diff_resonance_xi', fmtNum(stats.resonanceXi, 4));
+        const dCollision = num(diffInt.dCollision, im.dCollision, transport.dCollision);
+        const slrFactor = num(diffInt.slrFactor, im.slrFactor, transport.slrFactor) ?? 1;
+        const dSlrFromFactor = (slrFactor > 1 && dCollision != null) ? (slrFactor - 1) * dCollision : null;
+        set('diff_d_radiation', fmtSci(num(diffInt.dRadiation, im.dRadiation, transport.dRadiation)));
+        set('diff_d_collision', fmtSci(dCollision));
+        set('diff_slr_factor', fmtNum(slrFactor, 4));
+        set('diff_damage_rate', fmtSci(num(diffInt.damageRate, im.damageRate, transport.damageRate)));
+        set('diff_d_slr', fmtSci(num(stats.dSlr, dSlrFromFactor)));
+        set('diff_d_res', fmtSci(num(stats.dRes)));
+        set('diff_resonance_xi', fmtNum(num(stats.resonanceXi), 4));
 
-        set('diff_projected_range', fmtSci(diffInt.projectedRange));
-        set('diff_straggle_sigma', fmtSci(diffInt.straggleSigma));
-        set('diff_lattice_stiffness', fmtSci(diffInt.latticeStiffness));
-        set('diff_equilibrium_dist', fmtSci(diffInt.equilibriumDistance));
+        set('diff_projected_range', fmtSci(num(diffInt.projectedRange, im.projectedRange, transport.projectedRange)));
+        set('diff_straggle_sigma', fmtSci(num(diffInt.straggleSigma, im.straggleSigma, transport.straggleSigma)));
+        set('diff_lattice_stiffness', fmtSci(num(diffInt.latticeStiffness, im.latticeStiffness, transport.latticeStiffness)));
+        set('diff_equilibrium_dist', fmtSci(num(diffInt.equilibriumDistance, im.equilibriumDistance, transport.equilibriumDistance)));
 
-        if (window.addPhysics3DData) window.addPhysics3DData(stats, simReq);
-        if (window.renderPhysicsStats3D) window.renderPhysicsStats3D(window.current3DViewType || 'surface');
+        try {
+            if (window.addPhysics3DData) window.addPhysics3DData(stats, simReq);
+            if (window.renderPhysicsStats3D) window.renderPhysicsStats3D(window.current3DViewType || 'surface');
+        } catch (e3d) {
+            console.warn('[Simulation] 3D render skipped:', e3d);
+        }
     }
 };
 

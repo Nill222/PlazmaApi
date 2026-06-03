@@ -1,5 +1,6 @@
 package plasmapi.project.plasma.model.res;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -50,6 +51,7 @@ public class PlasmaConfiguration {
     private Double meltingPoint;
     private Double latticeParameterOverride;
 
+    @JsonIgnore
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "config_id")
     private Config config;

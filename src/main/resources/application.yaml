@@ -88,3 +88,7 @@ energy-deposition:
     return-current-axial-fraction: 0.3
     current-density-factor: 0.5
     pressure-damping-pa: 50.0
+
+slr:
+  k: 5.0e-3
+  fluence0: 1.0e20
