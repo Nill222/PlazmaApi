@@ -1,6 +1,7 @@
 package plasmapi.project.plasma.service.math.simulation.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import plasmapi.project.plasma.model.atom.AtomList;
 import plasmapi.project.plasma.model.res.Ion;
@@ -27,6 +28,9 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class SimulationOrchestratorImpl implements SimulationOrchestratorService {
+
+    @Value("${energy-deposition.default-gap-length-m:0.1}")
+    private double defaultElectrodeDistanceM;
 
     private final AtomListRepository atomRepository;
     private final IonRepository ionRepository;
@@ -184,6 +188,7 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
         cfg.setChamberWidth(r.getChamberWidth());
         cfg.setChamberDepth(r.getChamberDepth());
         cfg.setIonIncidenceAngle(r.getAngle());
+        cfg.setElectrodeDistance(resolveElectrodeDistance(r));
 
         cfg.setTargetTemperature(r.getAmbientTemp());
 
@@ -204,6 +209,13 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
         cfg.setThermalConductivity(atom.getThermalConductivity());
 
         return cfg;
+    }
+
+    private double resolveElectrodeDistance(SimulationRequest r) {
+        if (r.getElectrodeDistance() != null && r.getElectrodeDistance() > 0) {
+            return r.getElectrodeDistance();
+        }
+        return defaultElectrodeDistanceM;
     }
 
     // =========================================================

@@ -202,6 +202,14 @@ public class Result {
         @Column(name = "equilibrium_distance")
         private Double equilibriumDistance;
 
+        /** Угол падения иона на мишень, ° */
+        @Column(name = "ion_incidence_angle")
+        private Double ionIncidenceAngle;
+
+        /** Расстояние анод–катод (зазор разряда), м */
+        @Column(name = "electrode_distance")
+        private Double electrodeDistance;
+
         @Column(name = "created_at")
         private LocalDateTime createdAt = LocalDateTime.now();
 

@@ -769,8 +769,8 @@ const SimulationUI = {
             set('r_exposure_time', fmtNum(simReq.exposureTime, 0));
             set('r_angle', fmtNum(simReq.angle, 1));
         }
+        set('r_electrode_distance', fmtNum(num(simReq?.electrodeDistance, plasma.electrodeDistance), 3));
         const plasmaResult = raw?.plasmaResult || {};
-        set('r_electrode_distance', fmtNum(num(plasma.electrodeDistance), 3));
         set('r_ion_incidence_angle', fmtNum(num(plasma.ionIncidenceAngle, simReq?.angle), 1));
 
         set('r_voltage', fmtNum(num(plasma.voltage, simReq?.voltage), 0));
@@ -1072,6 +1072,7 @@ const FormHandler = {
             chamberWidth: parseFloat(getField('chamberWidth')),
             chamberDepth: parseFloat(getField('chamberDepth')),
             angle: parseFloat(getField('angle')),
+            electrodeDistance: parseFloat(getField('electrodeDistance')) || 0.1,
             exposureTime: parseFloat(getField('exposureTime')),
             ambientTemp: parseFloat(getField('ambientTemp')) || 300,
             composition: SimulationState.alloyComponents.map(buildAlloyComponentDto),
@@ -1232,6 +1233,8 @@ window.saveResults = async (silent = false) => {
             resonanceXi: stats.resonanceXi || 0,
             dSlr: stats.dSlr || 0,
             dRes: stats.dRes || 0,
+            angle: request?.angle ?? plasma?.ionIncidenceAngle ?? 0,
+            electrodeDistance: request?.electrodeDistance ?? plasma?.electrodeDistance ?? 0,
             diffusionCoefficient1: profile.d_effective || profile.d1 || 0,
             diffusionCoefficient2: profile.d_thermal || profile.d2 || 0,
             depths: profile.meanDepth || 0,

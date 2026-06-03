@@ -91,6 +91,8 @@ public class SimulationResultMapper {
                 stats.resonanceXi(),
                 stats.dSlr(),
                 stats.dRes(),
+                angleDeg(result),
+                electrodeDistanceM(result),
                 enrichIntermediate(result, intermediate)
         );
     }
@@ -184,6 +186,20 @@ public class SimulationResultMapper {
             return List.of(new IonCompositionItemDTO(result.getIon().getId(), 1.0));
         }
         return List.of();
+    }
+
+    private static double angleDeg(SimulationResult result) {
+        var cfg = result.getPlasmaConfig();
+        return cfg != null && cfg.getIonIncidenceAngle() != null
+                ? cfg.getIonIncidenceAngle()
+                : 0.0;
+    }
+
+    private static double electrodeDistanceM(SimulationResult result) {
+        var cfg = result.getPlasmaConfig();
+        return cfg != null && cfg.getElectrodeDistance() != null
+                ? cfg.getElectrodeDistance()
+                : 0.0;
     }
 
     private List<Double> extractCoolingProfile(PhysicsStats stats) {

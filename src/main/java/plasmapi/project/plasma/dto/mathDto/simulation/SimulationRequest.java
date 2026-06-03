@@ -24,6 +24,8 @@ public class SimulationRequest {
     private double chamberDepth;       // м
     private double exposureTime;       // с
     private double angle;              // градусы
+    /** Расстояние между анодом и катодом (м); если не задано — из конфига энерговклада */
+    private Double electrodeDistance;
     private Double ambientTemp;         // К, температура окружающей среды (опционально, по умолчанию 300)
     private List<AlloyComponentDto> composition;
     private List<IonComponentDto> ionComposition;

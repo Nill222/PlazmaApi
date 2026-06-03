@@ -86,6 +86,8 @@ public class ResultMapper{
         r.setResonanceXi(dto.resonanceXi());
         r.setDSlr(dto.dSlr());
         r.setDRes(dto.dRes());
+        r.setIonIncidenceAngle(dto.angle());
+        r.setElectrodeDistance(dto.electrodeDistance());
 
         AtomList atom = r.getAtom();
         PlasmaConfiguration plasmaCfg = r.getConfig() != null ? r.getConfig().getConfig() : null;
@@ -162,6 +164,12 @@ public class ResultMapper{
         cfg.setExposureTime(60.0);
         cfg.setChamberWidth(0.2);
         cfg.setChamberDepth(0.2);
+        if (dto.angle() > 0) {
+            cfg.setIonIncidenceAngle(dto.angle());
+        }
+        if (dto.electrodeDistance() > 0) {
+            cfg.setElectrodeDistance(dto.electrodeDistance());
+        }
         return cfg;
     }
 
@@ -212,6 +220,8 @@ public class ResultMapper{
                 PhysicsMath.finiteOrDefault(nz(r.getResonanceXi()), 1.0),
                 PhysicsMath.finiteOrZero(nz(r.getDSlr())),
                 PhysicsMath.finiteOrZero(nz(r.getDRes())),
+                PhysicsMath.finiteOrZero(nz(r.getIonIncidenceAngle())),
+                PhysicsMath.finiteOrZero(nz(r.getElectrodeDistance())),
                 sanitizeIntermediate(readIntermediate(r)),
                 r.getCreatedAt()
         );

@@ -447,6 +447,12 @@ public class IntermediateResultEnrichmentService {
         }
         if (cfg.getChamberWidth() == null) cfg.setChamberWidth(0.2);
         if (cfg.getChamberDepth() == null) cfg.setChamberDepth(0.2);
+        if (cfg.getIonIncidenceAngle() == null && r.getIonIncidenceAngle() != null) {
+            cfg.setIonIncidenceAngle(r.getIonIncidenceAngle());
+        }
+        if (cfg.getElectrodeDistance() == null && r.getElectrodeDistance() != null) {
+            cfg.setElectrodeDistance(r.getElectrodeDistance());
+        }
 
         if (cfg.getCurrent() == null && r.getCurrentDensity() != null
                 && cfg.getChamberWidth() != null && cfg.getChamberDepth() != null) {

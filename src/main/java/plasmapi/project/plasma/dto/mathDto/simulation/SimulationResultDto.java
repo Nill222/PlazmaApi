@@ -35,5 +35,7 @@ public record SimulationResultDto(
         double resonanceXi,
         double dSlr,
         double dRes,
+        double angle,
+        double electrodeDistance,
         SimulationIntermediateResultDto intermediate
 ) {}
