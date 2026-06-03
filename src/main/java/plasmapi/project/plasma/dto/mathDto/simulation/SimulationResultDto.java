@@ -1,5 +1,7 @@
 package plasmapi.project.plasma.dto.mathDto.simulation;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import plasmapi.project.plasma.dto.logikDTO.composition.AtomCompositionItemDTO;
 import plasmapi.project.plasma.dto.logikDTO.composition.IonCompositionItemDTO;
 import plasmapi.project.plasma.dto.mathDto.diffusion.DiffusionProfileDto;
@@ -35,7 +37,10 @@ public record SimulationResultDto(
         double resonanceXi,
         double dSlr,
         double dRes,
+        @JsonProperty("angle")
+        @JsonAlias("ionIncidenceAngle")
         double angle,
+        @JsonAlias("electrode_distance")
         double electrodeDistance,
         SimulationIntermediateResultDto intermediate
 ) {}

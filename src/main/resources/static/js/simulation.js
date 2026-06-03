@@ -384,6 +384,25 @@ function buildIonComponentDto(c) {
     };
 }
 
+function readFormNumber(id, fallback = null) {
+    const el = document.getElementById(id);
+    if (!el) return fallback;
+    const n = parseFloat(el.value);
+    return Number.isFinite(n) ? n : fallback;
+}
+
+function resolveSaveGeometry(request, plasma) {
+    const angle = readFormNumber('angle', null)
+        ?? request?.angle
+        ?? plasma?.ionIncidenceAngle
+        ?? 0;
+    const electrodeDistance = readFormNumber('electrodeDistance', null)
+        ?? request?.electrodeDistance
+        ?? plasma?.electrodeDistance
+        ?? 0.1;
+    return { angle, electrodeDistance };
+}
+
 const SimulationAPI = {
     async run(requestData) {
         const response = await window.PlasmaAuth.apiRequest(SIMULATION_CONFIG.API_SIMULATION, requestData, true);
@@ -1160,6 +1179,11 @@ window.saveResults = async (silent = false) => {
     try {
         const result = SimulationState.currentResult;
         const request = SimulationState.currentRequest;
+        const raw = result?.data && result.profile == null ? result.data : result;
+        const profile = raw?.profile || {};
+        const stats = raw?.stats || {};
+        const plasma = raw?.plasmaConfig || {};
+        const { angle, electrodeDistance } = resolveSaveGeometry(request, plasma);
         const firstAtom = SimulationState.alloyComponents[0];
         const firstIon = SimulationState.ionComponents[0];
 
@@ -1167,10 +1191,6 @@ window.saveResults = async (silent = false) => {
             if (!silent) window.PlasmaAnimations?.ToastNotifications.show('Не удалось определить атом и ион для сохранения', 'error');
             return;
         }
-
-        const profile = result.profile || {};
-        const stats = result.stats || {};
-        const plasma = result.plasmaConfig || {};
 
         const saveData = {
             atomId: Number(firstAtom.atomId),
@@ -1183,7 +1203,7 @@ window.saveResults = async (silent = false) => {
             totalTransferredEnergy: stats.totalTransferredEnergy || 0,
             avgTransferredPerAtom: stats.avgTransferredPerAtom || 0,
             avgT: (() => {
-                const im = result.intermediate || {};
+                const im = raw?.intermediate || result?.intermediate || {};
                 const map = stats.thermalTemperatureMap;
                 if (im.thermalAvgTemperature > 0) return im.thermalAvgTemperature;
                 if (map?.length) {
@@ -1197,7 +1217,7 @@ window.saveResults = async (silent = false) => {
                 return stats.finalProbeTemperature || 0;
             })(),
             minT: (() => {
-                const im = result.intermediate || {};
+                const im = raw?.intermediate || result?.intermediate || {};
                 if (im.thermalMinTemperature > 0) return im.thermalMinTemperature;
                 const map = stats.thermalTemperatureMap;
                 if (map?.length) {
@@ -1211,7 +1231,7 @@ window.saveResults = async (silent = false) => {
                 return stats.finalProbeTemperature || 0;
             })(),
             maxT: (() => {
-                const im = result.intermediate || {};
+                const im = raw?.intermediate || result?.intermediate || {};
                 if (im.thermalMaxTemperature > 0) return im.thermalMaxTemperature;
                 const map = stats.thermalTemperatureMap;
                 if (map?.length) {
@@ -1233,9 +1253,9 @@ window.saveResults = async (silent = false) => {
             resonanceXi: stats.resonanceXi || 0,
             dSlr: stats.dSlr || 0,
             dRes: stats.dRes || 0,
-            angle: request?.angle ?? plasma?.ionIncidenceAngle ?? 0,
-            electrodeDistance: request?.electrodeDistance ?? plasma?.electrodeDistance ?? 0,
-            diffusionCoefficient1: profile.d_effective || profile.d1 || 0,
+            angle,
+            electrodeDistance,
+            diffusionCoefficient1: profile.d_effective || profile.dEffective || profile.d1 || 0,
             diffusionCoefficient2: profile.d_thermal || profile.d2 || 0,
             depths: profile.meanDepth || 0,
             concentration: profile.concentration?.length ? profile.concentration.reduce((a, b) => a + b, 0) / profile.concentration.length : 0,
@@ -1252,7 +1272,7 @@ window.saveResults = async (silent = false) => {
             },
             perAtomTransferredEnergies: [],
             coolingProfile: stats.thermalTimes || [],
-            intermediate: result.intermediate || null
+            intermediate: raw?.intermediate || result?.intermediate || null
         };
 
         await SimulationAPI.save(saveData);
@@ -1421,7 +1441,9 @@ const AutoGenerationManager = {
                     voltage: gen.voltage, current: gen.current, pressure: gen.pressure,
                     electronTemp: gen.electronTemp, chamberWidth: gen.chamberWidth,
                     chamberDepth: gen.chamberDepth, exposureTime: gen.exposureTime,
-                    angle: gen.angle, ambientTemp: gen.ambientTemp,
+                    angle: gen.angle,
+                    electrodeDistance: readFormNumber('electrodeDistance', 0.1),
+                    ambientTemp: gen.ambientTemp,
                     composition: runAlloy.map(buildAlloyComponentDto),
                     ionComposition: runIons.map(buildIonComponentDto)
                 };

@@ -164,9 +164,7 @@ public class ResultMapper{
         cfg.setExposureTime(60.0);
         cfg.setChamberWidth(0.2);
         cfg.setChamberDepth(0.2);
-        if (dto.angle() > 0) {
-            cfg.setIonIncidenceAngle(dto.angle());
-        }
+        cfg.setIonIncidenceAngle(dto.angle());
         if (dto.electrodeDistance() > 0) {
             cfg.setElectrodeDistance(dto.electrodeDistance());
         }
