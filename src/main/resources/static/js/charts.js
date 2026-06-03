@@ -145,7 +145,7 @@ const CHART_CONFIGS = {
 
     87: {
         xKey: 'fluenceEff',
-        yKey: 'transferredEnergy',
+        yKey: 'totalTransferredEnergy',
         zKey: 'damageRate',
         xLabel: 'Эффективный флюенс (м⁻²)',
         yLabel: 'Переданная энергия (Дж)',
@@ -166,6 +166,16 @@ const CHART_CONFIGS = {
     },
 
     89: {
+        xKey: 'dCollision',
+        yKey: 'slrFactor',
+        zKey: 'dSlr',
+        xLabel: 'D_collision (м²/с)',
+        yLabel: 'SLR-фактор',
+        zLabel: 'D_SLR (м²/с)',
+        title: 'Вклад SLR-диффузии от столкновительной диффузии',
+        category: 'fluence'
+    },
+    90: {
         xKey: 'dCollision',
         yKey: 'slrFactor',
         zKey: 'dSlr',
@@ -427,6 +437,14 @@ class DataLoader {
             // Конвертация мм → м: делим на 1000
             case 'depths':
                 return data.map(item => (get(item) || 0) / 1000);
+
+            case 'slrFactor':
+                // Показываем отклонение от 1 в ppm (parts per million)
+                // или просто умножаем разницу на 10^6 для наглядности
+                return data.map(item => {
+                    const val = get(item) || 1;
+                    return (val - 1) * 1e6; // микроотклонения
+                });
 
             case 'dSlr_plus_dRes':
                 return data.map(item => (get({ ...item, __k: 'd_Slr' }) || this.getNestedValue(item, 'dSlr') || 0)
