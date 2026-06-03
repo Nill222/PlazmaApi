@@ -3,6 +3,7 @@ package plasmapi.project.plasma.service.math.thermal.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import plasmapi.project.plasma.model.res.PlasmaConfiguration;
+import plasmapi.project.plasma.service.math.parallel.MathParallelSupport;
 import plasmapi.project.plasma.service.math.thermal.ThermalResult;
 import plasmapi.project.plasma.service.math.thermal.ThermalService;
 
@@ -12,6 +13,8 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class ThermalServiceImpl implements ThermalService {
+
+    private final MathParallelSupport mathParallelSupport;
     /**
      * Моделирует нагрев и охлаждение материала под действием ионного пучка.
      *
@@ -135,15 +138,21 @@ public class ThermalServiceImpl implements ThermalService {
             double[] T_new = T.clone();
             double time = (step + 1) * dt;
 
-            // Внутренние узлы
+            // Внутренние узлы (параллельно по i — каждый узел независим в рамках шага)
             double cyclingFactor = getCyclingFactor(time, thermalCyclingEnabled, cyclePeriod, dutyCycle);
-            for (int i = 1; i < N - 1; i++) {
-                double laplacian = (T[i-1] - 2*T[i] + T[i+1]) / (dx * dx);
-                T_new[i] += dt * (alpha * laplacian + (cyclingFactor * source[i]) / (rho * cp));
-                if (T_new[i] > debyeLimit) {
-                    T_new[i] = debyeLimit;
+            final double dtStep = dt;
+            final double cycling = cyclingFactor;
+            final double dxSq = dx * dx;
+            double[] finalT = T;
+            mathParallelSupport.parallelFor(N - 2, k -> {
+                int i = k + 1;
+                double laplacian = (finalT[i - 1] - 2 * finalT[i] + finalT[i + 1]) / dxSq;
+                double updated = finalT[i] + dtStep * (alpha * laplacian + (cycling * source[i]) / (rho * cp));
+                if (updated > debyeLimit) {
+                    updated = debyeLimit;
                 }
-            }
+                T_new[i] = updated;
+            });
 
             // Граничные условия
             // Левая граница (x=0, облучаемая поверхность)

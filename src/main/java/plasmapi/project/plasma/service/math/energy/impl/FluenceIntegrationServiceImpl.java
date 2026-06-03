@@ -1,9 +1,11 @@
 package plasmapi.project.plasma.service.math.energy.impl;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import plasmapi.project.plasma.service.math.energy.FluenceFormulaInput;
 import plasmapi.project.plasma.service.math.energy.FluenceIntegrationService;
+import plasmapi.project.plasma.service.math.parallel.MathParallelSupport;
 
 import java.util.function.DoubleUnaryOperator;
 
@@ -12,7 +14,10 @@ import java.util.function.DoubleUnaryOperator;
  * [cos^γ α_i / (1+(r_i/R)^2)^δ · F_d · f_p(P) · E_i · ε_i · Φ_ion] · Δt_n
  */
 @Service
+@RequiredArgsConstructor
 public class FluenceIntegrationServiceImpl implements FluenceIntegrationService {
+
+    private final MathParallelSupport mathParallelSupport;
 
     @Value("${energy-deposition.integration.min-steps:50}")
     private int minSteps = 50;
@@ -60,21 +65,26 @@ public class FluenceIntegrationServiceImpl implements FluenceIntegrationService 
 
         int steps = chooseSteps(input.exposureTime());
         double dt = input.exposureTime() / steps;
-        double fluence = 0.0;
 
         DoubleUnaryOperator fd = input.dischargeModulationFd() != null
                 ? input.dischargeModulationFd()
                 : t -> 1.0;
 
-        for (int n = 0; n < steps; n++) {
-            double tMid = (n + 0.5) * dt;
-            double dischargeFactor = Math.max(fd.applyAsDouble(tMid), 0.0);
+        final double vaF = va;
+        final double angularFactorF = angularFactor;
+        final double geoF = geo;
+        final double fpF = fp;
+        final double eiF = ei;
+        final double epsF = eps;
+        final double fluxNormF = fluxNorm;
+        final double dtF = dt;
 
-            double term = va * angularFactor * geo * dischargeFactor * fp * ei * eps * fluxNorm * dt;
-            if (Double.isFinite(term) && term > 0) {
-                fluence += term;
-            }
-        }
+        double fluence = mathParallelSupport.parallelSum(steps, n -> {
+            double tMid = (n + 0.5) * dtF;
+            double dischargeFactor = Math.max(fd.applyAsDouble(tMid), 0.0);
+            double term = vaF * angularFactorF * geoF * dischargeFactor * fpF * eiF * epsF * fluxNormF * dtF;
+            return (Double.isFinite(term) && term > 0) ? term : 0.0;
+        });
 
         return Math.max(fluence, 0.0);
     }
@@ -88,16 +98,16 @@ public class FluenceIntegrationServiceImpl implements FluenceIntegrationService 
 
         int steps = chooseSteps(exposureTime);
         double dt = exposureTime / steps;
-        double fluence = 0.0;
+        final double dtF = dt;
 
-        for (int n = 0; n < steps; n++) {
-            double tMid = (n + 0.5) * dt;
+        double fluence = mathParallelSupport.parallelSum(steps, n -> {
+            double tMid = (n + 0.5) * dtF;
             double v = exposureRateAtTime.applyAsDouble(tMid);
             if (Double.isNaN(v) || v < 0) {
                 v = 0.0;
             }
-            fluence += v * dt;
-        }
+            return v * dtF;
+        });
 
         return Math.max(fluence, 0.0);
     }

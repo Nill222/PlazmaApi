@@ -4,15 +4,32 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 import plasmapi.project.plasma.model.res.PlasmaConfiguration;
 import plasmapi.project.plasma.service.math.PhysicsMath;
+import plasmapi.project.plasma.config.MathParallelProperties;
 import plasmapi.project.plasma.service.math.energy.impl.FluenceIntegrationServiceImpl;
 import plasmapi.project.plasma.service.math.energy.impl.ModifiedLayerThicknessServiceImpl;
+import plasmapi.project.plasma.service.math.parallel.MathParallelSupport;
+
+import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DocumentFormulasTest {
 
-    private final FluenceIntegrationServiceImpl fluenceService = new FluenceIntegrationServiceImpl();
+    private final FluenceIntegrationServiceImpl fluenceService = new FluenceIntegrationServiceImpl(
+            sequentialParallelSupport()
+    );
+
+    private static MathParallelSupport sequentialParallelSupport() {
+        MathParallelProperties props = new MathParallelProperties();
+        props.setEnabled(false);
+        return new MathParallelSupport(
+                props,
+                Executors.newSingleThreadExecutor(),
+                new Semaphore(1)
+        );
+    }
     private final ModifiedLayerThicknessServiceImpl layerService = new ModifiedLayerThicknessServiceImpl();
 
     @Test

@@ -21,6 +21,7 @@ import plasmapi.project.plasma.service.math.simulation.SimulationIntermediateRes
 import plasmapi.project.plasma.service.math.simulation.SimulationOrchestratorService;
 import plasmapi.project.plasma.service.math.simulation.SimulationResult;
 import plasmapi.project.plasma.service.math.simulation.ThermalIntermediate;
+import plasmapi.project.plasma.service.math.parallel.MathParallelSupport;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,9 +38,14 @@ public class SimulationOrchestratorImpl implements SimulationOrchestratorService
 
     private final PlasmaService plasmaService;
     private final DiffusionService diffusionService;
+    private final MathParallelSupport mathParallelSupport;
 
     @Override
     public SimulationResult runSimulation(SimulationRequest request) {
+        return mathParallelSupport.runWithSimulationPermit(() -> executeSimulation(request));
+    }
+
+    private SimulationResult executeSimulation(SimulationRequest request) {
 
         // =========================
         // 1. ATOM

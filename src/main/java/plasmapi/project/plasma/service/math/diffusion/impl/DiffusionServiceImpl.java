@@ -26,6 +26,7 @@ import plasmapi.project.plasma.service.math.energy.EnergyDepositionService;
 import plasmapi.project.plasma.service.math.transport.IonTransportService;
 import plasmapi.project.plasma.service.math.transport.LorentzContext;
 import plasmapi.project.plasma.service.math.transport.MagneticFieldEstimationService;
+import plasmapi.project.plasma.service.math.parallel.MathParallelSupport;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +40,7 @@ public class DiffusionServiceImpl implements DiffusionService {
     private final PotentialService potentialService;
     private final PlasmaService plasmaService;
     private final ThermalService thermalService;
+    private final MathParallelSupport mathParallelSupport;
     private final SLRService slrService;
     private final ResonanceService resonanceService;
     private final IonCollisionAveragingService ionCollisionAveragingService;
@@ -68,34 +70,34 @@ public class DiffusionServiceImpl implements DiffusionService {
         boolean isAlloy = alloy != null && !alloy.getComponents().isEmpty();
         AlloyComposition alloyForCalc = isAlloy ? Objects.requireNonNull(alloy) : null;
 
-        // =========================
-        // 1. THERMAL
-        // =========================
         ThermalDtoAdapter adapter = new ThermalDtoAdapter(plasmaConfig, ambientTemp, exposureTime);
 
-        ThermalResult thermal = thermalService.simulate(
-                plasmaConfig,
-                adapter.getT0(),
-                adapter.getTMax(),
-                adapter.getDt(),
-                adapter.getThickness(),
-                adapter.getPowerInput(),
-                adapter.getProjectedRange(),
-                adapter.getBoundaryCondition(),
-                ambientTemp,
-                adapter.getH(),
-                adapter.getN(),
-                adapter.getDebyeTemperature(atom),
-                adapter.getProbeDepth(),
-                adapter.isThermalCyclingEnabled(),
-                adapter.getCyclePeriod(),
-                adapter.getDutyCycle()
+        // =========================
+        // 1. THERMAL || 2. PLASMA (независимые этапы)
+        // =========================
+        MathParallelSupport.StagePair<ThermalResult, PlasmaResult> earlyStages = mathParallelSupport.runStages(
+                () -> thermalService.simulate(
+                        plasmaConfig,
+                        adapter.getT0(),
+                        adapter.getTMax(),
+                        adapter.getDt(),
+                        adapter.getThickness(),
+                        adapter.getPowerInput(),
+                        adapter.getProjectedRange(),
+                        adapter.getBoundaryCondition(),
+                        ambientTemp,
+                        adapter.getH(),
+                        adapter.getN(),
+                        adapter.getDebyeTemperature(atom),
+                        adapter.getProbeDepth(),
+                        adapter.isThermalCyclingEnabled(),
+                        adapter.getCyclePeriod(),
+                        adapter.getDutyCycle()
+                ),
+                () -> plasmaService.calculate(plasmaConfig, ion, ionComp, null)
         );
-
-        // =========================
-        // 2. PLASMA
-        // =========================
-        PlasmaResult plasma = plasmaService.calculate(plasmaConfig, ion, ionComp, null);
+        ThermalResult thermal = earlyStages.first();
+        PlasmaResult plasma = earlyStages.second();
 
         double ionEnergyEv = plasma.ionEnergyEv();
         double ionFlux = plasma.ionFlux();
@@ -309,22 +311,26 @@ public class DiffusionServiceImpl implements DiffusionService {
 // 12. PROFILE (normalized)
 // =========================
 
-        List<Double> depths = new ArrayList<>();
-        List<Double> conc = new ArrayList<>();
-
+        final int profilePoints = 200;
         double maxDepth = 5 * (Rp + sigma);
-        double dx = maxDepth / 199;
-
+        double dx = maxDepth / (profilePoints - 1);
         double norm = fluence / (Math.sqrt(2 * Math.PI) * sigma);
-        for (int i = 0; i < 200; i++) {
+        double sigmaSq2 = 2.0 * sigma * sigma;
+        double rp = Rp;
+
+        double[] depthArr = new double[profilePoints];
+        double[] concArr = new double[profilePoints];
+        mathParallelSupport.parallelFor(profilePoints, i -> {
             double x = i * dx;
+            depthArr[i] = x;
+            concArr[i] = norm * Math.exp(-(x - rp) * (x - rp) / sigmaSq2);
+        });
 
-            double c = norm * Math.exp(
-                    -(x - Rp) * (x - Rp) / (2 * sigma * sigma)
-            );
-
-            depths.add(x);
-            conc.add(c);
+        List<Double> depths = new ArrayList<>(profilePoints);
+        List<Double> conc = new ArrayList<>(profilePoints);
+        for (int i = 0; i < profilePoints; i++) {
+            depths.add(depthArr[i]);
+            conc.add(concArr[i]);
         }
 
         double hardenedLayer = PhysicsMath.sanitizeLayerThickness(

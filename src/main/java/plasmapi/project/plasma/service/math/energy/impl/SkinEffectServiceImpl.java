@@ -1,8 +1,10 @@
 package plasmapi.project.plasma.service.math.energy.impl;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import plasmapi.project.plasma.service.math.energy.SkinEffectService;
+import plasmapi.project.plasma.service.math.parallel.MathParallelSupport;
 
 import java.util.function.DoubleUnaryOperator;
 
@@ -10,9 +12,12 @@ import java.util.function.DoubleUnaryOperator;
  * SKIN-effect: (6)–(13).
  */
 @Service
+@RequiredArgsConstructor
 public class SkinEffectServiceImpl implements SkinEffectService {
 
     private static final double MU0 = 4.0 * Math.PI * 1e-7;
+
+    private final MathParallelSupport mathParallelSupport;
 
     @Value("${energy-deposition.skin.enabled:true}")
     private boolean enabled;
@@ -87,15 +92,16 @@ public class SkinEffectServiceImpl implements SkinEffectService {
     ) {
         int steps = Math.min(5000, Math.max(50, (int) Math.ceil(exposureTime * 100.0)));
         double dt = exposureTime / steps;
-        double energy = 0.0;
+        final double basePower = baseSurfacePower;
+        final double dtF = dt;
+        final DoubleUnaryOperator modulation = timeModulationAt;
 
-        for (int n = 0; n < steps; n++) {
-            double t = (n + 0.5) * dt;
-            double g = timeModulationAt != null ? timeModulationAt.applyAsDouble(t) : 1.0;
+        double energy = mathParallelSupport.parallelSum(steps, n -> {
+            double t = (n + 0.5) * dtF;
+            double g = modulation != null ? modulation.applyAsDouble(t) : 1.0;
             g = Math.abs(g);
-            double instantaneousPower = baseSurfacePower * g * g;
-            energy += instantaneousPower * dt;
-        }
+            return basePower * g * g * dtF;
+        });
 
         if (energy <= 0 && jouleAtSurface > 0) {
             energy = jouleAtSurface * skinDepth * 0.5 * exposureTime;

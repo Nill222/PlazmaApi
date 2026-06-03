@@ -13,9 +13,12 @@ import plasmapi.project.plasma.service.math.transport.LorentzContext;
 import plasmapi.project.plasma.service.math.transport.LorentzForceService;
 import plasmapi.project.plasma.service.math.transport.TransportResult;
 import plasmapi.project.plasma.service.math.transport.Vector3D;
+import plasmapi.project.plasma.service.math.parallel.MathParallelSupport;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +26,7 @@ public class IonTransportServiceImpl implements IonTransportService {
 
     private final CollisionService collisionService;
     private final LorentzForceService lorentzForceService;
+    private final MathParallelSupport mathParallelSupport;
 
     private static final double EV = PhysicalConstants.EV;
     private static final double E_MIN = 1.0; // eV
@@ -47,8 +51,6 @@ public class IonTransportServiceImpl implements IonTransportService {
     ) {
 
         List<Double> ranges = new ArrayList<>();
-        double deflectionSumRad = 0.0;
-        int deflectionCount = 0;
 
         double massKg = PhysicsMath.safeIonMassKg(ion.getMass());
         int charge = PhysicsMath.safeIonCharge(ion.getCharge());
@@ -58,8 +60,14 @@ public class IonTransportServiceImpl implements IonTransportService {
 
         LorentzContext ctx = lorentzContext != null ? lorentzContext : LorentzContext.disabled();
 
-        for (int i = 0; i < particles; i++) {
-            double[] run = simulatePrimaryIon(ion, atom, ionEnergyEv * EV, ctx);
+        double[][] runs = new double[particles][];
+        mathParallelSupport.parallelFor(particles, i ->
+                runs[i] = simulatePrimaryIon(ion, atom, ionEnergyEv * EV, ctx, ThreadLocalRandom.current())
+        );
+
+        double deflectionSumRad = 0.0;
+        int deflectionCount = 0;
+        for (double[] run : runs) {
             ranges.add(run[0]);
             if (run[1] > 0) {
                 deflectionSumRad += run[1];
@@ -67,10 +75,13 @@ public class IonTransportServiceImpl implements IonTransportService {
             }
         }
 
-        double mean = ranges.stream().mapToDouble(d -> d).average().orElse(0.0);
+        double mean = Arrays.stream(runs).mapToDouble(r -> r[0]).average().orElse(0.0);
 
-        double variance = ranges.stream()
-                .mapToDouble(d -> (d - mean) * (d - mean))
+        double variance = Arrays.stream(runs)
+                .mapToDouble(r -> {
+                    double d = r[0];
+                    return (d - mean) * (d - mean);
+                })
                 .average()
                 .orElse(0.0);
 
@@ -88,7 +99,13 @@ public class IonTransportServiceImpl implements IonTransportService {
     /**
      * @return [depth, accumulated Lorentz deflection angle, rad]
      */
-    private double[] simulatePrimaryIon(Ion ion, AtomList atom, double E, LorentzContext lorentz) {
+    private double[] simulatePrimaryIon(
+            Ion ion,
+            AtomList atom,
+            double E,
+            LorentzContext lorentz,
+            ThreadLocalRandom rng
+    ) {
 
         Vector3D dir = new Vector3D(0, 0, 1);
         double depth = 0.0;
@@ -114,13 +131,13 @@ public class IonTransportServiceImpl implements IonTransportService {
             if (sigma <= 0) break;
 
             double lambda = 1.0 / (density * sigma);
-            double step = -lambda * Math.log(Math.random());
+            double step = -lambda * Math.log(rng.nextDouble());
 
             // ограничение шага (стабильность)
             step = Math.min(step, 5e-9);
 
             double bMax = Math.sqrt(sigma / Math.PI);
-            double b = bMax * Math.sqrt(Math.random());
+            double b = bMax * Math.sqrt(rng.nextDouble());
 
             // =========================
             // 2. collision
@@ -142,7 +159,7 @@ public class IonTransportServiceImpl implements IonTransportService {
             denom = Math.max(denom, 1e-12);
 
             double thetaLab = Math.atan(Math.sin(thetaCM) / denom);
-            double phi = 2 * Math.PI * Math.random();
+            double phi = 2 * Math.PI * rng.nextDouble();
 
             dir = rotate(dir, thetaLab, phi);
 
@@ -194,7 +211,7 @@ public class IonTransportServiceImpl implements IonTransportService {
                 recoil.setMass(M2);
                 recoil.setCharge(Z2);
 
-                simulateCascade(recoil, atom, recoilEnergy, 1);
+                simulateCascade(recoil, atom, recoilEnergy, 1, rng);
             }
 
             // =========================
@@ -210,7 +227,7 @@ public class IonTransportServiceImpl implements IonTransportService {
     // =========================================
     // CASCADE (не влияет на глубину)
     // =========================================
-    private void simulateCascade(Ion ion, AtomList atom, double E, int depth) {
+    private void simulateCascade(Ion ion, AtomList atom, double E, int depth, ThreadLocalRandom rng) {
 
         if (E < 5 * EV || depth > 10) return;
 
@@ -231,12 +248,12 @@ public class IonTransportServiceImpl implements IonTransportService {
             if (sigma <= 0) break;
 
             double lambda = 1.0 / (density * sigma);
-            double step = -lambda * Math.log(Math.random());
+            double step = -lambda * Math.log(rng.nextDouble());
 
             step = Math.min(step, 5e-9);
 
             double bMax = Math.sqrt(sigma / Math.PI);
-            double b = bMax * Math.sqrt(Math.random());
+            double b = bMax * Math.sqrt(rng.nextDouble());
 
             CollisionResult col = collisionService.simulate(
                     ion,
@@ -267,7 +284,7 @@ public class IonTransportServiceImpl implements IonTransportService {
                 recoil.setMass(M2);
                 recoil.setCharge(Z2);
 
-                simulateCascade(recoil, atom, recoilEnergy, depth + 1);
+                simulateCascade(recoil, atom, recoilEnergy, depth + 1, rng);
             }
         }
     }

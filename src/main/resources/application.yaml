@@ -92,3 +92,12 @@ energy-deposition:
 slr:
   k: 5.0e-3
   fluence0: 1.0e20
+
+# Параллельные расчёты в math-сервисах (пул потоков + семафор симуляций)
+plasma:
+  math:
+    parallel:
+      enabled: true
+      pool-size: 0
+      simulation-max-concurrent: 4
+      min-parallel-items: 32
