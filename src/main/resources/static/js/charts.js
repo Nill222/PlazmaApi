@@ -47,19 +47,18 @@ const EXPORT_CONFIG = Object.freeze({
 });
 
 // ─────────────────────────────────────────────────────────────
-// CHART CONFIGS  (85 шт.)
+// CHART CONFIGS (85 шт.)
 // ─────────────────────────────────────────────────────────────
 
 const CHART_CONFIGS = {
-    1: { xKey:'pressure', yKey:'electronDensity', zKey:'voltage', xLabel:'Давление (Па)', yLabel:'Плотность электронов (м⁻³)', zLabel:'Напряжение (В)', title:'Плотность электронов от давления', category:'plasma' },
-   // 2: { xKey:'voltage', yKey:'electronVelocity', zKey:'currentDensity', xLabel:'Напряжение (В)', yLabel:'Скорость электронов (м/с)', zLabel:'Плотность тока (А/м²)', title:'Скорость электронов от напряжения', category:'plasma' },
-    3: { xKey:'voltage', yKey:'currentDensity', zKey:'ionEnergy', xLabel:'Напряжение (В)', yLabel:'Плотность тока (А/м²)', zLabel:'Энергия ионов (Дж)', title:'Плотность тока от напряжения', category:'plasma' },
-    4: { xKey:'voltage', yKey:'electronTemperature', zKey:'currentDensity', xLabel:'Напряжение (В)', yLabel:'Температура электронов (°K)', zLabel:'Плотность тока (А/м²)', title:'Температура электронов', category:'thermal' },
-    5: { xKey:'totalTransferredEnergy',yKey:'depths', zKey:'avgT', xLabel:'Общая переданная энергия (Дж)', yLabel:'Глубина слоя (м)', zLabel:'Средняя температура (°K)', title:'Температура от энергии и глубины', category:'thermal' },
-    6: { xKey:'voltage', yKey:'depths', zKey:'avgT', xLabel:'Напряжение (В)', yLabel:'Глубина слоя (м)', zLabel:'Средняя температура (°K)', title:'Температура от напряжения и глубины', category:'thermal' },
-    7: { xKey:'pressure', yKey:'depths', zKey:'avgT', xLabel:'Давление (Па)', yLabel:'Глубина слоя (м)', zLabel:'Средняя температура (°K)', title:'Температура от давления и глубины', category:'thermal' },
-    8: { xKey:'currentDensity', yKey:'depths', zKey:'avgT', xLabel:'Плотность тока (А/м²)', yLabel:'Глубина слоя (м)', zLabel:'Средняя температура (°K)', title:'Температура от плотности тока и глубины', category:'thermal' },
-    9: { xKey:'voltage', yKey:'currentDensity', zKey:'totalTransferredEnergy', xLabel:'Напряжение (В)', yLabel:'Плотность тока (А/м²)', zLabel:'Полная энергия (Дж)', title:'Полная энергия от напряжения и плотности тока', category:'energy' },
+    1:  { xKey:'pressure', yKey:'electronDensity', zKey:'voltage', xLabel:'Давление (Па)', yLabel:'Плотность электронов (м⁻³)', zLabel:'Напряжение (В)', title:'Плотность электронов от давления', category:'plasma' },
+    3:  { xKey:'voltage', yKey:'currentDensity', zKey:'ionEnergy', xLabel:'Напряжение (В)', yLabel:'Плотность тока (А/м²)', zLabel:'Энергия ионов (Дж)', title:'Плотность тока от напряжения', category:'plasma' },
+    4:  { xKey:'voltage', yKey:'electronTemperature', zKey:'currentDensity', xLabel:'Напряжение (В)', yLabel:'Температура электронов (°K)', zLabel:'Плотность тока (А/м²)', title:'Температура электронов', category:'thermal' },
+    5:  { xKey:'totalTransferredEnergy',yKey:'depths', zKey:'avgT', xLabel:'Общая переданная энергия (Дж)', yLabel:'Глубина слоя (м)', zLabel:'Средняя температура (°K)', title:'Температура от энергии и глубины', category:'thermal' },
+    6:  { xKey:'voltage', yKey:'depths', zKey:'avgT', xLabel:'Напряжение (В)', yLabel:'Глубина слоя (м)', zLabel:'Средняя температура (°K)', title:'Температура от напряжения и глубины', category:'thermal' },
+    7:  { xKey:'pressure', yKey:'depths', zKey:'avgT', xLabel:'Давление (Па)', yLabel:'Глубина слоя (м)', zLabel:'Средняя температура (°K)', title:'Температура от давления и глубины', category:'thermal' },
+    8:  { xKey:'currentDensity', yKey:'depths', zKey:'avgT', xLabel:'Плотность тока (А/м²)', yLabel:'Глубина слоя (м)', zLabel:'Средняя температура (°K)', title:'Температура от плотности тока и глубины', category:'thermal' },
+    9:  { xKey:'voltage', yKey:'currentDensity', zKey:'totalTransferredEnergy', xLabel:'Напряжение (В)', yLabel:'Плотность тока (А/м²)', zLabel:'Полная энергия (Дж)', title:'Полная энергия от напряжения и плотности тока', category:'energy' },
     10: { xKey:'voltage', yKey:'avgTransferredPerAtom', zKey:'concentration', xLabel:'Напряжение (В)', yLabel:'Средняя переданная энергия на атом (эВ)', zLabel:'Концентрация (м⁻³)', title:'Энергия на атом от напряжения и температуры', category:'energy' },
     11: { xKey:'voltage', yKey:'ionEnergy', zKey:'concentration', xLabel:'Напряжение (В)', yLabel:'Энергия иона (эВ)', zLabel:'Концентрация (м⁻³)', title:'Энергия иона от напряжения и концентрации', category:'energy' },
     12: { xKey:'diffusionCoefficient1', yKey:'totalTransferredEnergy', zKey:'avgT', xLabel:'D₁ (м²/с)', yLabel:'Полная переданная энергия (эВ)', zLabel:'Средняя температура (°K)', title:'D₁ от температуры и энергии', category:'diffusion' },
@@ -81,11 +80,9 @@ const CHART_CONFIGS = {
     28: { xKey:'avgT', yKey:'voltage', zKey:'totalDamage', xLabel:'Средняя температура (°K)', yLabel:'Напряжение (В)', zLabel:'Суммарные повреждения (дефекты/м²)', title:'T · V → Суммарные повреждения', category:'damage' },
     29: { xKey:'electronDensity', yKey:'electronTemperature', zKey:'pressure', xLabel:'Плотность электронов (м⁻³)', yLabel:'Температура электронов (°K)', zLabel:'Давление (Па)', title:'Давление от параметров плазмы', category:'plasma' },
     30: { xKey:'ionEnergy', yKey:'electronTemperature', zKey:'electronDensity', xLabel:'Энергия иона (эВ)', yLabel:'Температура электронов (°K)', zLabel:'Плотность электронов (м⁻³)', title:'Плотность электронов от энергетики', category:'plasma' },
-   // 31: { xKey:'currentDensity', yKey:'electronDensity', zKey:'electronVelocity', xLabel:'Плотность тока (А/м²)', yLabel:'Плотность электронов (м⁻³)', zLabel:'Скорость электронов (м/с)', title:'Кинетика электронов от тока и концентрации', category:'plasma' },
     32: { xKey:'pressure', yKey:'electronTemperature', zKey:'currentDensity', xLabel:'Давление (Па)', yLabel:'Температура электронов (°K)', zLabel:'Плотность тока (А/м²)', title:'Ток от термодинамических параметров плазмы', category:'plasma' },
     33: { xKey:'voltage', yKey:'pressure', zKey:'electronDensity', xLabel:'Напряжение (В)', yLabel:'Давление (Па)', zLabel:'Плотность электронов (м⁻³)', title:'Разрядные характеристики: V·P → n_e', category:'plasma' },
     34: { xKey:'ionEnergy', yKey:'avgTransferredPerAtom', zKey:'totalTransferredEnergy', xLabel:'Энергия иона (эВ)', yLabel:'Энергия на атом (эВ)', zLabel:'Полная переданная энергия (Дж)', title:'Баланс энергии: ион → атом → полная', category:'energy' },
-   // 35: { xKey:'voltage', yKey:'electronVelocity', zKey:'totalTransferredEnergy', xLabel:'Напряжение (В)', yLabel:'Скорость электронов (м/с)', zLabel:'Полная переданная энергия (Дж)', title:'Энергопередача от скорости электронов', category:'energy' },
     36: { xKey:'currentDensity', yKey:'avgTransferredPerAtom', zKey:'concentration', xLabel:'Плотность тока (А/м²)', yLabel:'Энергия на атом (эВ)', zLabel:'Концентрация дефектов (м⁻³)', title:'Концентрация от энергопередачи', category:'energy' },
     37: { xKey:'totalMomentum', yKey:'ionEnergy', zKey:'totalTransferredEnergy', xLabel:'Суммарный импульс (кг·м/с)', yLabel:'Энергия иона (эВ)', zLabel:'Полная переданная энергия (Дж)', title:'Связь импульса и энергии в столкновениях', category:'energy' },
     38: { xKey:'totalTransferredEnergy', yKey:'depths', zKey:'concentration', xLabel:'Полная переданная энергия (Дж)', yLabel:'Глубина (м)', zLabel:'Концентрация (м⁻³)', title:'Профиль концентрации от энергии и глубины', category:'energy' },
@@ -107,7 +104,6 @@ const CHART_CONFIGS = {
     54: { xKey:'electronTemperature', yKey:'ionEnergy', zKey:'totalTransferredEnergy', xLabel:'Температура электронов (°K)', yLabel:'Энергия иона (эВ)', zLabel:'Полная переданная энергия (Дж)', title:'Энергообмен электрон-ион-атом', category:'energy' },
     55: { xKey:'currentDensity', yKey:'totalTransferredEnergy', zKey:'avgT', xLabel:'Плотность тока (А/м²)', yLabel:'Полная переданная энергия (Дж)', zLabel:'Средняя температура (°K)', title:'Нагрев от плотности тока и энергопередачи', category:'thermal' },
     56: { xKey:'voltage', yKey:'depths', zKey:'concentration', xLabel:'Напряжение (В)', yLabel:'Глубина (м)', zLabel:'Концентрация (м⁻³)', title:'Профиль концентрации от напряжения и глубины', category:'energy' },
-  //  57: { xKey:'electronVelocity', yKey:'ionEnergy', zKey:'currentDensity', xLabel:'Скорость электронов (м/с)', yLabel:'Энергия иона (эВ)', zLabel:'Плотность тока (А/м²)', title:'Транспортные свойства плазмы', category:'plasma' },
     58: { xKey:'totalMomentum', yKey:'avgT', zKey:'totalDisplacement', xLabel:'Суммарный импульс (кг·м/с)', yLabel:'Средняя температура (°K)', zLabel:'Суммарное смещение (м)', title:'Термоактивированные смещения', category:'damage' },
     59: { xKey:'diffusionCoefficient1', yKey:'totalTransferredEnergy', zKey:'depths', xLabel:'Кф диффузии D₁ (м²/с)', yLabel:'Полная переданная энергия (Дж)', zLabel:'Глубина проникновения (м)', title:'Глубина диффузии от энергии', category:'diffusion' },
     60: { xKey:'concentration', yKey:'avgT', zKey:'totalDamage', xLabel:'Концентрация (м⁻³)', yLabel:'Средняя температура (°K)', zLabel:'Суммарные повреждения (дефекты/м²)', title:'Отжиг дефектов', category:'damage' },
@@ -143,8 +139,8 @@ const CHART_CONFIGS = {
 // ─────────────────────────────────────────────────────────────
 
 const ChartInteractionState = {
-    activeChart: /** @type {string|null} */ null,
-    _timers: /** @type {Map<string, ReturnType<typeof setTimeout>>} */ new Map(),
+    activeChart: null,
+    _timers: new Map(),
 
     setActive(id) {
         this.activeChart = id;
@@ -167,22 +163,20 @@ const ChartInteractionState = {
 // ─────────────────────────────────────────────────────────────
 
 const ChartsState = {
-    data: /** @type {object[]} */ [],
+    data: [],
     loading: true,
     error: null,
     selectedCategory: 'all',
     currentFilter: 'all',
-    pressureRanges: /** @type {Record<string, {min:number, max:number}>} */ {},
+    pressureRanges: {},
 };
 
 // ─────────────────────────────────────────────────────────────
 // HELPERS
 // ─────────────────────────────────────────────────────────────
 
-/** @param {number[]} arr */
 const avg = arr => arr.reduce((a, b) => a + b, 0) / (arr.length || 1);
 
-/** @param {number[]} values */
 function getTrend(values) {
     const v = values.filter(x => Number.isFinite(x));
     if (v.length < 2) return 'up';
@@ -192,8 +186,6 @@ function getTrend(values) {
 
 /**
  * Unicode trend arrow for axis title.
- * @param {number[]} values
- * @param {'x'|'y'|'z'} axis
  */
 function trendArrow(values, axis) {
     const up = getTrend(values) === 'up';
@@ -207,11 +199,9 @@ function trendArrow(values, axis) {
     return up ? ' →' : ' ←';
 }
 
-/** @param {object} cfg */
 const isPressureChart = cfg =>
     PRESSURE_KEYS.has(cfg.xKey) || PRESSURE_KEYS.has(cfg.yKey) || PRESSURE_KEYS.has(cfg.zKey);
 
-/** @param {object} cfg */
 function getPressureAxis(cfg) {
     if (PRESSURE_KEYS.has(cfg.xKey)) return 'x';
     if (PRESSURE_KEYS.has(cfg.yKey)) return 'y';
@@ -219,35 +209,27 @@ function getPressureAxis(cfg) {
     return null;
 }
 
-/**
- * @param {object[]} data
- * @param {number} min
- * @param {number} max
- */
 const filterByPressure = (data, min, max) =>
     data.filter(item => {
         const p = item.pressure ?? 0;
         return p >= min && p <= max;
     });
 
-/** @param {object[]} data */
 function pressureRangeFromData(data) {
     const vals = DataLoader.extractValues(data, 'pressure').filter(Number.isFinite);
     if (!vals.length) return { min: 0, max: 100 };
     return { min: Math.min(...vals), max: Math.max(...vals) };
 }
 
-/** @param {string} dataUrl  @returns {Uint8Array} */
 function dataUrlToBytes(dataUrl) {
     const bin = atob(dataUrl.split(',')[1]);
     return Uint8Array.from(bin, c => c.charCodeAt(0));
 }
 
-/** @param {Blob} blob  @returns {Promise<string>} */
 function blobToBase64(blob) {
     return new Promise((res, rej) => {
         const r = new FileReader();
-        r.onload  = () => res(/** @type {string} */ (r.result).split(',')[1]);
+        r.onload  = () => res(r.result.split(',')[1]);
         r.onerror = rej;
         r.readAsDataURL(blob);
     });
@@ -269,16 +251,12 @@ const { tick: TICK_SIZE, axisTitle: AXIS_TITLE_SIZE, colorbar: CB_SIZE, cbTitle:
 
 /**
  * Builds a Plotly 3D axis config.
- * @param {string}   label      Axis title text (arrow appended automatically)
- * @param {number[]} values     Axis data (for smart ticks / exponent detection)
- * @param {'x'|'y'|'z'} axis   Used for trend-arrow direction
- * @param {object}   [extra]    Plotly overrides (e.g. for export font scaling)
  */
 function buildAxis(label, values = [], axis = 'x', extra = {}) {
     const valid  = values.filter(Number.isFinite);
     const absMax = valid.length ? Math.max(...valid.map(Math.abs)) : 0;
 
-    // ФЛАГ: научный стиль для |x| >= 10000 или 0 < |x| < 0.001
+    // Научный стиль для |x| >= 10000 или 0 < |x| < 0.001
     const useScientific = valid.some(v =>
         v !== 0 && (Math.abs(v) >= 10000 || Math.abs(v) < 0.001)
     );
@@ -296,11 +274,8 @@ function buildAxis(label, values = [], axis = 'x', extra = {}) {
         tickfont:        { family: FONT_FAMILY, size: TICK_SIZE, color: '#333333' },
         nticks,
         tickmode:        'auto',
-
-        // 🔬 ИЗМЕНЕНО: динамический выбор формата
         exponentformat:  useScientific ? 'e' : 'f',
         showexponent:    useScientific ? 'all' : 'last',
-
         linecolor:       '#000000',
         linewidth:       2,
         zerolinecolor:   '#000000',
@@ -315,9 +290,6 @@ function buildAxis(label, values = [], axis = 'x', extra = {}) {
     };
 }
 
-/** @param {string} zLabel
- * @param fontScale
- */
 function buildColorbar(zLabel, fontScale = 1) {
     const titleSize = Math.round(CB_TITLE_SIZE * fontScale);
     const tickSize  = Math.round(CB_SIZE * fontScale);
@@ -390,7 +362,6 @@ class DataLoader {
         return results;
     }
 
-    /** @param {object} obj  @param {string} path */
     static getNestedValue(obj, path) {
         if (!obj || !path) return null;
         if (path.includes('.')) {
@@ -405,13 +376,12 @@ class DataLoader {
         );
     }
 
-    /** @param {object[]} data  @param {string} key */
     static extractValues(data, key) {
         const get = item => this.getNestedValue(item, key) ?? 0;
 
         switch (key) {
-            case 'depths':  // ← ДОБАВИТЬ ЭТОТ БЛОК
-                // Конвертация мм → м: делим на 1000 (умножаем на 10^(-3))
+            // Конвертация мм → м: делим на 1000
+            case 'depths':
                 return data.map(item => (get(item) || 0) / 1000);
 
             case 'dSlr_plus_dRes':
@@ -419,13 +389,12 @@ class DataLoader {
                     + (this.getNestedValue(item, 'd_Res') || this.getNestedValue(item, 'dRes') || 0));
 
             case 'fluenceEffRatio':
-            case 'fluenceEff_div_fluence': {
+            case 'fluenceEff_div_fluence':
                 return data.map(item => {
                     const f    = this.getNestedValue(item, 'fluence')    || 1;
                     const fEff = this.getNestedValue(item, 'fluenceEff') || 0;
                     return fEff / (f || 1);
                 });
-            }
 
             default:
                 return data.map(get);
@@ -464,7 +433,7 @@ function getNiceAxisRange(values, extraMax = null) {
     max += margin;
 
     const range = max - min;
-    const rawStep = range / 5; // ~5-6 делений //////////////
+    const rawStep = range / 5; // ~5-6 делений
     const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
     const normalized = rawStep / magnitude;
 
@@ -622,7 +591,7 @@ class ChartRenderer {
             });
     }
 
-    // ── Off-screen high-quality export (PNG & SVG) ─────────────────────────────
+    // ── Off-screen high-quality export (PNG & SVG) ──────────────────
     static async renderForExport(chartData, config, camera = null, axisRange = null, format = 'png') {
         const dims = format === 'svg' ? EXPORT_CONFIG.dimensions.svg : EXPORT_CONFIG.dimensions.png;
         const { width, height } = dims;
@@ -685,7 +654,6 @@ class ChartRenderer {
                     tickVals.push(maxRounded);
                 }
 
-                // 🔬 НОВЫЙ ФЛАГ для экспорта (аналогичная логика)
                 const validExport = vals.filter(Number.isFinite);
                 const useScientificExport = validExport.some(v =>
                     v !== 0 && (Math.abs(v) >= 10000 || Math.abs(v) < 0.001)
@@ -712,8 +680,6 @@ class ChartRenderer {
                     gridwidth: EXPORT_STYLE.gridWidth,
                     gridcolor: 'black',
                     backgroundcolor: 'rgba(255,255,255,1)',
-
-                    // 🔬 ИЗМЕНЕНО: научный формат при необходимости
                     exponentformat: useScientificExport ? 'e' : 'f',
                     showexponent:    useScientificExport ? 'all' : 'last',
                 });
@@ -777,10 +743,10 @@ class ChartRenderer {
 // ─────────────────────────────────────────────────────────────
 
 class UIManager {
-    static /** @type {IntersectionObserver|null} */ observer = null;
-    static loadedCharts  = /** @type {Set<string>} */ new Set();
-    static pendingLoads  = /** @type {Set<string>} */ new Set();
-    static MAX_LOADED    = 15;
+    static observer = null;
+    static loadedCharts = new Set();
+    static pendingLoads = new Set();
+    static MAX_LOADED = 15;
 
     // ── State display ───────────────────────────────────────────────
     static showLoading() { this._setState('loading'); }
@@ -800,7 +766,6 @@ class UIManager {
         const grid = document.getElementById('chartsGrid');
         grid.innerHTML = '';
 
-        /** @type {Record<string, {id:string, config:object}[]>} */
         const byCategory = {};
         for (const [id, cfg] of Object.entries(CHART_CONFIGS)) {
             (byCategory[cfg.category] ??= []).push({ id, config: cfg });
@@ -1157,11 +1122,11 @@ function buildLegendTable(lib, config, chartData) {
                     width: { size: 30, type: WidthType.PERCENTAGE },
                     shading: { fill: i % 2 === 0 ? 'f8fafc' : 'f1f5f9' },
                     children: [new Paragraph({
-                        spacing: { before: 80, after: 80 },  // 🔥 больше отступы
+                        spacing: { before: 80, after: 80 },
                         children: [new TextRun({
                             text: label,
                             bold: true,
-                            size: 24,          // 🔥 крупнее
+                            size: 24,
                             color: '1e40af',
                             font: FONT_FAMILY
                         })]
@@ -1174,10 +1139,10 @@ function buildLegendTable(lib, config, chartData) {
                         spacing: { before: 80, after: 80 },
                         children: [new TextRun({
                             text: value,
-                            size: 24,          // 🔥 крупнее
+                            size: 24,
                             color: '374151',
                             font: FONT_FAMILY,
-                            bold: true         // 🔥 жирный
+                            bold: true
                         })]
                     })],
                 }),
@@ -1215,7 +1180,7 @@ function buildStatsTable(lib, chartData) {
                         children: [new TextRun({
                             text: label,
                             bold: true,
-                            size: 24,          // 🔥 крупнее
+                            size: 24,
                             color: '166534',
                             font: FONT_FAMILY
                         })]
@@ -1228,10 +1193,10 @@ function buildStatsTable(lib, chartData) {
                         spacing: { before: 70, after: 70 },
                         children: [new TextRun({
                             text: value,
-                            size: 24,          // 🔥 крупнее
+                            size: 24,
                             color: '374151',
                             font: 'Courier New',
-                            bold: true         // 🔥 жирный
+                            bold: true
                         })]
                     })],
                 }),
@@ -1273,7 +1238,7 @@ function buildSingleChartWordContent(lib, chartId, config, chartData, imgBytes, 
 }
 
 // ─────────────────────────────────────────────────────────────
-// PRESSURE CONTROLS  (global, referenced from HTML)
+// PRESSURE CONTROLS (global, referenced from HTML)
 // ─────────────────────────────────────────────────────────────
 
 window.setPressurePreset = function(chartId, preset) {
@@ -1499,7 +1464,7 @@ async function exportChartsToWord(chartIds) {
         ];
 
         // Group by category
-        const byCategory = /** @type {Record<string, string[]>} */ {};
+        const byCategory = {};
         for (const id of chartIds) {
             (byCategory[CHART_CONFIGS[id].category] ??= []).push(id);
         }
