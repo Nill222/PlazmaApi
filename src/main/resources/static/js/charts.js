@@ -131,7 +131,51 @@ const CHART_CONFIGS = {
     82: { xKey:'ionFlux', yKey:'totalDamage', zKey:'avgT', xLabel:'Поток ионов (м⁻²·с⁻¹)', yLabel:'Суммарные повреждения (дефекты/м²)', zLabel:'Средняя температура (°K)', title:'Скорость дефектообразования', category:'flux' },
     83: { xKey:'currentDensity', yKey:'ionFlux', zKey:'voltage', xLabel:'Плотность тока (А/м²)', yLabel:'Поток ионов (м⁻²·с⁻¹)', zLabel:'Напряжение (В)', title:'Связь электрического тока и ионного потока', category:'flux' },
     84: { xKey:'ionFlux', yKey:'totalTransferredEnergy', zKey:'ionEnergy', xLabel:'Поток ионов (м⁻²·с⁻¹)', yLabel:'Полная переданная энергия (Дж)', zLabel:'Энергия иона (эВ)', title:'Мощность энергопередачи', category:'flux' },
-    85: { xKey:'ionFlux', yKey:'fluenceEffRatio', zKey:'resonanceXi', xLabel:'Поток ионов (м⁻²·с⁻¹)', yLabel:'Φ_eff / Φ', zLabel:'Резонансный параметр ξ', title:'Кф усиления потока', category:'flux' }
+    85: { xKey:'ionFlux', yKey:'fluenceEffRatio', zKey:'resonanceXi', xLabel:'Поток ионов (м⁻²·с⁻¹)', yLabel:'Φ_eff / Φ', zLabel:'Резонансный параметр ξ', title:'Кф усиления потока', category:'flux' },
+    86: {
+        xKey: 'fluence',
+        yKey: 'angle',
+        zKey: 'fluenceEff',
+        xLabel: 'Флюенс (м⁻²)',
+        yLabel: 'Угол падения (°)',
+        zLabel: 'Эффективный флюенс (м⁻²)',
+        title: 'Эффективный флюенс от флюенса и угла',
+        category: 'fluence'
+    },
+
+    87: {
+        xKey: 'fluenceEff',
+        yKey: 'transferredEnergy',
+        zKey: 'damageRate',
+        xLabel: 'Эффективный флюенс (м⁻²)',
+        yLabel: 'Переданная энергия (Дж)',
+        zLabel: 'Скорость повреждений (дефекты/(м²·с))',
+        title: 'Скорость повреждений от эффективного флюенса и энергии',
+        category: 'fluence'
+    },
+
+    88: {
+        xKey: 'fluenceEff',
+        yKey: 'damageRate',
+        zKey: 'slrFactor',
+        xLabel: 'Эффективный флюенс (м⁻²)',
+        yLabel: 'Скорость повреждений (дефекты/(м²·с))',
+        zLabel: 'SLR-фактор',
+        title: 'SLR-фактор от эффективного флюенса и скорости повреждений',
+        category: 'fluence'
+    },
+
+    89: {
+        xKey: 'dCollision',
+        yKey: 'slrFactor',
+        zKey: 'dSlr',
+        xLabel: 'D_collision (м²/с)',
+        yLabel: 'SLR-фактор',
+        zLabel: 'D_SLR (м²/с)',
+        title: 'Вклад SLR-диффузии от столкновительной диффузии',
+        category: 'fluence'
+    },
+
 };
 
 // ─────────────────────────────────────────────────────────────

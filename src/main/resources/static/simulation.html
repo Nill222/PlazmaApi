@@ -105,6 +105,61 @@
                     <!-- Сплав -->
                     <div class="param-section">
                         <h4><i class="fas fa-cubes"></i> Состав сплава</h4>
+
+                        <!-- 🔽 ПРЕСЕТЫ СПЛАВОВ -->
+                        <div class="form-group preset-group">
+                            <label for="alloyPreset"><i class="fas fa-bookmark"></i> Готовый сплав</label>
+                            <select id="alloyPreset">
+                                <option value="">— Выбрать из каталога —</option>
+                                <optgroup label="Стали и сплавы железа">
+                                    <option value="steel_fe_cr">Сталь Fe-Cr</option>
+                                    <option value="stainless_steel">Нержавеющая сталь (Fe-Cr-Ni)</option>
+                                    <option value="fe_co_alloy">Железо-Кобальт сплав</option>
+                                </optgroup>
+                                <optgroup label="Вольфрамовые сплавы">
+                                    <option value="pure_tungsten">Чистый вольфрам</option>
+                                    <option value="w_mo_alloy">Вольфрам-Молибден</option>
+                                    <option value="w_fe_alloy">Вольфрам-Железо</option>
+                                </optgroup>
+                                <optgroup label="Молибденовые сплавы">
+                                    <option value="pure_molybdenum">Чистый молибден</option>
+                                    <option value="mo_cr_alloy">Молибден-Хром</option>
+                                </optgroup>
+                                <optgroup label="Никелевые сплавы">
+                                    <option value="pure_nickel">Чистый никель</option>
+                                    <option value="ni_cr_alloy">Никель-Хром</option>
+                                    <option value="ni_fe_alloy">Никель-Железо</option>
+                                </optgroup>
+                                <optgroup label="Хромовые покрытия">
+                                    <option value="pure_chromium">Чистый хром</option>
+                                    <option value="cr_fe_alloy">Хром-Железо</option>
+                                </optgroup>
+                                <optgroup label="Кобальтовые сплавы">
+                                    <option value="pure_cobalt">Чистый кобальт</option>
+                                    <option value="co_cr_alloy">Кобальт-Хром</option>
+                                </optgroup>
+                                <optgroup label="Углеродистые материалы">
+                                    <option value="carbon_steel">Углеродистая сталь</option>
+                                    <option value="fe_cr_c">Хромистая сталь с углеродом</option>
+                                </optgroup>
+                                <optgroup label="Сложные сплавы">
+                                    <option value="complex_steel">Сложная сталь (Fe-Cr-Ni-Mo-Co)</option>
+                                    <option value="refractory_alloy">Тугоплавкий сплав (W-Mo-Cr)</option>
+                                </optgroup>
+                            </select>
+                            <div class="preset-actions">
+                                <button type="button" class="btn btn-secondary" onclick="applyAlloyPreset()">
+                                    <i class="fas fa-check"></i> Применить
+                                </button>
+                                <button type="button" class="btn btn-danger" onclick="clearAlloyPreset()">
+                                    <i class="fas fa-eraser"></i> Очистить
+                                </button>
+                            </div>
+                            <small class="preset-hint" id="alloyPresetHint">Выберите готовый сплав из каталога</small>
+                        </div>
+
+                        <div class="form-divider"><span>или добавить вручную</span></div>
+
                         <div class="form-group">
                             <label for="alloyAtomId">Атом</label>
                             <select id="alloyAtomId"><option value="">Выберите атом...</option></select>
@@ -124,6 +179,56 @@
                     <!-- Ионный состав -->
                     <div class="param-section">
                         <h4><i class="fas fa-circle-nodes"></i> Ионный состав</h4>
+
+                        <!-- 🔽 ПРЕСЕТЫ ИОНОВ -->
+                        <div class="form-group preset-group">
+                            <label for="ionPreset"><i class="fas fa-bookmark"></i> Готовый ионный состав</label>
+                            <select id="ionPreset">
+                                <option value="">— Выбрать из каталога —</option>
+                                <optgroup label="Водородсодержащая плазма">
+                                    <option value="pure_h2">Водород H₂</option>
+                                    <option value="h2_with_water">H₂ + H₂O</option>
+                                </optgroup>
+                                <optgroup label="Азотсодержащая плазма">
+                                    <option value="pure_n2">Азот N₂</option>
+                                    <option value="pure_n">Атомарный азот N</option>
+                                    <option value="n2_with_ar">N₂ + Ar</option>
+                                </optgroup>
+                                <optgroup label="Кислородсодержащая плазма">
+                                    <option value="pure_o2">Кислород O₂</option>
+                                    <option value="o2_with_co2">O₂ + CO₂</option>
+                                </optgroup>
+                                <optgroup label="Инертные газы">
+                                    <option value="pure_ar">Аргон Ar</option>
+                                    <option value="ar_with_n2">Ar + N₂</option>
+                                </optgroup>
+                                <optgroup label="Углеродсодержащая плазма">
+                                    <option value="ch4_plasma">CH₄ (метан)</option>
+                                    <option value="c2h2_plasma">C₂H₂ (ацетилен)</option>
+                                </optgroup>
+                                <optgroup label="Смешанная плазма">
+                                    <option value="air_simulation">Имитация воздуха (N₂+O₂+Ar)</option>
+                                    <option value="combustion_gas">Продукты горения (CO₂+H₂O+N₂)</option>
+                                    <option value="organic_plasma">Органическая плазма (CH₄+C₂H₂+H₂)</option>
+                                </optgroup>
+                                <optgroup label="Технологические смеси">
+                                    <option value="nitriding_gas">Газ для нитрирования (N₂+H₂)</option>
+                                    <option value="carburizing_gas">Газ для науглероживания (CH₄+H₂)</option>
+                                </optgroup>
+                            </select>
+                            <div class="preset-actions">
+                                <button type="button" class="btn btn-secondary" onclick="applyIonPreset()">
+                                    <i class="fas fa-check"></i> Применить
+                                </button>
+                                <button type="button" class="btn btn-danger" onclick="clearIonPreset()">
+                                    <i class="fas fa-eraser"></i> Очистить
+                                </button>
+                            </div>
+                            <small class="preset-hint" id="ionPresetHint">Выберите готовый ионный состав из каталога</small>
+                        </div>
+
+                        <div class="form-divider"><span>или добавить вручную</span></div>
+
                         <div class="form-group">
                             <label for="ionCompIonId">Ион</label>
                             <select id="ionCompIonId"><option value="">Выберите ион...</option></select>

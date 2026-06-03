@@ -5,6 +5,7 @@ const SIMULATION_CONFIG = {
     API_SAVE: '/api/simulation/create',
     API_ATOMS: '/atoms',
     API_IONS: '/ions',
+    API_ATOM_SYMBOL: '/atoms/symbol',  // поиск атома по символу
 };
 
 const AUTOGEN_PRESETS = {
@@ -13,6 +14,337 @@ const AUTOGEN_PRESETS = {
     high: { voltage: [300, 800], current: [0.01, 5.0], pressure: [15, 100], et: [4000, 4000], width: [0.55, 0.55], depth: [0.55, 0.55], time: [1800, 1800], angle: [0, 60], ambient: [300, 300] },
     custom: { voltage: [100, 3500], current: [0.005, 5], pressure: [0.1, 100], et: [4000, 4000], width: [0.55, 0.55], depth: [0.55, 0.55], time: [600, 3600], angle: [0, 90], ambient: [280, 300] }
 };
+
+/* ═══════════════════════════════════════════════════════════════
+   КАТАЛОГ ГОТОВЫХ СПЛАВОВ И ИОННЫХ СОСТАВОВ
+   Адаптировано под вашу БД:
+
+   АТОМЫ (из AtomList):
+   - C (IV)      → Carbon
+   - Cr (II/III/VI) → Chromium
+   - Ni (II/III) → Nickel
+   - Fe (II/III) → Iron
+   - Mo (IV/VI)  → Molybdenum
+   - W (IV/VI)   → Tungsten
+   - Co (II/III) → Cobalt
+
+   ИОНЫ (из Ion):
+   - H2O, CHN4, O2, H2, CO2, Ar, N, N2, C2H2
+   ═══════════════════════════════════════════════════════════════ */
+
+const ALLOY_PRESETS = {
+    // ───────── СТАЛИ И СПЛАВЫ ЖЕЛЕЗА ─────────
+    steel_fe_cr: {
+        name: 'Сталь Fe-Cr',
+        source: 'Базовая хромистая сталь',
+        components: [
+            { atomSymbol: 'Fe', fraction: 0.85 },
+            { atomSymbol: 'Cr', fraction: 0.15 }
+        ]
+    },
+    stainless_steel: {
+        name: 'Нержавеющая сталь',
+        source: 'Fe-Cr-Ni сплав',
+        components: [
+            { atomSymbol: 'Fe', fraction: 0.70 },
+            { atomSymbol: 'Cr', fraction: 0.18 },
+            { atomSymbol: 'Ni', fraction: 0.10 },
+            { atomSymbol: 'Mo', fraction: 0.02 }
+        ]
+    },
+    fe_co_alloy: {
+        name: 'Железо-Кобальт сплав',
+        source: 'Магнитный сплав',
+        components: [
+            { atomSymbol: 'Fe', fraction: 0.50 },
+            { atomSymbol: 'Co', fraction: 0.50 }
+        ]
+    },
+
+    // ───────── ВОЛЬФРАМОВЫЕ СПЛАВЫ ─────────
+    pure_tungsten: {
+        name: 'Чистый вольфрам',
+        source: 'W для плазменных приложений',
+        components: [
+            { atomSymbol: 'W', fraction: 1.00 }
+        ]
+    },
+    w_mo_alloy: {
+        name: 'Вольфрам-Молибден',
+        source: 'W-Mo тугоплавкий сплав',
+        components: [
+            { atomSymbol: 'W', fraction: 0.80 },
+            { atomSymbol: 'Mo', fraction: 0.20 }
+        ]
+    },
+    w_fe_alloy: {
+        name: 'Вольфрам-Железо',
+        source: 'W-Fе псевдосплав',
+        components: [
+            { atomSymbol: 'W', fraction: 0.90 },
+            { atomSymbol: 'Fe', fraction: 0.10 }
+        ]
+    },
+
+    // ───────── МОЛИБДЕНОВЫЕ СПЛАВЫ ─────────
+    pure_molybdenum: {
+        name: 'Чистый молибден',
+        source: 'Mo для высокотемпературных применений',
+        components: [
+            { atomSymbol: 'Mo', fraction: 1.00 }
+        ]
+    },
+    mo_cr_alloy: {
+        name: 'Молибден-Хром',
+        source: 'Mo-Cr жаропрочный сплав',
+        components: [
+            { atomSymbol: 'Mo', fraction: 0.85 },
+            { atomSymbol: 'Cr', fraction: 0.15 }
+        ]
+    },
+
+    // ───────── НИКЕЛЕВЫЕ СПЛАВЫ ─────────
+    pure_nickel: {
+        name: 'Чистый никель',
+        source: 'Ni для коррозионностойких покрытий',
+        components: [
+            { atomSymbol: 'Ni', fraction: 1.00 }
+        ]
+    },
+    ni_cr_alloy: {
+        name: 'Никель-Хром',
+        source: 'Ni-Cr жаропрочный сплав',
+        components: [
+            { atomSymbol: 'Ni', fraction: 0.80 },
+            { atomSymbol: 'Cr', fraction: 0.20 }
+        ]
+    },
+    ni_fe_alloy: {
+        name: 'Никель-Железо',
+        source: 'Ni-Fe магнитный сплав',
+        components: [
+            { atomSymbol: 'Ni', fraction: 0.60 },
+            { atomSymbol: 'Fe', fraction: 0.40 }
+        ]
+    },
+
+    // ───────── ХРОМОВЫЕ ПОКРЫТИЯ ─────────
+    pure_chromium: {
+        name: 'Чистый хром',
+        source: 'Cr для гальванических покрытий',
+        components: [
+            { atomSymbol: 'Cr', fraction: 1.00 }
+        ]
+    },
+    cr_fe_alloy: {
+        name: 'Хром-Железо',
+        source: 'Cr-Fe феррохром',
+        components: [
+            { atomSymbol: 'Cr', fraction: 0.70 },
+            { atomSymbol: 'Fe', fraction: 0.30 }
+        ]
+    },
+
+    // ───────── КОБАЛЬТОВЫЕ СПЛАВЫ ─────────
+    pure_cobalt: {
+        name: 'Чистый кобальт',
+        source: 'Co для магнитных материалов',
+        components: [
+            { atomSymbol: 'Co', fraction: 1.00 }
+        ]
+    },
+    co_cr_alloy: {
+        name: 'Кобальт-Хром',
+        source: 'Co-Cr биосовместимый сплав',
+        components: [
+            { atomSymbol: 'Co', fraction: 0.65 },
+            { atomSymbol: 'Cr', fraction: 0.30 },
+            { atomSymbol: 'Mo', fraction: 0.05 }
+        ]
+    },
+
+    // ───────── УГЛЕРОДИСТЫЕ МАТЕРИАЛЫ ─────────
+    carbon_steel: {
+        name: 'Углеродистая сталь',
+        source: 'Fe-C конструкционная сталь',
+        components: [
+            { atomSymbol: 'Fe', fraction: 0.98 },
+            { atomSymbol: 'C', fraction: 0.02 }
+        ]
+    },
+    fe_cr_c: {
+        name: 'Хромистая сталь с углеродом',
+        source: 'Fe-Cr-C инструментальная сталь',
+        components: [
+            { atomSymbol: 'Fe', fraction: 0.85 },
+            { atomSymbol: 'Cr', fraction: 0.12 },
+            { atomSymbol: 'C', fraction: 0.03 }
+        ]
+    },
+
+    // ───────── СЛОЖНЫЕ СПЛАВЫ ─────────
+    complex_steel: {
+        name: 'Сложная сталь',
+        source: 'Fe-Cr-Ni-Mo-Co многокомпонентный',
+        components: [
+            { atomSymbol: 'Fe', fraction: 0.65 },
+            { atomSymbol: 'Cr', fraction: 0.15 },
+            { atomSymbol: 'Ni', fraction: 0.10 },
+            { atomSymbol: 'Mo', fraction: 0.05 },
+            { atomSymbol: 'Co', fraction: 0.05 }
+        ]
+    },
+    refractory_alloy: {
+        name: 'Тугоплавкий сплав',
+        source: 'W-Mo-Cr жаропрочный',
+        components: [
+            { atomSymbol: 'W', fraction: 0.60 },
+            { atomSymbol: 'Mo', fraction: 0.25 },
+            { atomSymbol: 'Cr', fraction: 0.15 }
+        ]
+    }
+};
+
+const ION_PRESETS = {
+    // ───────── ВОДОРОДСОДЕРЖАЩАЯ ПЛАЗМА ─────────
+    pure_h2: {
+        name: 'Водород H₂',
+        source: 'Чистая водородная плазма',
+        components: [
+            { ionName: 'H2', fraction: 1.00 }
+        ]
+    },
+    h2_with_water: {
+        name: 'H₂ + H₂O',
+        source: 'Влажная водородная плазма',
+        components: [
+            { ionName: 'H2', fraction: 0.90 },
+            { ionName: 'H2O', fraction: 0.10 }
+        ]
+    },
+
+    // ───────── АЗОТСОДЕРЖАЩАЯ ПЛАЗМА ─────────
+    pure_n2: {
+        name: 'Азот N₂',
+        source: 'Молекулярный азот для нитрирования',
+        components: [
+            { ionName: 'N2', fraction: 1.00 }
+        ]
+    },
+    pure_n: {
+        name: 'Атомарный азот N',
+        source: 'Атомарный азот для плазменного азотирования',
+        components: [
+            { ionName: 'N', fraction: 1.00 }
+        ]
+    },
+    n2_with_ar: {
+        name: 'N₂ + Ar',
+        source: 'Азотно-аргоновая смесь',
+        components: [
+            { ionName: 'N2', fraction: 0.80 },
+            { ionName: 'Ar', fraction: 0.20 }
+        ]
+    },
+
+    // ───────── КИСЛОРОДСОДЕРЖАЩАЯ ПЛАЗМА ─────────
+    pure_o2: {
+        name: 'Кислород O₂',
+        source: 'Кислородная плазма для окисления',
+        components: [
+            { ionName: 'O2', fraction: 1.00 }
+        ]
+    },
+    o2_with_co2: {
+        name: 'O₂ + CO₂',
+        source: 'Кислород с углекислым газом',
+        components: [
+            { ionName: 'O2', fraction: 0.85 },
+            { ionName: 'CO2', fraction: 0.15 }
+        ]
+    },
+
+    // ───────── ИНЕРТНЫЕ ГАЗЫ ─────────
+    pure_ar: {
+        name: 'Аргон Ar',
+        source: 'Инертный газ для распыления',
+        components: [
+            { ionName: 'Ar', fraction: 1.00 }
+        ]
+    },
+    ar_with_n2: {
+        name: 'Ar + N₂',
+        source: 'Аргон с азотом для реактивного распыления',
+        components: [
+            { ionName: 'Ar', fraction: 0.70 },
+            { ionName: 'N2', fraction: 0.30 }
+        ]
+    },
+
+    // ───────── УГЛЕВОДОРОДНАЯ ПЛАЗМА ─────────
+    ch4_plasma: {
+        name: 'CH₄ (метан)',
+        source: 'Метановая плазма для CVD',
+        components: [
+            { ionName: 'CHN4', fraction: 1.00 }  // В вашей БД CHN4, а не CH4
+        ]
+    },
+    c2h2_plasma: {
+        name: 'C₂H₂ (ацетилен)',
+        source: 'Ацетиленовая плазма для алмазоподобных покрытий',
+        components: [
+            { ionName: 'C2H2', fraction: 1.00 }
+        ]
+    },
+
+    // ───────── СМЕШАННАЯ ПЛАЗМА ─────────
+    air_simulation: {
+        name: 'Имитация воздуха',
+        source: 'N₂ + O₂ + Ar',
+        components: [
+            { ionName: 'N2', fraction: 0.78 },
+            { ionName: 'O2', fraction: 0.21 },
+            { ionName: 'Ar', fraction: 0.01 }
+        ]
+    },
+    combustion_gas: {
+        name: 'Продукты горения',
+        source: 'CO₂ + H₂O + N₂',
+        components: [
+            { ionName: 'CO2', fraction: 0.15 },
+            { ionName: 'H2O', fraction: 0.10 },
+            { ionName: 'N2', fraction: 0.75 }
+        ]
+    },
+    organic_plasma: {
+        name: 'Органическая плазма',
+        source: 'CH₄ + C₂H₂ + H₂',
+        components: [
+            { ionName: 'CHN4', fraction: 0.40 },
+            { ionName: 'C2H2', fraction: 0.30 },
+            { ionName: 'H2', fraction: 0.30 }
+        ]
+    },
+
+    // ───────── ТЕХНОЛОГИЧЕСКИЕ СМЕСИ ─────────
+    nitriding_gas: {
+        name: 'Газ для нитрирования',
+        source: 'N₂ + H₂',
+        components: [
+            { ionName: 'N2', fraction: 0.75 },
+            { ionName: 'H2', fraction: 0.25 }
+        ]
+    },
+    carburizing_gas: {
+        name: 'Газ для науглероживания',
+        source: 'CH₄ + H₂',
+        components: [
+            { ionName: 'CHN4', fraction: 0.20 },
+            { ionName: 'H2', fraction: 0.80 }
+        ]
+    }
+};
+
 
 const SimulationState = {
     currentResult: null,
@@ -76,8 +408,230 @@ const SimulationAPI = {
         const response = await window.PlasmaAuth.apiRequest(SIMULATION_CONFIG.API_IONS, null, true);
         if (!response.ok) throw new Error('Failed to fetch ions');
         return response.data?.data || response.data || [];
+    },
+
+    async getAtomBySymbol(symbol) {
+        const response = await window.PlasmaAuth.apiRequest(
+            `${SIMULATION_CONFIG.API_ATOM_SYMBOL}/${encodeURIComponent(symbol)}`,
+            null,
+            true
+        );
+        if (!response.ok) return [];
+        const data = response.data?.data || response.data || [];
+        return Array.isArray(data) ? data : [];
     }
 };
+
+/* ═══════════════════════════════════════════════════════════════
+   ПОИСК АТОМОВ И ИОНОВ ДЛЯ ПРЕСЕТОВ
+   ═══════════════════════════════════════════════════════════════ */
+
+/**
+ * Извлекает базовый символ из atom_name.
+ * Примеры:
+ *   "W (IV)" → "W"
+ *   "Fe (II)" → "Fe"
+ *   "Cr (VI)" → "Cr"
+ */
+function extractSymbolFromAtomName(atomName) {
+    if (!atomName) return '';
+    return atomName.split('(')[0].trim();
+}
+
+/**
+ * Ищет атом в кэше по символу.
+ */
+function findAtomBySymbol(symbol) {
+    if (!window.availableAtoms?.length) return null;
+    const sym = symbol.trim();
+    const symUpper = sym.toUpperCase();
+
+    // Ищем по извлечённому символу из atom_name
+    const bySymbol = window.availableAtoms.find(a => {
+        const extracted = extractSymbolFromAtomName(a.atomName);
+        return extracted === sym || extracted.toUpperCase() === symUpper;
+    });
+    if (bySymbol) return bySymbol;
+
+    // Ищем по full_name
+    const byFullName = window.availableAtoms.find(a =>
+        a.fullName?.toLowerCase() === sym.toLowerCase()
+    );
+    if (byFullName) return byFullName;
+
+    return null;
+}
+
+/**
+ * Асинхронный поиск атома: сначала в кэше, затем через API.
+ */
+async function findAtomBySymbolAsync(symbol) {
+    const cached = findAtomBySymbol(symbol);
+    if (cached) return cached;
+
+    try {
+        const atoms = await SimulationAPI.getAtomBySymbol(symbol);
+        if (atoms?.length > 0) {
+            const found = atoms[0];
+            if (!window.availableAtoms) window.availableAtoms = [];
+            window.availableAtoms.push(found);
+            console.log(`[Preset] Атом "${symbol}" загружен через API`);
+            return found;
+        }
+    } catch (e) {
+        console.warn(`[Preset] API-поиск атома "${symbol}" не удался:`, e);
+    }
+    return null;
+}
+
+/**
+ * Ищет ион по имени в кэше.
+ */
+function findIonByName(name) {
+    if (!window.availableIons?.length) return null;
+    const n = name.trim();
+    const nLower = n.toLowerCase();
+
+    // Точное совпадение
+    const exact = window.availableIons.find(ion => ion.name === n);
+    if (exact) return exact;
+
+    // Case-insensitive
+    const ci = window.availableIons.find(ion =>
+        ion.name?.toLowerCase() === nLower
+    );
+    if (ci) return ci;
+
+    return null;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ПРИМЕНЕНИЕ ПРЕСЕТОВ
+   ═══════════════════════════════════════════════════════════════ */
+
+async function applyAlloyPreset() {
+    const select = document.getElementById('alloyPreset');
+    const hint = document.getElementById('alloyPresetHint');
+    const key = select?.value;
+
+    if (!key) {
+        window.PlasmaAnimations?.ToastNotifications.show('Выберите сплав из списка', 'warning');
+        return;
+    }
+
+    const preset = ALLOY_PRESETS[key];
+    if (!preset) return;
+
+    SimulationState.alloyComponents = [];
+    const missing = [];
+
+    for (const comp of preset.components) {
+        const atom = await findAtomBySymbolAsync(comp.atomSymbol);
+        if (!atom) {
+            missing.push(comp.atomSymbol);
+            continue;
+        }
+        SimulationState.alloyComponents.push({
+            atomId: atom.id,
+            atomName: atom.atomName,
+            fullName: atom.fullName,
+            debye_temperature: atom.debye_temperature ?? 400,
+            fraction: comp.fraction
+        });
+    }
+
+    AlloyManager.renderComponents();
+
+    if (missing.length) {
+        hint.className = 'preset-hint warning';
+        hint.textContent = `⚠ Не найдены: ${missing.join(', ')}`;
+        window.PlasmaAnimations?.ToastNotifications.show(
+            `Пресет применён частично. Отсутствуют: ${missing.join(', ')}`, 'warning', 5000
+        );
+    } else {
+        hint.className = 'preset-hint success';
+        hint.textContent = `✓ ${preset.name} — ${preset.source}`;
+        window.PlasmaAnimations?.ToastNotifications.show(
+            `Применён сплав: ${preset.name}`, 'success', 3000
+        );
+    }
+}
+
+function clearAlloyPreset() {
+    SimulationState.alloyComponents = [];
+    AlloyManager.renderComponents();
+    const select = document.getElementById('alloyPreset');
+    const hint = document.getElementById('alloyPresetHint');
+    if (select) select.value = '';
+    if (hint) {
+        hint.className = 'preset-hint';
+        hint.textContent = 'Выберите готовый сплав из каталога';
+    }
+}
+
+function applyIonPreset() {
+    const select = document.getElementById('ionPreset');
+    const hint = document.getElementById('ionPresetHint');
+    const key = select?.value;
+
+    if (!key) {
+        window.PlasmaAnimations?.ToastNotifications.show('Выберите ионный состав из списка', 'warning');
+        return;
+    }
+
+    const preset = ION_PRESETS[key];
+    if (!preset) return;
+
+    SimulationState.ionComponents = [];
+    const missing = [];
+
+    for (const comp of preset.components) {
+        const ion = findIonByName(comp.ionName);
+        if (!ion) {
+            missing.push(comp.ionName);
+            continue;
+        }
+        SimulationState.ionComponents.push({
+            ionId: ion.id,
+            ionName: ion.name,
+            charge: ion.charge ?? 1,
+            fraction: comp.fraction
+        });
+    }
+
+    IonCompositionManager.renderComponents();
+
+    if (missing.length) {
+        hint.className = 'preset-hint warning';
+        hint.textContent = `⚠ Не найдены: ${missing.join(', ')}`;
+        window.PlasmaAnimations?.ToastNotifications.show(
+            `Пресет применён частично. Отсутствуют: ${missing.join(', ')}`, 'warning', 5000
+        );
+    } else {
+        hint.className = 'preset-hint success';
+        hint.textContent = `✓ ${preset.name} — ${preset.source}`;
+        window.PlasmaAnimations?.ToastNotifications.show(
+            `Применён ионный состав: ${preset.name}`, 'success', 3000
+        );
+    }
+}
+
+function clearIonPreset() {
+    SimulationState.ionComponents = [];
+    IonCompositionManager.renderComponents();
+    const select = document.getElementById('ionPreset');
+    const hint = document.getElementById('ionPresetHint');
+    if (select) select.value = '';
+    if (hint) {
+        hint.className = 'preset-hint';
+        hint.textContent = 'Выберите готовый ионный состав из каталога';
+    }
+}
+
+window.applyAlloyPreset = applyAlloyPreset;
+window.clearAlloyPreset = clearAlloyPreset;
+window.applyIonPreset = applyIonPreset;
+window.clearIonPreset = clearIonPreset;
 
 const SimulationUI = {
     showLoading() {
@@ -150,7 +704,6 @@ const SimulationUI = {
             return arr.map(c => `${c.ionName || c.ionId || '?'} ${((c.fraction ?? 0) * 100).toFixed(1)}%`).join(' · ');
         };
 
-        // OVERVIEW - только уникальные входные + геометрия из результата
         if (simReq) {
             set('r_composition', fmtComp(simReq.composition));
             set('r_ion_composition', fmtIon(simReq.ionComposition));
@@ -160,11 +713,9 @@ const SimulationUI = {
             set('r_exposure_time', fmtNum(simReq.exposureTime, 0));
             set('r_angle', fmtNum(simReq.angle, 1));
         }
-        // electrodeDistance и ionIncidenceAngle из результата (бэкенд берет из конфига)
         set('r_electrode_distance', fmtNum(result.electrodeDistance, 3));
         set('r_ion_incidence_angle', fmtNum(result.ionIncidenceAngle, 1));
 
-        // PLASMA - параметры плазмы
         set('r_voltage', fmtNum(result.voltage || simReq?.voltage, 0));
         set('r_pressure', fmtNum(result.pressure || simReq?.pressure, 2));
         set('r_electron_temp', fmtNum(result.electronTemperature || simReq?.electronTemp, 0));
@@ -174,7 +725,6 @@ const SimulationUI = {
         set('plasma_current_density', fmtSci(stats.currentDensity));
         set('damage_ion_flux', fmtSci(stats.ionFlux));
 
-        // THERMAL & ENERGY - энергия и температура
         set('ps_total_energy', fmtSci(stats.totalTransferredEnergy));
         set('ps_avg_energy', fmtSci(stats.avgTransferredPerAtom));
         set('ps_binding_energy', fmtNum(stats.surfaceBindingEnergy, 3));
@@ -189,7 +739,6 @@ const SimulationUI = {
         set('skin_temperature_delta', fmtNum(energy.skinTemperatureDelta, 2));
         set('skin_effective_temp', fmtNum(energy.effectiveSurfaceTemperature, 2));
 
-        // MATERIAL MODIFICATION - модификация материала
         set('r_d_effective', fmtSci(profile.d_effective));
         set('r_d_thermal', fmtSci(profile.d_thermal));
         set('r_mean_depth', fmtSci(profile.meanDepth));
@@ -207,7 +756,6 @@ const SimulationUI = {
         set('energy_potential_surface', fmtNum(energy.potentialAtSurface, 2));
         set('energy_accelerating_field', fmtSci(energy.acceleratingField));
 
-        // DAMAGE & STRUCTURE - повреждения и структура
         set('damage_total', fmtSci(stats.totalDamage));
         set('damage_displacement', fmtSci(stats.totalDisplacement));
         set('damage_momentum', fmtSci(stats.totalMomentum));
@@ -227,7 +775,6 @@ const SimulationUI = {
         set('diff_lattice_stiffness', fmtSci(diffInt.latticeStiffness));
         set('diff_equilibrium_dist', fmtSci(diffInt.equilibriumDistance));
 
-        // 3D ВИЗУАЛИЗАЦИЯ
         if (window.addPhysics3DData) window.addPhysics3DData(stats, simReq);
         if (window.renderPhysicsStats3D) window.renderPhysicsStats3D(window.current3DViewType || 'surface');
     }
@@ -605,10 +1152,15 @@ const AutoGenerationManager = {
 
     generateParams(presetName) {
         const p = this.getPreset(presetName);
+        const t = Math.random();
+
+        const pressure = +(p.pressure[0] + t * (p.pressure[1] - p.pressure[0])).toFixed(3);
+        const voltage = +(p.voltage[1] - t * (p.voltage[1] - p.voltage[0])).toFixed(0);
+
         return {
-            voltage: this.rand(p.voltage[0], p.voltage[1], 0),
+            voltage: voltage,
             current: this.rand(p.current[0], p.current[1], 3),
-            pressure: this.rand(p.pressure[0], p.pressure[1], 3),
+            pressure: pressure,
             electronTemp: this.rand(p.et[0], p.et[1], 0),
             chamberWidth: this.rand(p.width[0], p.width[1], 3),
             chamberDepth: this.rand(p.depth[0], p.depth[1], 3),
