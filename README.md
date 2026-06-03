@@ -2,6 +2,40 @@
 
 Этот проект реализует модульную систему для моделирования воздействия плазмы на атомную решётку материала. Симуляция учитывает плазменные параметры, коллизии ионов с атомами, тепловые эффекты и диффузию.
 
+## Запуск одной кнопкой (Docker)
+
+**Требования:** [Docker Desktop для Windows](https://docs.docker.com/desktop/setup/install/windows-install/) (или Docker на Linux/macOS). Перед запуском Docker Desktop должен быть в статусе **Running**.
+
+### Windows
+
+Дважды щёлкните **`start.bat`** в проводнике (или запустите из терминала: `start.bat`).
+
+Остановка: **`stop.bat`**.
+
+При первом запуске создаётся `.env` из `.env.example`, собираются контейнеры, откроется браузер на **http://localhost:8081**.
+
+### Linux / macOS
+
+```bash
+./start.sh
+```
+
+### Вручную (любая ОС)
+
+```bash
+cp .env.example .env   # при первом запуске
+docker compose up --build -d
+```
+
+| Действие | Windows | Linux/macOS |
+|----------|---------|-------------|
+| Запуск | `start.bat` | `./start.sh` |
+| Остановка | `stop.bat` | `docker compose down` |
+| Логи | `docker compose logs -f app` | то же |
+| Удалить БД | `docker compose down -v` | то же |
+
+Переменные окружения — в файле `.env` (см. `.env.example`).
+
 ---
 
 ## 1. Параметры плазмы (PlasmaService)
