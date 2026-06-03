@@ -15,7 +15,10 @@ public final class PhysicsMath {
     public static final double MAX_ION_FLUX = 1e25;
     public static final double MAX_FLUENCE = 1e30;
     public static final double MAX_ELECTRON_DENSITY = 1e26;
+    /** Макс. глубина профиля / пробега для отображения и meanDepth (м) */
     public static final double MAX_DEPTH_M = 1.0;
+    /** Макс. толщина упрочнённого слоя h по формуле (5) (м) */
+    public static final double MAX_LAYER_THICKNESS_M = 0.1;
     public static final double MAX_DAMAGE = 1e35;
     public static final double MAX_ENERGY_J = 1e20;
     public static final double MAX_MOMENTUM = 1e15;
@@ -62,6 +65,10 @@ public final class PhysicsMath {
 
     public static double sanitizeDepth(double depthM) {
         return clampPositive(depthM, MAX_DEPTH_M);
+    }
+
+    public static double sanitizeLayerThickness(double thicknessM) {
+        return clampPositive(thicknessM, MAX_LAYER_THICKNESS_M);
     }
 
     public static double sanitizeDamage(double damage) {

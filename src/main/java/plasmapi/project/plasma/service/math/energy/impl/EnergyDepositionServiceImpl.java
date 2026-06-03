@@ -117,7 +117,7 @@ public class EnergyDepositionServiceImpl implements EnergyDepositionService {
                 PhysicsMath.finiteOrZero(plasmaCorrection),
                 PhysicsMath.sanitizeExposureRate(exposureRate),
                 PhysicsMath.sanitizeFluence(fluence),
-                PhysicsMath.finiteOrZero(thickness),
+                PhysicsMath.sanitizeLayerThickness(thickness),
                 skin.skinDepth(),
                 skin.surfacePowerDensity(),
                 skin.accumulatedEnergy(),

@@ -2,6 +2,7 @@ package plasmapi.project.plasma.service.math.energy.impl;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import plasmapi.project.plasma.service.math.PhysicalConstants;
 import plasmapi.project.plasma.service.math.energy.LayerThicknessInput;
 import plasmapi.project.plasma.service.math.energy.ModifiedLayerThicknessService;
 
@@ -10,6 +11,9 @@ import plasmapi.project.plasma.service.math.energy.ModifiedLayerThicknessService
  */
 @Service
 public class ModifiedLayerThicknessServiceImpl implements ModifiedLayerThicknessService {
+
+    private static final double KB = PhysicalConstants.KB;
+    private static final double EV = PhysicalConstants.EV;
 
     @Value("${energy-deposition.layer.dose-to-thickness:5.0e-12}")
     private double kappaD = 5.0e-12;
@@ -35,6 +39,9 @@ public class ModifiedLayerThicknessServiceImpl implements ModifiedLayerThickness
     @Value("${energy-deposition.layer.bracket-min:0.05}")
     private double bracketMin = 0.05;
 
+    @Value("${energy-deposition.layer.bracket-max:50.0}")
+    private double bracketMax = 50.0;
+
     @Override
     public double computeThickness(LayerThicknessInput input) {
         if (input.fluence() < 0) {
@@ -46,17 +53,32 @@ public class ModifiedLayerThicknessServiceImpl implements ModifiedLayerThickness
 
         double temperatureTerm = temperatureGamma * input.localSurfaceTemperatureK();
 
+        double teEv = toElectronVolts(input.electronTemperature());
         double plasmaSum = etaPressure * input.pressurePa()
-                + etaElectronTemp * input.electronTemperature()
+                + etaElectronTemp * teEv
                 + etaCurrent * input.currentA()
                 + etaVoltage * input.voltageV();
 
         double bracket = angularTerm + temperatureTerm + plasmaSum;
         bracket = Math.max(bracket, bracketMin);
+        bracket = Math.min(bracket, bracketMax);
 
         double kPron = Math.max(input.penetrationCoefficient(), 0.0);
 
         return kappaD * input.fluence() * kPron * bracket;
+    }
+
+    /**
+     * T_e в конфиге хранится в К (UI), в формуле (5) — в эВ (как в M_p).
+     */
+    public static double toElectronVolts(double teRaw) {
+        if (!Double.isFinite(teRaw) || teRaw <= 0) {
+            return 0.0;
+        }
+        if (teRaw < 100.0) {
+            return teRaw;
+        }
+        return teRaw * KB / EV;
     }
 
     @Override

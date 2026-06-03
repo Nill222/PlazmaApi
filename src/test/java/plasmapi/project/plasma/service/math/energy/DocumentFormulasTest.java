@@ -34,6 +34,12 @@ class DocumentFormulasTest {
     }
 
     @Test
+    void electronTemperatureKelvinConvertedToEv() {
+        double teEv = ModifiedLayerThicknessServiceImpl.toElectronVolts(11600.0);
+        assertTrue(teEv > 0.5 && teEv < 2.0);
+    }
+
+    @Test
     void formula5_usesSinSquaredAngularCorrection() {
         LayerThicknessInput normal = new LayerThicknessInput(
                 1.0e18, 0.35, 0.0, 400.0, 10.0, 5.0, 1.5, 500.0

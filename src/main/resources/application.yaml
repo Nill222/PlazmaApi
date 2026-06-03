@@ -65,6 +65,7 @@ energy-deposition:
     plasma-current-eta: 1.0e-3
     plasma-voltage-eta: 1.0e-4
     bracket-min: 0.05
+    bracket-max: 50.0
   plasma:
     linear-pressure: 1.0e-5
     linear-electron-temp: 0.15

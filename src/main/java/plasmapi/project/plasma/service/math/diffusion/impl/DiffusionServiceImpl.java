@@ -325,9 +325,10 @@ public class DiffusionServiceImpl implements DiffusionService {
             conc.add(c);
         }
 
-        double meanDepth = PhysicsMath.sanitizeDepth(
-                Math.max(Rp, energyDeposition.modifiedLayerThickness())
+        double hardenedLayer = PhysicsMath.sanitizeLayerThickness(
+                energyDeposition.modifiedLayerThickness()
         );
+        double meanDepth = PhysicsMath.sanitizeDepth(Math.max(Rp, hardenedLayer));
         fluenceEff = PhysicsMath.sanitizeFluence(fluenceEff);
         ionFlux = PhysicsMath.sanitizeIonFlux(ionFlux);
 
@@ -413,7 +414,7 @@ public class DiffusionServiceImpl implements DiffusionService {
                 PhysicsMath.finiteOrZero(energyDeposition.energyGainFactor()),
                 PhysicsMath.finiteOrZero(energyDeposition.plasmaCorrectionFactor()),
                 PhysicsMath.sanitizeExposureRate(energyDeposition.exposureRate()),
-                energyDeposition.modifiedLayerThickness(),
+                PhysicsMath.sanitizeLayerThickness(energyDeposition.modifiedLayerThickness()),
                 energyDeposition.skinDepth(),
                 energyDeposition.skinSurfacePower(),
                 energyDeposition.skinAccumulatedEnergy(),

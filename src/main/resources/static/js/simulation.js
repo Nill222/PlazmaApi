@@ -684,10 +684,36 @@ const SimulationUI = {
         const profile = result.profile || {};
         const stats = result.stats || {};
         const plasma = result.plasmaConfig || {};
-        const energy = profile.energyDeposition || result.intermediate?.energyDeposition || {};
-        const diffInt = profile.diffusionIntermediate || result.intermediate?.diffusion || {};
+        const im = result.intermediate || {};
+        const energy = profile.energyDeposition || {};
+        const diffInt = profile.diffusionIntermediate || im.diffusion || {};
+
+        const pick = (...vals) => {
+            for (const v of vals) {
+                const n = Number(v);
+                if (v != null && !isNaN(n) && n > 0) return n;
+            }
+            return null;
+        };
+
+        const layerThickness = pick(
+            stats.modifiedLayerThickness,
+            im.modifiedLayerThickness,
+            energy.modifiedLayerThickness
+        );
+        const integratedFluence = pick(stats.fluence, im.integratedFluence, energy.fluence);
+        const plasmaCorrection = pick(stats.plasmaCorrectionFactor, im.plasmaCorrectionFactor, energy.plasmaCorrectionFactor);
+        const exposureRate = pick(stats.exposureRate, im.exposureRate, energy.exposureRate);
+        const energyGain = pick(stats.energyGainFactor, im.energyGainFactor, energy.energyGainFactor);
 
         const fmtSci = (v) => (v == null || isNaN(Number(v))) ? '—' : Number(v).toExponential(3);
+        const fmtDepth = (v) => {
+            if (v == null || isNaN(Number(v))) return '—';
+            const m = Number(v);
+            if (m < 1e-5) return `${(m * 1e9).toFixed(1)} нм`;
+            if (m < 1e-3) return `${(m * 1e6).toFixed(2)} мкм`;
+            return `${m.toExponential(3)} м`;
+        };
         const fmtNum = (v, d = 2) => (v == null || isNaN(Number(v))) ? '—' : Number(v).toFixed(d);
         const set = (id, val) => {
             const el = document.getElementById(id);
@@ -741,7 +767,7 @@ const SimulationUI = {
 
         set('r_d_effective', fmtSci(profile.d_effective));
         set('r_d_thermal', fmtSci(profile.d_thermal));
-        set('r_mean_depth', fmtSci(profile.meanDepth));
+        set('r_mean_depth', fmtDepth(profile.meanDepth));
         set('diff_concentration', fmtSci(result.concentration || profile.concentration));
 
         set('r_d1', fmtSci(profile.d1));
@@ -749,17 +775,17 @@ const SimulationUI = {
         set('r_q1', fmtNum(profile.q1_ev, 3));
         set('r_q2', fmtNum(profile.q2_ev, 3));
 
-        set('energy_gain_factor', fmtNum(energy.energyGainFactor, 4));
-        set('plasma_correction_factor', fmtNum(energy.plasmaCorrectionFactor, 4));
-        set('exposure_rate', fmtSci(energy.exposureRate));
-        set('modified_layer_thickness', fmtSci(energy.modifiedLayerThickness));
-        set('energy_potential_surface', fmtNum(energy.potentialAtSurface, 2));
-        set('energy_accelerating_field', fmtSci(energy.acceleratingField));
+        set('energy_gain_factor', fmtNum(energyGain, 4));
+        set('plasma_correction_factor', fmtNum(plasmaCorrection, 4));
+        set('exposure_rate', fmtSci(exposureRate));
+        set('modified_layer_thickness', fmtDepth(layerThickness));
+        set('energy_potential_surface', fmtNum(im.potentialAtSurface ?? energy.potentialAtSurface, 2));
+        set('energy_accelerating_field', fmtSci(im.acceleratingField ?? energy.acceleratingField));
 
         set('damage_total', fmtSci(stats.totalDamage));
         set('damage_displacement', fmtSci(stats.totalDisplacement));
         set('damage_momentum', fmtSci(stats.totalMomentum));
-        set('damage_fluence', fmtSci(stats.fluence));
+        set('damage_fluence', fmtSci(integratedFluence ?? stats.fluence));
         set('damage_fluence_eff', fmtSci(stats.fluenceEff));
 
         set('diff_d_radiation', fmtSci(diffInt.dRadiation));
