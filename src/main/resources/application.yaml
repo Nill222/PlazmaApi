@@ -101,3 +101,6 @@ plasma:
       simulation-max-concurrent: 4
       # Порог для parallelFor/sum (MC-ионы 200, профиль 200 — ниже, без лишнего overhead)
       min-parallel-items: 512
+      thermal-parallel-enabled: true
+      thermal-min-inner-nodes: 128
+      thermal-min-total-work: 500000
