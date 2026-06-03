@@ -1,17 +1,12 @@
 package plasmapi.project.plasma.service.math.thermal.impl;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import plasmapi.project.plasma.config.MathParallelProperties;
 import plasmapi.project.plasma.model.res.PlasmaConfiguration;
 import plasmapi.project.plasma.service.math.thermal.ThermalResult;
 import plasmapi.project.plasma.service.math.thermal.ThermalService;
 
 @Service
-@RequiredArgsConstructor
 public class ThermalServiceImpl implements ThermalService {
-
-    private final MathParallelProperties mathParallelProperties;
 
     /**
      * Моделирует нагрев и охлаждение материала под действием ионного пучка.
@@ -116,7 +111,7 @@ public class ThermalServiceImpl implements ThermalService {
                 t
         );
 
-        ThermalTimeLoop.Result loop = ThermalTimeLoop.run(state, mathParallelProperties);
+        ThermalTimeLoop.Result loop = ThermalTimeLoop.run(state);
 
         double debyeReachTime = Double.NaN;
         double debyeFrontDepth = 0.0;

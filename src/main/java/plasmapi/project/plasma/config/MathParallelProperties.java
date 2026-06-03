@@ -24,15 +24,4 @@ public class MathParallelProperties {
      * Минимальное число итераций, при котором имеет смысл ForkJoin-parallel.
      */
     private int minParallelItems = 512;
-
-    /**
-     * Параллельный проход по внутренним узлам сетки в thermal (барьер, потоки живут весь расчёт).
-     */
-    private boolean thermalParallelEnabled = true;
-
-    /** Минимум внутренних узлов (N−2) для включения thermal-parallel. */
-    private int thermalMinInnerNodes = 128;
-
-    /** Минимум «работы» steps × innerNodes для включения thermal-parallel. */
-    private long thermalMinTotalWork = 500_000;
 }
