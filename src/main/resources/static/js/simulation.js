@@ -755,15 +755,38 @@ const SimulationUI = {
         set('ps_avg_energy', fmtSci(stats.avgTransferredPerAtom));
         set('ps_binding_energy', fmtNum(stats.surfaceBindingEnergy, 3));
 
-        set('thermal_probe_temp', fmtNum(stats.finalProbeTemperature, 2));
-        set('thermal_debye_speed', fmtSci(stats.debyeFrontSpeed));
-        set('thermal_debye_depth', fmtSci(stats.debyeFrontDepth));
+        const thermalFromMap = (() => {
+            const map = stats.thermalTemperatureMap;
+            if (!map?.length) return null;
+            let min = Infinity, max = -Infinity, sum = 0, n = 0;
+            for (const row of map) {
+                for (const v of (row || [])) {
+                    const t = Number(v);
+                    if (!isFinite(t)) continue;
+                    min = Math.min(min, t);
+                    max = Math.max(max, t);
+                    sum += t;
+                    n++;
+                }
+            }
+            return n > 0 ? { min, max, avg: sum / n } : null;
+        })();
+        const tProbe = pick(im.finalProbeTemperature, stats.finalProbeTemperature);
+        const tMin = pick(im.thermalMinTemperature, thermalFromMap?.min, tProbe);
+        const tMax = pick(im.thermalMaxTemperature, thermalFromMap?.max, tProbe);
+        const tAvg = pick(im.thermalAvgTemperature, thermalFromMap?.avg, tProbe);
+        set('thermal_min_temp', fmtNum(tMin, 2));
+        set('thermal_max_temp', fmtNum(tMax, 2));
+        set('thermal_avg_temp', fmtNum(tAvg, 2));
+        set('thermal_probe_temp', fmtNum(tProbe, 2));
+        set('thermal_debye_speed', fmtSci(pick(im.debyeFrontSpeed, stats.debyeFrontSpeed)));
+        set('thermal_debye_depth', fmtSci(pick(im.debyeFrontDepth, stats.debyeFrontDepth)));
 
         set('skin_depth', fmtSci(energy.skinDepth));
         set('skin_surface_power', fmtSci(energy.skinSurfacePower));
         set('skin_accumulated_energy', fmtSci(energy.skinAccumulatedEnergy));
         set('skin_temperature_delta', fmtNum(energy.skinTemperatureDelta, 2));
-        set('skin_effective_temp', fmtNum(energy.effectiveSurfaceTemperature, 2));
+        set('skin_effective_temp', fmtNum(pick(im.effectiveSurfaceTemperature, energy.effectiveSurfaceTemperature, stats.effectiveSurfaceTemperature), 2));
 
         set('r_d_effective', fmtSci(profile.d_effective));
         set('r_d_thermal', fmtSci(profile.d_thermal));
@@ -1120,9 +1143,48 @@ window.saveResults = async (silent = false) => {
             s: `${firstAtom.atomName} ${(firstAtom.fraction * 100).toFixed(1)}%`,
             totalTransferredEnergy: stats.totalTransferredEnergy || 0,
             avgTransferredPerAtom: stats.avgTransferredPerAtom || 0,
-            avgT: stats.finalProbeTemperature || 0,
-            minT: stats.finalProbeTemperature || 0,
-            maxT: stats.finalProbeTemperature || 0,
+            avgT: (() => {
+                const im = result.intermediate || {};
+                const map = stats.thermalTemperatureMap;
+                if (im.thermalAvgTemperature > 0) return im.thermalAvgTemperature;
+                if (map?.length) {
+                    let sum = 0, n = 0;
+                    for (const row of map) for (const v of (row || [])) {
+                        const t = Number(v);
+                        if (isFinite(t)) { sum += t; n++; }
+                    }
+                    if (n > 0) return sum / n;
+                }
+                return stats.finalProbeTemperature || 0;
+            })(),
+            minT: (() => {
+                const im = result.intermediate || {};
+                if (im.thermalMinTemperature > 0) return im.thermalMinTemperature;
+                const map = stats.thermalTemperatureMap;
+                if (map?.length) {
+                    let min = Infinity;
+                    for (const row of map) for (const v of (row || [])) {
+                        const t = Number(v);
+                        if (isFinite(t)) min = Math.min(min, t);
+                    }
+                    if (isFinite(min)) return min;
+                }
+                return stats.finalProbeTemperature || 0;
+            })(),
+            maxT: (() => {
+                const im = result.intermediate || {};
+                if (im.thermalMaxTemperature > 0) return im.thermalMaxTemperature;
+                const map = stats.thermalTemperatureMap;
+                if (map?.length) {
+                    let max = -Infinity;
+                    for (const row of map) for (const v of (row || [])) {
+                        const t = Number(v);
+                        if (isFinite(t)) max = Math.max(max, t);
+                    }
+                    if (isFinite(max)) return max;
+                }
+                return stats.finalProbeTemperature || 0;
+            })(),
             totalMomentum: stats.totalMomentum || 0,
             totalDamage: stats.totalDamage || 0,
             totalDisplacement: stats.totalDisplacement || 0,

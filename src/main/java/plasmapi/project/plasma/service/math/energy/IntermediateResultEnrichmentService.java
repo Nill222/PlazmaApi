@@ -10,6 +10,8 @@ import plasmapi.project.plasma.model.res.Result;
 import plasmapi.project.plasma.service.math.PhysicsMath;
 import plasmapi.project.plasma.service.math.PhysicsStats;
 import plasmapi.project.plasma.service.math.diffusion.DiffusionIntermediate;
+
+import java.util.List;
 /**
  * Дополняет промежуточные параметры расчётом или оценкой из данных БД (атом, конфиг, результат).
  */
@@ -289,6 +291,16 @@ public class IntermediateResultEnrichmentService {
             mp = 1.0;
         }
 
+        double thermalMin = dto.thermalMinTemperature();
+        double thermalMax = dto.thermalMaxTemperature();
+        double thermalAvg = dto.thermalAvgTemperature();
+        ThermalRange fromMap = thermalRangeFromMap(stats, dto.finalProbeTemperature());
+        if (fromMap.count() > 0 && thermalRangeIsDegenerate(thermalMin, thermalMax, thermalAvg)) {
+            thermalMin = fromMap.min();
+            thermalMax = fromMap.max();
+            thermalAvg = fromMap.avg();
+        }
+
         return new SimulationIntermediateResultDto(
                 dto.ionEnergyEv(),
                 pickPositive(dto.ionFlux(), stats != null ? stats.ionFlux() : 0),
@@ -307,9 +319,9 @@ public class IntermediateResultEnrichmentService {
                 pick(dto.finalProbeTemperature(), stats != null ? stats.finalProbeTemperature() : ambientTemp),
                 debyeSpeed,
                 debyeDepth,
-                dto.thermalMinTemperature(),
-                dto.thermalMaxTemperature(),
-                dto.thermalAvgTemperature(),
+                thermalMin,
+                thermalMax,
+                thermalAvg,
                 dto.dRadiation(),
                 dto.dCollision(),
                 dto.slrFactor(),
@@ -675,5 +687,42 @@ public class IntermediateResultEnrichmentService {
             return fallback;
         }
         return 0.0;
+    }
+
+    private record ThermalRange(double min, double max, double avg, int count) {}
+
+    private static ThermalRange thermalRangeFromMap(PhysicsStats stats, double fallback) {
+        if (stats == null || stats.thermalTemperatureMap() == null) {
+            return new ThermalRange(fallback, fallback, fallback, 0);
+        }
+        double min = Double.POSITIVE_INFINITY;
+        double max = Double.NEGATIVE_INFINITY;
+        double sum = 0.0;
+        int count = 0;
+        for (List<Double> row : stats.thermalTemperatureMap()) {
+            if (row == null) {
+                continue;
+            }
+            for (Double t : row) {
+                if (t == null || !Double.isFinite(t)) {
+                    continue;
+                }
+                min = Math.min(min, t);
+                max = Math.max(max, t);
+                sum += t;
+                count++;
+            }
+        }
+        if (count == 0) {
+            return new ThermalRange(fallback, fallback, fallback, 0);
+        }
+        return new ThermalRange(min, max, sum / count, count);
+    }
+
+    private static boolean thermalRangeIsDegenerate(double min, double max, double avg) {
+        if (!Double.isFinite(min) || !Double.isFinite(max) || !Double.isFinite(avg)) {
+            return true;
+        }
+        return Math.abs(max - min) < 0.5 && Math.abs(avg - min) < 0.5;
     }
 }

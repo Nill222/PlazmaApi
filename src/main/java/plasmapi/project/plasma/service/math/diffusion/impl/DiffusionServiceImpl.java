@@ -609,7 +609,11 @@ public class DiffusionServiceImpl implements DiffusionService {
         }
 
         Double getDebyeTemperature(AtomList atom) {
-            return atom != null ? atom.getDebyeTemperature() : null;
+            if (atom == null || atom.getDebyeTemperature() == null || atom.getDebyeTemperature() <= 0) {
+                return null;
+            }
+            // В БД температура Дебая хранится в °C (см. atoms.js, max 1000).
+            return atom.getDebyeTemperature() + 273.15;
         }
 
         Double getProbeDepth() {
