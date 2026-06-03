@@ -9,10 +9,54 @@ const SIMULATION_CONFIG = {
 };
 
 const AUTOGEN_PRESETS = {
-    low: { voltage: [1200, 3500], current: [0.005, 0.05], pressure: [0.1, 5], et: [4000, 4000], width: [0.55, 0.55], depth: [0.55, 0.55], time: [1800, 1800], angle: [0, 60], ambient: [300, 300] },
-    medium: { voltage: [700, 1200], current: [0.05, 0.1], pressure: [5, 15], et: [4000, 4000], width: [0.55, 0.55], depth: [0.55, 0.55], time: [1800, 1800], angle: [0, 60], ambient: [300, 300] },
-    high: { voltage: [300, 800], current: [0.01, 5.0], pressure: [15, 100], et: [4000, 4000], width: [0.55, 0.55], depth: [0.55, 0.55], time: [1800, 1800], angle: [0, 60], ambient: [300, 300] },
-    custom: { voltage: [100, 3500], current: [0.005, 5], pressure: [0.1, 100], et: [4000, 4000], width: [0.55, 0.55], depth: [0.55, 0.55], time: [600, 3600], angle: [0, 90], ambient: [280, 300] }
+    low: {
+        voltage: [1200, 3500],
+        current: [0.005, 0.05],
+        pressure: [0.1, 5],
+        et: [4000, 4000],
+        width: [0.55, 0.55],
+        depth: [0.55, 0.55],
+        time: [1800, 1800],
+        angle: [0, 60],
+        ambient: [300, 300],
+        electrodeDistance: [0.55, 0.55]
+    },
+    medium: {
+        voltage: [700, 1200],
+        current: [0.05, 0.1],
+        pressure: [5, 15],
+        et: [4000, 4000],
+        width: [0.55, 0.55],
+        depth: [0.55, 0.55],
+        time: [1800, 1800],
+        angle: [0, 60],
+        ambient: [300, 300],
+        electrodeDistance: [0.55, 0.55]
+    },
+    high: {
+        voltage: [300, 800],
+        current: [0.01, 5.0],
+        pressure: [15, 100],
+        et: [4000, 4000],
+        width: [0.55, 0.55],
+        depth: [0.55, 0.55],
+        time: [1800, 1800],
+        angle: [0, 60],
+        ambient: [300, 300],
+        electrodeDistance: [0.55, 0.55]
+    },
+    custom: {
+        voltage: [100, 3500],
+        current: [0.005, 5],
+        pressure: [0.1, 100],
+        et: [4000, 4000],
+        width: [0.55, 0.55],
+        depth: [0.55, 0.55],
+        time: [600, 3600],
+        angle: [0, 90],
+        ambient: [280, 300],
+        electrodeDistance: [0.55, 0.55]
+    }
 };
 
 /* ═══════════════════════════════════════════════════════════════
@@ -382,25 +426,6 @@ function buildIonComponentDto(c) {
         charge: c.charge ?? 0,
         fraction: c.fraction
     };
-}
-
-function readFormNumber(id, fallback = null) {
-    const el = document.getElementById(id);
-    if (!el) return fallback;
-    const n = parseFloat(el.value);
-    return Number.isFinite(n) ? n : fallback;
-}
-
-function resolveSaveGeometry(request, plasma) {
-    const angle = readFormNumber('angle', null)
-        ?? request?.angle
-        ?? plasma?.ionIncidenceAngle
-        ?? 0;
-    const electrodeDistance = readFormNumber('electrodeDistance', null)
-        ?? request?.electrodeDistance
-        ?? plasma?.electrodeDistance
-        ?? 0.1;
-    return { angle, electrodeDistance };
 }
 
 const SimulationAPI = {
@@ -1179,11 +1204,6 @@ window.saveResults = async (silent = false) => {
     try {
         const result = SimulationState.currentResult;
         const request = SimulationState.currentRequest;
-        const raw = result?.data && result.profile == null ? result.data : result;
-        const profile = raw?.profile || {};
-        const stats = raw?.stats || {};
-        const plasma = raw?.plasmaConfig || {};
-        const { angle, electrodeDistance } = resolveSaveGeometry(request, plasma);
         const firstAtom = SimulationState.alloyComponents[0];
         const firstIon = SimulationState.ionComponents[0];
 
@@ -1191,6 +1211,10 @@ window.saveResults = async (silent = false) => {
             if (!silent) window.PlasmaAnimations?.ToastNotifications.show('Не удалось определить атом и ион для сохранения', 'error');
             return;
         }
+
+        const profile = result.profile || {};
+        const stats = result.stats || {};
+        const plasma = result.plasmaConfig || {};
 
         const saveData = {
             atomId: Number(firstAtom.atomId),
@@ -1203,7 +1227,7 @@ window.saveResults = async (silent = false) => {
             totalTransferredEnergy: stats.totalTransferredEnergy || 0,
             avgTransferredPerAtom: stats.avgTransferredPerAtom || 0,
             avgT: (() => {
-                const im = raw?.intermediate || result?.intermediate || {};
+                const im = result.intermediate || {};
                 const map = stats.thermalTemperatureMap;
                 if (im.thermalAvgTemperature > 0) return im.thermalAvgTemperature;
                 if (map?.length) {
@@ -1217,7 +1241,7 @@ window.saveResults = async (silent = false) => {
                 return stats.finalProbeTemperature || 0;
             })(),
             minT: (() => {
-                const im = raw?.intermediate || result?.intermediate || {};
+                const im = result.intermediate || {};
                 if (im.thermalMinTemperature > 0) return im.thermalMinTemperature;
                 const map = stats.thermalTemperatureMap;
                 if (map?.length) {
@@ -1231,7 +1255,7 @@ window.saveResults = async (silent = false) => {
                 return stats.finalProbeTemperature || 0;
             })(),
             maxT: (() => {
-                const im = raw?.intermediate || result?.intermediate || {};
+                const im = result.intermediate || {};
                 if (im.thermalMaxTemperature > 0) return im.thermalMaxTemperature;
                 const map = stats.thermalTemperatureMap;
                 if (map?.length) {
@@ -1253,9 +1277,9 @@ window.saveResults = async (silent = false) => {
             resonanceXi: stats.resonanceXi || 0,
             dSlr: stats.dSlr || 0,
             dRes: stats.dRes || 0,
-            angle,
-            electrodeDistance,
-            diffusionCoefficient1: profile.d_effective || profile.dEffective || profile.d1 || 0,
+            angle: request?.angle ?? plasma?.ionIncidenceAngle ?? 0,
+            electrodeDistance: request?.electrodeDistance ?? plasma?.electrodeDistance ?? 0,
+            diffusionCoefficient1: profile.d_effective || profile.d1 || 0,
             diffusionCoefficient2: profile.d_thermal || profile.d2 || 0,
             depths: profile.meanDepth || 0,
             concentration: profile.concentration?.length ? profile.concentration.reduce((a, b) => a + b, 0) / profile.concentration.length : 0,
@@ -1272,7 +1296,8 @@ window.saveResults = async (silent = false) => {
             },
             perAtomTransferredEnergies: [],
             coolingProfile: stats.thermalTimes || [],
-            intermediate: raw?.intermediate || result?.intermediate || null
+            intermediate: result.intermediate || null,
+
         };
 
         await SimulationAPI.save(saveData);
@@ -1315,7 +1340,8 @@ const AutoGenerationManager = {
             chamberDepth: this.rand(p.depth[0], p.depth[1], 3),
             exposureTime: this.rand(p.time[0], p.time[1], 2),
             angle: this.rand(p.angle[0], p.angle[1], 1),
-            ambientTemp: this.rand(p.ambient[0], p.ambient[1], 0)
+            ambientTemp: this.rand(p.ambient[0], p.ambient[1], 0),
+            electrodeDistance: this.rand(p.electrodeDistance[0], p.electrodeDistance[1], 3)  // всегда 0.55
         };
     },
 
@@ -1358,7 +1384,12 @@ const AutoGenerationManager = {
             current: getRange('ccMin', 'ccMax', def.current[0], def.current[1]),
             pressure: getRange('cpMin', 'cpMax', def.pressure[0], def.pressure[1]),
             et: getRange('ceMin', 'ceMax', def.et[0], def.et[1]),
-            width: def.width, depth: def.depth, time: def.time, angle: def.angle, ambient: def.ambient
+            width: def.width,
+            depth: def.depth,
+            time: def.time,
+            angle: def.angle,
+            ambient: def.ambient,
+            electrodeDistance: def.electrodeDistance
         };
     },
 
@@ -1441,9 +1472,7 @@ const AutoGenerationManager = {
                     voltage: gen.voltage, current: gen.current, pressure: gen.pressure,
                     electronTemp: gen.electronTemp, chamberWidth: gen.chamberWidth,
                     chamberDepth: gen.chamberDepth, exposureTime: gen.exposureTime,
-                    angle: gen.angle,
-                    electrodeDistance: readFormNumber('electrodeDistance', 0.1),
-                    ambientTemp: gen.ambientTemp,
+                    angle: gen.angle, ambientTemp: gen.ambientTemp,
                     composition: runAlloy.map(buildAlloyComponentDto),
                     ionComposition: runIons.map(buildIonComponentDto)
                 };
