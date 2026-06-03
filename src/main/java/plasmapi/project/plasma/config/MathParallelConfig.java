@@ -1,6 +1,5 @@
 package plasmapi.project.plasma.config;
 
-import jakarta.annotation.PreDestroy;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -16,7 +15,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @EnableConfigurationProperties(MathParallelProperties.class)
 public class MathParallelConfig {
 
-    @Bean
+    @Bean(destroyMethod = "shutdown")
     public ExecutorService mathComputationExecutor(MathParallelProperties properties) {
         int size = properties.resolvePoolSize();
         ThreadFactory factory = new ThreadFactory() {
@@ -45,10 +44,5 @@ public class MathParallelConfig {
             Semaphore simulationSemaphore
     ) {
         return new MathParallelSupport(properties, mathComputationExecutor, simulationSemaphore);
-    }
-
-    @PreDestroy
-    public void shutdownMathExecutor(ExecutorService mathComputationExecutor) {
-        mathComputationExecutor.shutdown();
     }
 }

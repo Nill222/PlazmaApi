@@ -1,10 +1,14 @@
 package plasmapi.project.plasma.config;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
  * Параллельное выполнение CPU-нагруженных расчётов в math-сервисах.
  */
+@Setter
+@Getter
 @ConfigurationProperties(prefix = "plasma.math.parallel")
 public class MathParallelProperties {
 
@@ -25,38 +29,6 @@ public class MathParallelProperties {
      * Минимальное число итераций, при котором имеет смысл распараллеливание.
      */
     private int minParallelItems = 32;
-
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public int getPoolSize() {
-        return poolSize;
-    }
-
-    public void setPoolSize(int poolSize) {
-        this.poolSize = poolSize;
-    }
-
-    public int getSimulationMaxConcurrent() {
-        return simulationMaxConcurrent;
-    }
-
-    public void setSimulationMaxConcurrent(int simulationMaxConcurrent) {
-        this.simulationMaxConcurrent = simulationMaxConcurrent;
-    }
-
-    public int getMinParallelItems() {
-        return minParallelItems;
-    }
-
-    public void setMinParallelItems(int minParallelItems) {
-        this.minParallelItems = minParallelItems;
-    }
 
     public int resolvePoolSize() {
         if (poolSize > 0) {
