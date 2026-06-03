@@ -1,13 +1,19 @@
 package plasmapi.project.plasma.service.math.energy;
 
 /**
- * Толщина модифицированного слоя (5).
+ * Толщина модифицированного (упрочнённого) слоя по формуле (5).
  */
 public interface ModifiedLayerThicknessService {
 
     /**
-     * h = C_dose · Φ · η · f_angle(θ) · f_temp(T_eff).
+     * (5) h_i = κ_d · Φ_i · K_{прон,i} · [1 − β·sin²α + γ_T·T + Σ_m η_m·p_m]
      */
+    double computeThickness(LayerThicknessInput input);
+
+    /**
+     * @deprecated используйте {@link #computeThickness(LayerThicknessInput)}
+     */
+    @Deprecated
     double computeThickness(
             double fluence,
             double incidenceAngleRad,

@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import plasmapi.project.plasma.model.atom.AtomList;
+import plasmapi.project.plasma.model.res.Ion;
 import plasmapi.project.plasma.model.res.PlasmaConfiguration;
 import plasmapi.project.plasma.service.math.PhysicsMath;
 import plasmapi.project.plasma.service.math.energy.*;
@@ -11,7 +12,7 @@ import plasmapi.project.plasma.service.math.energy.*;
 import java.util.function.DoubleUnaryOperator;
 
 /**
- * Связанный контур расчёта по блок-схеме: (1)–(5) + SKIN (6)–(12).
+ * Связанный контур расчёта: (1)–(5) по методике + SKIN (6)–(12).
  */
 @Service
 @RequiredArgsConstructor
@@ -36,11 +37,19 @@ public class EnergyDepositionServiceImpl implements EnergyDepositionService {
     @Value("${energy-deposition.skin.relative-permeability:1.0}")
     private double relativePermeability;
 
+    @Value("${energy-deposition.layer.implantation-efficiency:0.35}")
+    private double implantationEfficiency;
+
+    @Value("${energy-deposition.layer.reference-penetration-gain:100.0}")
+    private double referencePenetrationGain;
+
     @Override
     public EnergyDepositionResult compute(
             PlasmaConfiguration cfg,
             AtomList targetMaterial,
+            Ion ion,
             double ionFlux,
+            double ionEnergyEv,
             double exposureTime,
             double localSurfaceTemperature,
             DoubleUnaryOperator timeModulationAt
@@ -55,15 +64,24 @@ public class EnergyDepositionServiceImpl implements EnergyDepositionService {
 
         double energyGain = energyGainService.computeGain(pathLength, vDis);
         double plasmaCorrection = plasmaCorrectionService.computeFactor(cfg);
-
-        double baseExposureRate = ionFlux * energyGain * plasmaCorrection;
-        DoubleUnaryOperator rateAtTime = buildExposureRateAtTime(baseExposureRate, timeModulationAt);
-
-        double fluence = fluenceIntegrationService.integrate(exposureTime, rateAtTime);
+        double kPron = penetrationCoefficient(energyGain);
 
         double incidenceAngle = Math.toRadians(nz(cfg.getIonIncidenceAngle(), 0.0));
-        double conductivity = estimateConductivity(targetMaterial);
 
+        FluenceFormulaInput fluenceInput = new FluenceFormulaInput(
+                cfg,
+                vDis,
+                ionEnergyEv,
+                ionFlux,
+                incidenceAngle,
+                0.0,
+                exposureTime,
+                timeModulationAt,
+                implantationEfficiency
+        );
+        double fluence = fluenceIntegrationService.integrateDocumentFormula(fluenceInput);
+
+        double conductivity = estimateConductivity(targetMaterial);
         SkinEffectService.SkinEffectResult skin = skinEffectService.compute(
                 eAccel,
                 incidenceAngle,
@@ -73,25 +91,31 @@ public class EnergyDepositionServiceImpl implements EnergyDepositionService {
                 timeModulationAt
         );
 
-        double referenceTemp = nz(cfg.getTargetTemperature(), localSurfaceTemperature);
         double tEff = skinEffectService.effectiveTemperature(
                 localSurfaceTemperature,
                 skin.temperatureDelta()
         );
 
-        double thickness = modifiedLayerThicknessService.computeThickness(
+        LayerThicknessInput layerInput = new LayerThicknessInput(
                 fluence,
+                kPron,
                 incidenceAngle,
                 tEff,
-                referenceTemp
+                nz(cfg.getPressure()),
+                nz(cfg.getElectronTemperature()),
+                nz(cfg.getCurrent()),
+                voltage
         );
+        double thickness = modifiedLayerThicknessService.computeThickness(layerInput);
+
+        double exposureRate = exposureTime > 0 ? fluence / exposureTime : 0.0;
 
         return new EnergyDepositionResult(
                 PhysicsMath.finiteOrZero(phiSurface),
                 PhysicsMath.finiteOrZero(eAccel),
                 PhysicsMath.finiteOrZero(energyGain),
                 PhysicsMath.finiteOrZero(plasmaCorrection),
-                PhysicsMath.sanitizeExposureRate(baseExposureRate),
+                PhysicsMath.sanitizeExposureRate(exposureRate),
                 PhysicsMath.sanitizeFluence(fluence),
                 PhysicsMath.finiteOrZero(thickness),
                 skin.skinDepth(),
@@ -102,17 +126,9 @@ public class EnergyDepositionServiceImpl implements EnergyDepositionService {
         );
     }
 
-    private DoubleUnaryOperator buildExposureRateAtTime(
-            double baseRate,
-            DoubleUnaryOperator timeModulationAt
-    ) {
-        if (timeModulationAt == null) {
-            return t -> baseRate;
-        }
-        return t -> {
-            double g = timeModulationAt.applyAsDouble(t);
-            return baseRate * Math.max(g, 0.0);
-        };
+    private double penetrationCoefficient(double energyGain) {
+        double ref = Math.max(referencePenetrationGain, 1e-6);
+        return implantationEfficiency * Math.max(energyGain, 0.0) / ref;
     }
 
     private double resolveGapLength(PlasmaConfiguration cfg) {
@@ -136,10 +152,13 @@ public class EnergyDepositionServiceImpl implements EnergyDepositionService {
         if (atom == null || atom.getDsteny() == null || atom.getMolarMass() == null) {
             return defaultConductivity;
         }
-        // грубая оценка σ для металлов: σ ≈ ne·e·μ, ne ~ ρ·NA/M
         double ne = atom.getDsteny() * 6.022e23 / atom.getMolarMass();
-        double muE = 5e-3; // м²/(В·с) — порядок подвижности в проводнике
+        double muE = 5e-3;
         return Math.max(ne * 1.602e-19 * muE, defaultConductivity * 0.01);
+    }
+
+    private static double nz(Double v) {
+        return v != null && Double.isFinite(v) ? v : 0.0;
     }
 
     private static double nz(Double v, double fallback) {

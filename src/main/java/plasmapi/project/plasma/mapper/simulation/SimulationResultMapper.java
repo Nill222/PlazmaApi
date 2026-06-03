@@ -110,6 +110,7 @@ public class SimulationResultMapper {
                 dto,
                 result.getStats(),
                 result.getAtom(),
+                result.getIon(),
                 result.getPlasmaConfig(),
                 exposureTime,
                 ambient

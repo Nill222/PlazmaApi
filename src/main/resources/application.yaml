@@ -48,11 +48,23 @@ energy-deposition:
   integration:
     min-steps: 50
     max-steps: 5000
+  fluence:
+    angle-exponent: 7
+    geometry-exponent: 2.0
+    pressure-scale-pa: 10.0
+    reference-ion-energy-ev: 100.0
+    reference-ion-flux: 1.0e18
   layer:
     dose-to-thickness: 5.0e-12
     implantation-efficiency: 0.35
-    angle-exponent: 1.0
-    temperature-sensitivity: 2.0e-4
+    reference-penetration-gain: 100.0
+    angular-beta: 0.15
+    temperature-gamma: 2.0e-4
+    plasma-pressure-eta: 1.0e-5
+    plasma-electron-temp-eta: 0.15
+    plasma-current-eta: 1.0e-3
+    plasma-voltage-eta: 1.0e-4
+    bracket-min: 0.05
   plasma:
     linear-pressure: 1.0e-5
     linear-electron-temp: 0.15

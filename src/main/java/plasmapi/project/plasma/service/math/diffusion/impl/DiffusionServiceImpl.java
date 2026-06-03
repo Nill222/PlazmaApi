@@ -109,7 +109,9 @@ public class DiffusionServiceImpl implements DiffusionService {
         EnergyDepositionResult energyDeposition = energyDepositionService.compute(
                 plasmaConfig,
                 atom,
+                ion,
                 ionFlux,
+                ionEnergyEv,
                 exposureTime,
                 ambientTemp,
                 timeModulation

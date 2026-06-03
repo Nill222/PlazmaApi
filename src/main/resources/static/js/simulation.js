@@ -186,8 +186,12 @@ const SimulationAPI = {
             SIMULATION_CONFIG.API_SIMULATION, requestData, true
         );
         if (!response.ok) throw new Error(response.data?.message || 'Simulation failed');
-        // Бэкенд возвращает SimulationResult напрямую в data
-        return response.data?.data ?? response.data;
+        // SimulationRunResponse: { profile, stats, intermediate, plasmaConfig, ... }
+        const payload = response.data?.data ?? response.data;
+        if (payload?.stats) {
+            return payload;
+        }
+        return payload;
     },
 
     /**
@@ -277,8 +281,26 @@ const SimulationUI = {
         const profile = result.profile      || {};
         /** @type {PhysicsStats} */
         const stats   = result.stats        || {};
+        /** @type {Object} */
+        const intermediate = result.intermediate || {};
         /** @type {PlasmaConfig} */
         const plasma  = result.plasmaConfig  || {};
+
+        const layerThickness = stats.modifiedLayerThickness
+            || intermediate.modifiedLayerThickness
+            || 0;
+        const integratedFluence = stats.fluence
+            || intermediate.integratedFluence
+            || 0;
+        const plasmaCorrection = stats.plasmaCorrectionFactor
+            || intermediate.plasmaCorrectionFactor
+            || 0;
+        const skinDeltaT = stats.skinTemperatureDelta
+            || intermediate.skinTemperatureDelta
+            || 0;
+        const tEff = stats.effectiveSurfaceTemperature
+            || intermediate.effectiveSurfaceTemperature
+            || 0;
 
         /** @param {number|null|undefined} v */
         const sci = (v) => (v == null || isNaN(+v)) ? '—' : (+v).toExponential(3);
@@ -352,7 +374,7 @@ const SimulationUI = {
         set('ps_total_damage',       sci(stats.totalDamage));
         set('ps_total_momentum',     sci(stats.totalMomentum));
         set('ps_total_displacement', sci(stats.totalDisplacement));
-        set('ps_fluence',            sci(stats.fluence));
+        set('ps_fluence',            sci(integratedFluence));
         set('ps_fluence_eff',        sci(stats.fluenceEff));
         set('ps_ion_flux',           sci(stats.ionFlux));
         set('ps_resonance_xi',       sci(stats.resonanceXi));
@@ -366,9 +388,15 @@ const SimulationUI = {
         set('ps_skin_temperature_delta',   num(stats.skinTemperatureDelta, 2));
         set('ps_effective_surface_temp',   num(stats.effectiveSurfaceTemperature, 2));
         set('ps_energy_gain_factor',       num(stats.energyGainFactor, 4));
-        set('ps_plasma_correction_factor', num(stats.plasmaCorrectionFactor, 4));
-        set('ps_modified_layer_thickness', sci(stats.modifiedLayerThickness));
-        set('ps_exposure_rate',            sci(stats.exposureRate));
+        set('ps_plasma_correction_factor', num(plasmaCorrection, 4));
+        set('ps_modified_layer_thickness', sci(layerThickness));
+        set('ps_exposure_rate',            sci(stats.exposureRate || intermediate.exposureRate));
+
+        // дублирующие карточки (формулы 5 / SKIN)
+        set('ps_layer_thickness',          sci(layerThickness));
+        set('ps_plasma_correction',        num(plasmaCorrection, 4));
+        set('ps_skin_delta_t',             num(skinDeltaT, 2));
+        set('ps_t_eff',                    num(tEff, 2));
 
         // ── 3D-движок ─────────────────────────────────────────
         if (window.addPhysics3DData) {

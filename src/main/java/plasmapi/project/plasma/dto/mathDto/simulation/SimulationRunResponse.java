@@ -40,6 +40,7 @@ public record SimulationRunResponse(
                 intermediate,
                 result.getStats(),
                 result.getAtom(),
+                result.getIon(),
                 result.getPlasmaConfig(),
                 exposureTime,
                 ambient

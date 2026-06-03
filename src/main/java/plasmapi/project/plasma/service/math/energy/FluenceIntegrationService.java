@@ -3,18 +3,22 @@ package plasmapi.project.plasma.service.math.energy;
 import java.util.function.DoubleUnaryOperator;
 
 /**
- * Дискретное интегрирование флюенса по времени (4).
+ * Расчёт флюенса по формуле (4) из методики.
  */
 public interface FluenceIntegrationService {
 
     /**
-     * Φ = Σ_n v(t_n) Δt_n при переменной скорости воздействия.
+     * (4) Φ_i = V_a · Σ_n [cos^γ α / (1+(r_i/R)^2)^δ · F_d · f_p(P) · E_i · ε_i · Φ_ion] Δt_n
      */
-    double integrate(double exposureTime, DoubleUnaryOperator exposureRateAtTime);
+    double integrateDocumentFormula(FluenceFormulaInput input);
 
     /**
-     * Φ = v · t при постоянной скорости.
+     * @deprecated используйте {@link #integrateDocumentFormula(FluenceFormulaInput)}
      */
+    @Deprecated
+    double integrate(double exposureTime, DoubleUnaryOperator exposureRateAtTime);
+
+    @Deprecated
     default double integrateConstant(double exposureTime, double exposureRate) {
         return integrate(exposureTime, t -> exposureRate);
     }

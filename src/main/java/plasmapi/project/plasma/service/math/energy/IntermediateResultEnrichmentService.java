@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import plasmapi.project.plasma.dto.mathDto.simulation.SimulationIntermediateResultDto;
 import plasmapi.project.plasma.model.atom.AtomList;
+import plasmapi.project.plasma.model.res.Ion;
 import plasmapi.project.plasma.model.res.PlasmaConfiguration;
 import plasmapi.project.plasma.model.res.Result;
 import plasmapi.project.plasma.service.math.PhysicsMath;
@@ -29,12 +30,24 @@ public class IntermediateResultEnrichmentService {
             double exposureTime,
             double ambientTemp
     ) {
+        return enrich(base, stats, atom, null, cfg, exposureTime, ambientTemp);
+    }
+
+    public SimulationIntermediateResultDto enrich(
+            SimulationIntermediateResultDto base,
+            PhysicsStats stats,
+            AtomList atom,
+            Ion ion,
+            PlasmaConfiguration cfg,
+            double exposureTime,
+            double ambientTemp
+    ) {
         if (base == null) {
             if (cfg != null && atom != null && exposureTime > 0) {
                 double ionFlux = pickPositive(0, stats != null ? stats.ionFlux() : 0);
                 if (ionFlux > 0) {
                     return applyThermalAndMaterialFallbacks(
-                            computeEnergyIntermediate(cfg, atom, ionFlux, exposureTime, ambientTemp, null, stats),
+                            computeEnergyIntermediate(cfg, atom, ion, ionFlux, 0.0, exposureTime, ambientTemp, null, stats),
                             stats, atom, cfg, exposureTime, ambientTemp
                     );
                 }
@@ -49,7 +62,9 @@ public class IntermediateResultEnrichmentService {
                     stats != null ? stats.ionFlux() : 0
             );
             if (ionFlux > 0) {
-                computed = computeEnergyIntermediate(cfg, atom, ionFlux, exposureTime, ambientTemp, base, stats);
+                computed = computeEnergyIntermediate(
+                        cfg, atom, ion, ionFlux, base.ionEnergyEv(), exposureTime, ambientTemp, base, stats
+                );
             }
         }
 
@@ -68,7 +83,7 @@ public class IntermediateResultEnrichmentService {
         SimulationIntermediateResultDto base = fromResultEntity(r);
         PhysicsStats stats = physicsStatsFromResult(r);
 
-        return enrich(base, stats, r.getAtom(), cfg, exposureTime, ambient);
+        return enrich(base, stats, r.getAtom(), r.getIon(), cfg, exposureTime, ambient);
     }
 
     public SimulationIntermediateResultDto enrichForSave(
@@ -81,7 +96,7 @@ public class IntermediateResultEnrichmentService {
             double ambientTemp
     ) {
         SimulationIntermediateResultDto merged = merge(fromClient, fromSimulation);
-        return enrich(merged, stats, atom, cfg, exposureTime, ambientTemp);
+        return enrich(merged, stats, atom, null, cfg, exposureTime, ambientTemp);
     }
 
     public PhysicsStats mergeStats(PhysicsStats stats, SimulationIntermediateResultDto intermediate) {
@@ -101,13 +116,13 @@ public class IntermediateResultEnrichmentService {
                 pick(intermediate.finalProbeTemperature(), stats.finalProbeTemperature()),
                 pick(intermediate.debyeFrontSpeed(), stats.debyeFrontSpeed()),
                 pick(intermediate.debyeFrontDepth(), stats.debyeFrontDepth()),
-                stats.fluence(),
+                pickPositive(intermediate.integratedFluence(), stats.fluence()),
                 stats.fluenceEff(),
                 pick(intermediate.ionFlux(), stats.ionFlux()),
                 pick(intermediate.energyGainFactor(), stats.energyGainFactor()),
                 pick(intermediate.plasmaCorrectionFactor(), stats.plasmaCorrectionFactor()),
-                pick(intermediate.exposureRate(), stats.exposureRate()),
-                pick(intermediate.modifiedLayerThickness(), stats.modifiedLayerThickness()),
+                pickPositive(intermediate.exposureRate(), stats.exposureRate()),
+                pickPositive(intermediate.modifiedLayerThickness(), stats.modifiedLayerThickness()),
                 pick(intermediate.skinDepth(), stats.skinDepth()),
                 pick(intermediate.skinSurfacePower(), stats.skinSurfacePower()),
                 pick(intermediate.skinAccumulatedEnergy(), stats.skinAccumulatedEnergy()),
@@ -164,28 +179,35 @@ public class IntermediateResultEnrichmentService {
     private SimulationIntermediateResultDto computeEnergyIntermediate(
             PlasmaConfiguration cfg,
             AtomList atom,
+            Ion ion,
             double ionFlux,
+            double ionEnergyEvHint,
             double exposureTime,
             double ambientTemp,
             SimulationIntermediateResultDto base,
             PhysicsStats stats
     ) {
         PlasmaConfiguration cfgForSkin = copyWithMinimumObliquity(cfg);
+
+        double ionEnergyResolved = ionEnergyEvHint > 0
+                ? ionEnergyEvHint
+                : base != null && base.ionEnergyEv() > 0
+                ? base.ionEnergyEv()
+                : Math.max(
+                        nz(cfg.getIonEnergyOverride(), 0.0),
+                        Math.max(nz(cfg.getVoltage(), 0.0), 1.0)
+                );
+
         EnergyDepositionResult e = energyDepositionService.compute(
                 cfgForSkin,
                 atom,
+                resolveIon(ion),
                 ionFlux,
+                ionEnergyResolved,
                 exposureTime,
                 ambientTemp,
                 t -> 1.0
         );
-
-        double ionEnergyResolved = base != null && base.ionEnergyEv() > 0
-                ? base.ionEnergyEv()
-                : Math.max(
-                        nz(cfg.getIonEnergyOverride(), 0.0),
-                        Math.max(nz(cfg.getVoltage(), 0.0) * 1e-6, 1e-6)
-                );
 
         return new SimulationIntermediateResultDto(
                 ionEnergyResolved,
@@ -255,7 +277,8 @@ public class IntermediateResultEnrichmentService {
 
         double layerThickness = dto.modifiedLayerThickness();
         if (layerThickness <= 0 && dto.integratedFluence() > 0) {
-            layerThickness = 5.0e-12 * dto.integratedFluence() * 0.35;
+            double bracket = Math.max(0.05, 1.0 + 2.0e-4 * tEff);
+            layerThickness = 5.0e-12 * dto.integratedFluence() * 0.35 * bracket;
         }
 
         double mp = dto.plasmaCorrectionFactor();
@@ -600,6 +623,16 @@ public class IntermediateResultEnrichmentService {
                 pick(client.latticeStiffness(), simulation.latticeStiffness()),
                 pick(client.equilibriumDistance(), simulation.equilibriumDistance())
         );
+    }
+
+    private static Ion resolveIon(Ion ion) {
+        if (ion != null) {
+            return ion;
+        }
+        Ion fallback = new Ion();
+        fallback.setCharge(1);
+        fallback.setMass(6.63e-26);
+        return fallback;
     }
 
     private boolean needsEnergyDeposition(SimulationIntermediateResultDto dto) {
