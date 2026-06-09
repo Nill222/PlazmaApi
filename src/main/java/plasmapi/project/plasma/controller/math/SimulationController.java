@@ -38,14 +38,17 @@ public class SimulationController {
             @Valid @RequestBody SimulationRequest request) {
 
         SimulationResult result = simulationService.runSimulation(request);
+        int configId = request.getConfigId() != null ? request.getConfigId() : 1;
+        ResultDTO savedResult = resultService.saveFromSimulation(result, configId).orElseThrow();
         SimulationRunResponse response = SimulationRunResponse.from(
                 result,
                 simulationResultMapper.toIntermediateDto(result.getIntermediate()),
-                intermediateEnrichment
+                intermediateEnrichment,
+                savedResult
         );
         ApiResponse<SimulationRunResponse> resp = new ApiResponse<>(
                 response,
-                "Симуляция выполнена",
+                "Симуляция выполнена и сохранена",
                 HttpStatus.OK.value()
         );
         return ResponseEntity.ok(resp);
@@ -71,12 +74,18 @@ public class SimulationController {
             @RequestParam Integer configId
     ) {
         SimulationResult simulation = simulationService.runSimulation(request);
-        Optional<ResultDTO> saved = resultService.saveFromSimulation(simulation, configId);
+        ResultDTO saved = resultService.saveFromSimulation(simulation, configId).orElseThrow();
+        SimulationRunResponse response = SimulationRunResponse.from(
+                simulation,
+                simulationResultMapper.toIntermediateDto(simulation.getIntermediate()),
+                intermediateEnrichment,
+                saved
+        );
 
         ApiResponse<Map<String, Object>> resp = new ApiResponse<>(
                 Map.of(
-                        "simulation", simulation,
-                        "saved", saved.orElseThrow()
+                        "simulation", response,
+                        "saved", saved
                 ),
                 "Симуляция выполнена и сохранена",
                 HttpStatus.OK.value()

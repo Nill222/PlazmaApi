@@ -7,6 +7,7 @@ import plasmapi.project.plasma.model.res.PlasmaConfiguration;
 import plasmapi.project.plasma.service.math.PhysicsStats;
 import plasmapi.project.plasma.service.math.diffusion.DiffusionProfile;
 import plasmapi.project.plasma.service.math.plazma.PlasmaResult;
+import plasmapi.project.plasma.dto.logikDTO.result.ResultDTO;
 import plasmapi.project.plasma.service.math.energy.IntermediateResultEnrichmentService;
 import plasmapi.project.plasma.service.math.simulation.SimulationResult;
 
@@ -22,12 +23,14 @@ public record SimulationRunResponse(
         PlasmaConfiguration plasmaConfig,
         PhysicsStats stats,
         PlasmaResult plasmaResult,
-        SimulationIntermediateResultDto intermediate
+        SimulationIntermediateResultDto intermediate,
+        ResultDTO savedResult
 ) {
     public static SimulationRunResponse from(
             SimulationResult result,
             SimulationIntermediateResultDto intermediate,
-            IntermediateResultEnrichmentService enrichment
+            IntermediateResultEnrichmentService enrichment,
+            ResultDTO savedResult
     ) {
         double exposureTime = result.getPlasmaConfig().getExposureTime() != null
                 ? result.getPlasmaConfig().getExposureTime()
@@ -54,7 +57,8 @@ public record SimulationRunResponse(
                 result.getPlasmaConfig(),
                 enrichedStats,
                 result.getPlasmaResult(),
-                enriched
+                enriched,
+                savedResult
         );
     }
 }

@@ -14,6 +14,8 @@ import java.util.List;
 @Getter
 @Setter
 public class SimulationRequest {
+    /** ID конфигурации (configs.id) для сохранения результата в БД; по умолчанию 1 */
+    private Integer configId;
     private Integer atomId;           // например, "Cr(II) - Chromium"
     private Integer ionId;            // например, "O2 (+2)"
     private double voltage;            // В
