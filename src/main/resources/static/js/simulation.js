@@ -393,6 +393,7 @@ const ION_PRESETS = {
 
 const SimulationState = {
     currentResult: null,
+    savedResultId: null,
     currentRequest: null,
     alloyComponents: [],
     ionComponents: [],
@@ -1108,6 +1109,7 @@ const FormHandler = {
         const primaryIon = SimulationState.ionComponents[0];
 
         const requestData = {
+            configId: 1,
             atomId: Number(primaryAtom.atomId),
             ionId: Number(primaryIon.ionId),
             voltage: parseFloat(getField('voltage')),
@@ -1125,13 +1127,18 @@ const FormHandler = {
         };
 
         try {
+            SimulationState.savedResultId = null;
             SimulationUI.showLoading();
             const result = await SimulationAPI.run(requestData);
             SimulationState.currentResult = result;
             SimulationState.currentRequest = requestData;
+            SimulationState.savedResultId = result.savedResult?.id ?? null;
             SimulationUI.showResults();
             SimulationUI.fillResults(result, requestData);
-            window.PlasmaAnimations?.ToastNotifications.show('Симуляция выполнена успешно!', 'success', 3000);
+            const saveHint = SimulationState.savedResultId
+                ? ` (сохранено #${SimulationState.savedResultId})`
+                : '';
+            window.PlasmaAnimations?.ToastNotifications.show(`Симуляция выполнена успешно!${saveHint}`, 'success', 3000);
         } catch (error) {
             console.error('[Simulation] Error:', error);
             SimulationUI.showError(error instanceof Error ? error.message : 'Ошибка выполнения симуляции');
@@ -1193,6 +1200,17 @@ const FormHandler = {
 window.saveResults = async (silent = false) => {
     if (!SimulationState.currentResult) {
         if (!silent) window.PlasmaAnimations?.ToastNotifications.show('Нет результатов для сохранения', 'error');
+        return;
+    }
+
+    if (SimulationState.savedResultId) {
+        if (!silent) {
+            window.PlasmaAnimations?.ToastNotifications.show(
+                `Результат уже сохранён (#${SimulationState.savedResultId})`,
+                'info',
+                4000
+            );
+        }
         return;
     }
 
@@ -1468,6 +1486,7 @@ const AutoGenerationManager = {
 
                 const gen = this.generateParams(preset);
                 const requestData = {
+                    configId: 1,
                     atomId: Number(runAlloy[0].atomId),
                     ionId: Number(runIons[0].ionId),
                     voltage: gen.voltage, current: gen.current, pressure: gen.pressure,
@@ -1481,17 +1500,11 @@ const AutoGenerationManager = {
                 const result = await SimulationAPI.run(requestData);
                 SimulationState.currentResult = result;
                 SimulationState.currentRequest = requestData;
-
-                const prevAlloy = SimulationState.alloyComponents;
-                const prevIons = SimulationState.ionComponents;
-                SimulationState.alloyComponents = runAlloy;
-                SimulationState.ionComponents = runIons;
-
-                await window.saveResults(true);
-
-                SimulationState.alloyComponents = prevAlloy;
-                SimulationState.ionComponents = prevIons;
-                SimulationState.autoGenResults.push({ request: requestData, result });
+                SimulationState.autoGenResults.push({
+                    request: requestData,
+                    result,
+                    savedResultId: result.savedResult?.id ?? null
+                });
                 this.updateProgress(i, count, `Сохранено ${i}/${count}`);
 
             } catch (err) {
