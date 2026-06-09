@@ -18,11 +18,12 @@ const AUTOGEN_PRESETS = {
         depth: [0.55, 0.55],
         time: [1800, 1800],
         angle: [0, 60],
-        ambient: [300, 300],
+        ambient: [273, 313],
         electrodeDistance: [0.55, 0.55]
+
     },
     medium: {
-        voltage: [700, 1200],
+        voltage: [800, 1200],
         current: [0.05, 0.1],
         pressure: [5, 15],
         et: [4000, 4000],
@@ -30,7 +31,7 @@ const AUTOGEN_PRESETS = {
         depth: [0.55, 0.55],
         time: [1800, 1800],
         angle: [0, 60],
-        ambient: [300, 300],
+        ambient: [273, 313],
         electrodeDistance: [0.55, 0.55]
     },
     high: {
@@ -42,7 +43,7 @@ const AUTOGEN_PRESETS = {
         depth: [0.55, 0.55],
         time: [1800, 1800],
         angle: [0, 60],
-        ambient: [300, 300],
+        ambient: [273, 313],
         electrodeDistance: [0.55, 0.55]
     },
     custom: {
@@ -54,7 +55,7 @@ const AUTOGEN_PRESETS = {
         depth: [0.55, 0.55],
         time: [600, 3600],
         angle: [0, 90],
-        ambient: [280, 300],
+        ambient: [273, 313],
         electrodeDistance: [0.55, 0.55]
     }
 };

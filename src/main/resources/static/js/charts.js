@@ -46,146 +46,846 @@ const EXPORT_CONFIG = Object.freeze({
     ],
 });
 
+
+// ─────────────────────────────────────────────────────────────
+// PRESSURE & VOLTAGE INFO HELPERS
+// ─────────────────────────────────────────────────────────────
+
+function getPressureRangeForChart(data, chartId) {
+    const config = CHART_CONFIGS[chartId];
+    if (!config) return null;
+
+    const pressureValues = DataLoader.extractValues(data, 'pressure')
+        .filter(p => Number.isFinite(p) && p > 0);
+
+    if (!pressureValues.length) return null;
+
+    const min = Math.min(...pressureValues);
+    const max = Math.max(...pressureValues);
+
+    return {
+        min,
+        max,
+        label: min === max
+            ? `${min.toFixed(2)} Па`
+            : `${min.toFixed(2)} – ${max.toFixed(2)} Па`
+    };
+}
+
+function getVoltageRangeForChart(data, chartId) {
+    const config = CHART_CONFIGS[chartId];
+    if (!config) return null;
+
+    const voltageValues = DataLoader.extractValues(data, 'voltage')
+        .filter(v => Number.isFinite(v) && v > 0);
+
+    if (!voltageValues.length) return null;
+
+    const min = Math.min(...voltageValues);
+    const max = Math.max(...voltageValues);
+
+    return {
+        min,
+        max,
+        label: min === max
+            ? `${min.toFixed(0)} В`
+            : `${min.toFixed(0)} – ${max.toFixed(0)} В`
+    };
+}
+
+function getVoltageByPressureRanges(data) {
+    const pressureValues = DataLoader.extractValues(data, 'pressure');
+    const voltageValues = DataLoader.extractValues(data, 'voltage');
+
+    const ranges = [
+        { label: '0.1 – 5 Па', min: 0.1, max: 5 },
+        { label: '5 – 15 Па', min: 5, max: 15 },
+        { label: '15 – 100 Па', min: 15, max: 100 },
+    ];
+
+    const result = [];
+
+    for (const range of ranges) {
+        const indices = pressureValues
+            .map((p, i) => ({ p, v: voltageValues[i], i }))
+            .filter(item =>
+                Number.isFinite(item.p) &&
+                Number.isFinite(item.v) &&
+                item.p >= range.min &&
+                item.p <= range.max &&
+                item.v > 0
+            );
+
+        if (indices.length) {
+            const voltages = indices.map(item => item.v);
+            const vMin = Math.min(...voltages);
+            const vMax = Math.max(...voltages);
+
+            result.push({
+                pressureLabel: range.label,
+                voltageLabel: `${vMin.toFixed(0)} – ${vMax.toFixed(0)} В`,
+                vMin,
+                vMax,
+                count: indices.length,
+            });
+        }
+    }
+
+    return result;
+}
+
+function getGlobalRanges(data) {
+    const PARAMS = [
+        { key: 'pressure',       label: 'Давление',       unit: 'Па',    icon: 'fa-compress-arrows-alt', badge: 'badge-pressure'       },
+        { key: 'voltage',        label: 'Напряжение',      unit: 'В',     icon: 'fa-bolt',                badge: 'badge-voltage'        },
+        { key: 'depths',         label: 'Глубина',         unit: 'м',     icon: 'fa-layer-group',         badge: 'badge-depths'         },
+        { key: 'avgT',           label: 'Температура',     unit: '°K',    icon: 'fa-thermometer-half',    badge: 'badge-avgT'           },
+        { key: 'ionEnergy',      label: 'Энергия иона',    unit: 'эВ',    icon: 'fa-fire',                badge: 'badge-ionEnergy'      },
+        { key: 'currentDensity', label: 'Плотность тока',  unit: 'А/м²',  icon: 'fa-wave-square',         badge: 'badge-currentDensity' },
+        { key: 'fluence',        label: 'Флюенс',          unit: 'м⁻²',   icon: 'fa-clock',               badge: 'badge-fluence'        },
+        { key: 'fluenceEff',     label: 'Эфф. флюенс',     unit: 'м⁻²',   icon: 'fa-bullseye',            badge: 'badge-fluenceEff'     },
+    ];
+
+    return PARAMS.map(param => {
+        const values = DataLoader.extractValues(data, param.key)
+            .filter(v => Number.isFinite(v) && v > 0);
+        if (!values.length) return null;
+
+        const min = Math.min(...values);
+        const max = Math.max(...values);
+
+        return {
+            ...param,
+            rangeStr: min === max
+                ? `${min.toExponential(2)} ${param.unit}`
+                : `${min.toExponential(2)} – ${max.toExponential(2)} ${param.unit}`,
+        };
+    }).filter(Boolean);
+}
+
+
 // ─────────────────────────────────────────────────────────────
 // CHART CONFIGS (85 шт.)
 // ─────────────────────────────────────────────────────────────
 
 const CHART_CONFIGS = {
-    1:  { xKey:'pressure', yKey:'electronDensity', zKey:'voltage', xLabel:'Давление (Па)', yLabel:'Плотность электронов (м⁻³)', zLabel:'Напряжение (В)', title:'Плотность электронов от давления', category:'plasma' },
-    3:  { xKey:'voltage', yKey:'currentDensity', zKey:'ionEnergy', xLabel:'Напряжение (В)', yLabel:'Плотность тока (А/м²)', zLabel:'Энергия ионов (Дж)', title:'Плотность тока от напряжения', category:'plasma' },
-    4:  { xKey:'voltage', yKey:'electronTemperature', zKey:'currentDensity', xLabel:'Напряжение (В)', yLabel:'Температура электронов (°K)', zLabel:'Плотность тока (А/м²)', title:'Температура электронов', category:'thermal' },
-    5:  { xKey:'totalTransferredEnergy',yKey:'depths', zKey:'avgT', xLabel:'Общая переданная энергия (Дж)', yLabel:'Глубина слоя (м)', zLabel:'Средняя температура (°K)', title:'Температура от энергии и глубины', category:'thermal' },
-    6:  { xKey:'voltage', yKey:'depths', zKey:'avgT', xLabel:'Напряжение (В)', yLabel:'Глубина слоя (м)', zLabel:'Средняя температура (°K)', title:'Температура от напряжения и глубины', category:'thermal' },
-    7:  { xKey:'pressure', yKey:'depths', zKey:'avgT', xLabel:'Давление (Па)', yLabel:'Глубина слоя (м)', zLabel:'Средняя температура (°K)', title:'Температура от давления и глубины', category:'thermal' },
-    8:  { xKey:'currentDensity', yKey:'depths', zKey:'avgT', xLabel:'Плотность тока (А/м²)', yLabel:'Глубина слоя (м)', zLabel:'Средняя температура (°K)', title:'Температура от плотности тока и глубины', category:'thermal' },
-    9:  { xKey:'voltage', yKey:'currentDensity', zKey:'totalTransferredEnergy', xLabel:'Напряжение (В)', yLabel:'Плотность тока (А/м²)', zLabel:'Полная энергия (Дж)', title:'Полная энергия от напряжения и плотности тока', category:'energy' },
-    10: { xKey:'voltage', yKey:'avgTransferredPerAtom', zKey:'concentration', xLabel:'Напряжение (В)', yLabel:'Средняя переданная энергия на атом (эВ)', zLabel:'Концентрация (м⁻³)', title:'Энергия на атом от напряжения и температуры', category:'energy' },
-    11: { xKey:'voltage', yKey:'ionEnergy', zKey:'concentration', xLabel:'Напряжение (В)', yLabel:'Энергия иона (эВ)', zLabel:'Концентрация (м⁻³)', title:'Энергия иона от напряжения и концентрации', category:'energy' },
-    12: { xKey:'diffusionCoefficient1', yKey:'totalTransferredEnergy', zKey:'avgT', xLabel:'D₁ (м²/с)', yLabel:'Полная переданная энергия (эВ)', zLabel:'Средняя температура (°K)', title:'D₁ от температуры и энергии', category:'diffusion' },
-    13: { xKey:'totalTransferredEnergy', yKey:'totalDamage', zKey:'avgT', xLabel:'Переданная энергия (эВ)', yLabel:'Суммарные повреждения (дефекты/м²)', zLabel:'Средняя температура (°K)', title:'Энергия → Повреждения при разных температурах', category:'damage' },
-    14: { xKey:'totalTransferredEnergy', yKey:'voltage', zKey:'avgT', xLabel:'Полная переданная энергия (эВ)', yLabel:'Напряжение (В)', zLabel:'Средняя температура (°K)', title:'Энергия от температуры и напряжения', category:'energy' },
-    15: { xKey:'pressure', yKey:'totalTransferredEnergy', zKey:'avgT', xLabel:'Давление (Па)', yLabel:'Полная переданная энергия (эВ)', zLabel:'Средняя температура (°K)', title:'Энергия от давления и температуры', category:'energy' },
-    16: { xKey:'diffusionCoefficient1', yKey:'voltage', zKey:'avgT', xLabel:'D₁ (м²/с)', yLabel:'Напряжение (В)', zLabel:'Средняя температура (°K)', title:'D₁ от температуры и напряжения', category:'diffusion' },
-    17: { xKey:'diffusionCoefficient2', yKey:'voltage', zKey:'avgT', xLabel:'D₂ (м²/с)', yLabel:'Напряжение (В)', zLabel:'Средняя температура (°K)', title:'D₂ от температуры и напряжения', category:'diffusion' },
-    18: { xKey:'diffusionCoefficient1', yKey:'diffusionCoefficient2', zKey:'avgT', xLabel:'D₁ (м²/с)', yLabel:'D₂ (м²/с)', zLabel:'Средняя температура (°K)', title:'Сравнение D₁ и D₂ при разных температурах', category:'diffusion' },
-    19: { xKey:'voltage', yKey:'diffusionCoefficient1', zKey:'avgT', xLabel:'Напряжение (В)', yLabel:'Термическая диффузия D (м²/с)', zLabel:'Средняя температура (°K)', title:'Диффузия D₁ от напряжения и температуры', category:'diffusion' },
-    20: { xKey:'diffusionCoefficient1', yKey:'diffusionCoefficient2', zKey:'avgT', xLabel:'D₁ (м²/с)', yLabel:'D₂ (м²/с)', zLabel:'Средняя температура (°K)', title:'Сравнение D₁ и D₂ при разных температурах после SLR', category:'diffusion' },
-    21: { xKey:'totalTransferredEnergy', yKey:'totalDamage', zKey:'avgT', xLabel:'Переданная энергия (эВ)', yLabel:'Суммарные повреждения (дефекты/м²)', zLabel:'Средняя температура (°K)', title:'Повреждения от энергии и температуры', category:'damage' },
-    22: { xKey:'totalTransferredEnergy', yKey:'totalMomentum', zKey:'totalDamage', xLabel:'Переданная энергия (эВ)', yLabel:'Суммарный импульс (кг·м/с)', zLabel:'Суммарные повреждения (дефекты/м²)', title:'Импульс от энергии и повреждений', category:'damage' },
-    23: { xKey:'totalMomentum', yKey:'totalDisplacement', zKey:'totalDamage', xLabel:'Суммарный импульс (кг·м/с)', yLabel:'Суммарное смещение (м)', zLabel:'Суммарные повреждения (дефекты/м²)', title:'Смещение от импульса и повреждений', category:'damage' },
-    24: { xKey:'totalDamage', yKey:'voltage', zKey:'avgT', xLabel:'Суммарные повреждения (дефекты/м²)', yLabel:'Напряжение (В)', zLabel:'Средняя температура (°K)', title:'Повреждения от температуры и напряжения', category:'damage' },
-    25: { xKey:'voltage', yKey:'currentDensity', zKey:'depths', xLabel:'Напряжение (В)', yLabel:'Плотность тока (А/м²)', zLabel:'Глубина проникновения (м)', title:'V · j → Глубина проникновения ионов', category:'plasma' },
-    26: { xKey:'voltage', yKey:'currentDensity', zKey:'ionEnergy', xLabel:'Напряжение (В)', yLabel:'Плотность тока (А/м²)', zLabel:'Энергия ионов (Дж)', title:'V · j → Суммарная переданная энергия', category:'energy' },
-    27: { xKey:'avgT', yKey:'pressure', zKey:'concentration', xLabel:'Средняя температура (°K)', yLabel:'Давление (Па)', zLabel:'Концентрация (м⁻³)', title:'T · P → Концентрация', category:'plasma' },
-    28: { xKey:'avgT', yKey:'voltage', zKey:'totalDamage', xLabel:'Средняя температура (°K)', yLabel:'Напряжение (В)', zLabel:'Суммарные повреждения (дефекты/м²)', title:'T · V → Суммарные повреждения', category:'damage' },
-    29: { xKey:'electronDensity', yKey:'electronTemperature', zKey:'pressure', xLabel:'Плотность электронов (м⁻³)', yLabel:'Температура электронов (°K)', zLabel:'Давление (Па)', title:'Давление от параметров плазмы', category:'plasma' },
-    30: { xKey:'ionEnergy', yKey:'electronTemperature', zKey:'electronDensity', xLabel:'Энергия иона (эВ)', yLabel:'Температура электронов (°K)', zLabel:'Плотность электронов (м⁻³)', title:'Плотность электронов от энергетики', category:'plasma' },
-    32: { xKey:'pressure', yKey:'electronTemperature', zKey:'currentDensity', xLabel:'Давление (Па)', yLabel:'Температура электронов (°K)', zLabel:'Плотность тока (А/м²)', title:'Ток от термодинамических параметров плазмы', category:'plasma' },
-    33: { xKey:'voltage', yKey:'pressure', zKey:'electronDensity', xLabel:'Напряжение (В)', yLabel:'Давление (Па)', zLabel:'Плотность электронов (м⁻³)', title:'Разрядные характеристики: V·P → n_e', category:'plasma' },
-    34: { xKey:'ionEnergy', yKey:'avgTransferredPerAtom', zKey:'totalTransferredEnergy', xLabel:'Энергия иона (эВ)', yLabel:'Энергия на атом (эВ)', zLabel:'Полная переданная энергия (Дж)', title:'Баланс энергии: ион → атом → полная', category:'energy' },
-    36: { xKey:'currentDensity', yKey:'avgTransferredPerAtom', zKey:'concentration', xLabel:'Плотность тока (А/м²)', yLabel:'Энергия на атом (эВ)', zLabel:'Концентрация дефектов (м⁻³)', title:'Концентрация от энергопередачи', category:'energy' },
-    37: { xKey:'totalMomentum', yKey:'ionEnergy', zKey:'totalTransferredEnergy', xLabel:'Суммарный импульс (кг·м/с)', yLabel:'Энергия иона (эВ)', zLabel:'Полная переданная энергия (Дж)', title:'Связь импульса и энергии в столкновениях', category:'energy' },
-    38: { xKey:'totalTransferredEnergy', yKey:'depths', zKey:'concentration', xLabel:'Полная переданная энергия (Дж)', yLabel:'Глубина (м)', zLabel:'Концентрация (м⁻³)', title:'Профиль концентрации от энергии и глубины', category:'energy' },
-    39: { xKey:'avgTransferredPerAtom', yKey:'pressure', zKey:'totalDamage', xLabel:'Энергия на атом (эВ)', yLabel:'Давление (Па)', zLabel:'Суммарные повреждения (дефекты/м²)', title:'Повреждения от энергии на атом и давления', category:'damage' },
-    40: { xKey:'totalDamage', yKey:'totalDisplacement', zKey:'concentration', xLabel:'Суммарные повреждения (дефекты/м²)', yLabel:'Суммарное смещение (м)', zLabel:'Концентрация дефектов (м⁻³)', title:'Концентрация от повреждений и смещений', category:'damage' },
-    41: { xKey:'totalMomentum', yKey:'totalDamage', zKey:'avgT', xLabel:'Суммарный импульс (кг·м/с)', yLabel:'Суммарные повреждения (дефекты/м²)', zLabel:'Средняя температура (°K)', title:'Температурные эффекты от импульса и повреждений', category:'damage' },
-    42: { xKey:'currentDensity', yKey:'totalDamage', zKey:'totalTransferredEnergy', xLabel:'Плотность тока (А/м²)', yLabel:'Суммарные повреждения (дефекты/м²)', zLabel:'Полная переданная энергия (Дж)', title:'Энергетический баланс при дефектообразовании', category:'damage' },
-    43: { xKey:'ionEnergy', yKey:'totalDisplacement', zKey:'totalDamage', xLabel:'Энергия иона (эВ)', yLabel:'Суммарное смещение (м)', zLabel:'Суммарные повреждения (дефекты/м²)', title:'Каскады смещений от энергии иона', category:'damage' },
-    44: { xKey:'voltage', yKey:'totalDisplacement', zKey:'depths', xLabel:'Напряжение (В)', yLabel:'Суммарное смещение (м)', zLabel:'Глубина проникновения (м)', title:'Глубина проникновения дефектов', category:'damage' },
-    45: { xKey:'pressure', yKey:'totalDamage', zKey:'totalDisplacement', xLabel:'Давление (Па)', yLabel:'Суммарные повреждения (дефекты/м²)', zLabel:'Суммарное смещение (м)', title:'Влияние давления на смещения', category:'damage' },
-    46: { xKey:'avgT', yKey:'totalDamage', zKey:'diffusionCoefficient1', xLabel:'Средняя температура (°K)', yLabel:'Суммарные повреждения (дефекты/м²)', zLabel:'Кф диффузии D₁ (м²/с)', title:'Термоактивированная диффузия в повреждённом материале', category:'diffusion' },
-    47: { xKey:'avgT', yKey:'concentration', zKey:'diffusionCoefficient1', xLabel:'Средняя температура (°K)', yLabel:'Концентрация (м⁻³)', zLabel:'Кф диффузии D₁ (м²/с)', title:'Классическая зависимость D(T, C)', category:'diffusion' },
-    48: { xKey:'totalTransferredEnergy', yKey:'diffusionCoefficient1', zKey:'concentration', xLabel:'Полная переданная энергия (Дж)', yLabel:'Кф диффузии D₁ (м²/с)', zLabel:'Концентрация (м⁻³)', title:'Радиационно-ускоренная диффузия', category:'diffusion' },
-    49: { xKey:'diffusionCoefficient1', yKey:'depths', zKey:'concentration', xLabel:'Кф диффузии D₁ (м²/с)', yLabel:'Глубина (м)', zLabel:'Концентрация (м⁻³)', title:'Диффузионный профиль концентрации', category:'diffusion' },
-    50: { xKey:'avgT', yKey:'diffusionCoefficient2', zKey:'totalDamage', xLabel:'Средняя температура (°K)', yLabel:'Кф диффузии D₂ (м²/с)', zLabel:'Суммарные повреждения (дефекты/м²)', title:'Вторая мода диффузии и дефекты', category:'diffusion' },
-    51: { xKey:'pressure', yKey:'avgT', zKey:'diffusionCoefficient1', xLabel:'Давление (Па)', yLabel:'Средняя температура (°K)', zLabel:'Кф диффузии D₁ (м²/с)', title:'Термобарическая диффузия', category:'diffusion' },
-    52: { xKey:'voltage', zKey:'totalTransferredEnergy', yKey:'diffusionCoefficient2', xLabel:'Напряжение (В)', zLabel:'Полная переданная энергия (Дж)', yLabel:'Кф диффузии D₂ (м²/с)', title:'Энергетическая стимуляция второй моды диффузии', category:'diffusion' },
-    53: { xKey:'ionEnergy', yKey:'pressure', zKey:'depths', xLabel:'Энергия иона (эВ)', yLabel:'Давление (Па)', zLabel:'Глубина проникновения (м)', title:'Пробег ионов от энергии и давления', category:'plasma' },
-    54: { xKey:'electronTemperature', yKey:'ionEnergy', zKey:'totalTransferredEnergy', xLabel:'Температура электронов (°K)', yLabel:'Энергия иона (эВ)', zLabel:'Полная переданная энергия (Дж)', title:'Энергообмен электрон-ион-атом', category:'energy' },
-    55: { xKey:'currentDensity', yKey:'totalTransferredEnergy', zKey:'avgT', xLabel:'Плотность тока (А/м²)', yLabel:'Полная переданная энергия (Дж)', zLabel:'Средняя температура (°K)', title:'Нагрев от плотности тока и энергопередачи', category:'thermal' },
-    56: { xKey:'voltage', yKey:'depths', zKey:'concentration', xLabel:'Напряжение (В)', yLabel:'Глубина (м)', zLabel:'Концентрация (м⁻³)', title:'Профиль концентрации от напряжения и глубины', category:'energy' },
-    58: { xKey:'totalMomentum', yKey:'avgT', zKey:'totalDisplacement', xLabel:'Суммарный импульс (кг·м/с)', yLabel:'Средняя температура (°K)', zLabel:'Суммарное смещение (м)', title:'Термоактивированные смещения', category:'damage' },
-    59: { xKey:'diffusionCoefficient1', yKey:'totalTransferredEnergy', zKey:'depths', xLabel:'Кф диффузии D₁ (м²/с)', yLabel:'Полная переданная энергия (Дж)', zLabel:'Глубина проникновения (м)', title:'Глубина диффузии от энергии', category:'diffusion' },
-    60: { xKey:'concentration', yKey:'avgT', zKey:'totalDamage', xLabel:'Концентрация (м⁻³)', yLabel:'Средняя температура (°K)', zLabel:'Суммарные повреждения (дефекты/м²)', title:'Отжиг дефектов', category:'damage' },
-    61: { xKey:'ionFlux', yKey:'fluence', zKey:'currentDensity', xLabel:'Поток ионов (м⁻²·с⁻¹)', yLabel:'Флюенс (м⁻²)', zLabel:'Плотность тока (А/м²)', title:'Накопление флюенса по потоку и плотности тока', category:'fluence' },
-    62: { xKey:'fluence', yKey:'totalDamage', zKey:'avgT', xLabel:'Флюенс (м⁻²)', yLabel:'Суммарные повреждения (дефекты/м²)', zLabel:'Средняя температура (°K)', title:'Повреждения от интегрального флюенса', category:'fluence' },
-    63: { xKey:'fluence', yKey:'concentration', zKey:'depths', xLabel:'Флюенс (м⁻²)', yLabel:'Концентрация (м⁻³)', zLabel:'Глубина (м)', title:'Профиль концентрации от флюенса', category:'fluence' },
-    64: { xKey:'fluence', yKey:'fluenceEff', zKey:'resonanceXi', xLabel:'Флюенс (м⁻²)', yLabel:'Эффективный флюенс (м⁻²)', zLabel:'Резонансный параметр ξ', title:'Эффективный флюенс: реальный vs усиленный', category:'fluence' },
-    65: { xKey:'voltage', yKey:'fluence', zKey:'ionFlux', xLabel:'Напряжение (В)', yLabel:'Флюенс (м⁻²)', zLabel:'Поток ионов (м⁻²·с⁻¹)', title:'Накопление дозы от режима разряда', category:'fluence' },
-    66: { xKey:'ionEnergy', yKey:'resonanceXi', zKey:'concentration', xLabel:'Энергия иона (эВ)', yLabel:'Резонансный параметр ξ', zLabel:'Концентрация (м⁻³)', title:'Резонансное усиление от энергии иона', category:'resonance' },
-    67: { xKey:'resonanceXi', yKey:'dRes', zKey:'diffusionCoefficient1', xLabel:'Резонансный параметр ξ', yLabel:'Резонансный вклад в D (м²/с)', zLabel:'D₁ (м²/с)', title:'Резонансный вклад в диффузию', category:'resonance' },
-    68: { xKey:'voltage', yKey:'resonanceXi', zKey:'pressure', xLabel:'Напряжение (В)', yLabel:'Резонансный параметр ξ', zLabel:'Давление (Па)', title:'Резонанс от параметров плазмы', category:'resonance' },
-    69: { xKey:'resonanceXi', yKey:'fluenceEff', zKey:'totalDamage', xLabel:'Резонансный параметр ξ', yLabel:'Эффективный флюенс (м⁻²)', zLabel:'Суммарные повреждения (дефекты/м²)', title:'Усиление флюенса и повреждения', category:'resonance' },
-    70: { xKey:'avgT', yKey:'resonanceXi', zKey:'dRes', xLabel:'Средняя температура (°K)', yLabel:'Резонансный параметр ξ', zLabel:'Резонансный вклад в D (м²/с)', title:'Температурная зависимость резонансной диффузии', category:'resonance' },
-    71: { xKey:'fluence', yKey:'dSlr', zKey:'totalDamage', xLabel:'Флюенс (м⁻²)', yLabel:'Вклад SLR в D (м²/с)', zLabel:'Суммарные повреждения (дефекты/м²)', title:'SLR-диффузия от флюенса и повреждений', category:'slr' },
-    72: { xKey:'dSlr', yKey:'diffusionCoefficient1', zKey:'avgT', xLabel:'Вклад SLR в D (м²/с)', yLabel:'D₁ (м²/с)', zLabel:'Средняя температура (°K)', title:'Вклад SLR в термическую диффузию', category:'slr' },
-    73: { xKey:'voltage', yKey:'dSlr', zKey:'currentDensity', xLabel:'Напряжение (В)', yLabel:'Вклад SLR в D (м²/с)', zLabel:'Плотность тока (А/м²)', title:'SLR от режима обработки', category:'slr' },
-    74: { xKey:'totalDamage', yKey:'dSlr', zKey:'fluenceEff', xLabel:'Суммарные повреждения (дефекты/м²)', yLabel:'Вклад SLR в D (м²/с)', zLabel:'Эффективный флюенс (м⁻²)', title:'Баллистическое перемешивание', category:'slr' },
-    75: { xKey:'pressure', yKey:'dSlr', zKey:'ionFlux', xLabel:'Давление (Па)', yLabel:'Вклад SLR в D (м²/с)', zLabel:'Поток ионов (м⁻²·с⁻¹)', title:'SLR от параметров потока', category:'slr' },
-    76: { xKey:'dSlr', yKey:'dRes', zKey:'diffusionCoefficient1', xLabel:'Вклад SLR в D (м²/с)', yLabel:'Резонансный вклад в D (м²/с)', zLabel:'D₁ (м²/с)', title:'Сравнение механизмов радиационной диффузии', category:'rad_diffusion' },
-    77: { xKey:'dSlr_plus_dRes', yKey:'diffusionCoefficient1', zKey:'avgT', xLabel:'Вклад SLR в D + Резонансный вклад в D (м²/с)', yLabel:'D₁ (м²/с)', zLabel:'Средняя температура (°K)', title:'Полная радиационная диффузия', category:'rad_diffusion' },
-    78: { xKey:'diffusionCoefficient1', yKey:'diffusionCoefficient2', zKey:'fluenceEff', xLabel:'D₁ (м²/с)', yLabel:'D₂ (м²/с)', zLabel:'Эффективный флюенс (м⁻²)', title:'Сравнение Кфов диффузии от флюенса', category:'rad_diffusion' },
-    79: { xKey:'ionEnergy', yKey:'dSlr_plus_dRes', zKey:'totalDamage', xLabel:'Энергия иона (эВ)', yLabel:'Вклад SLR в D + Резонансный вклад в D (м²/с)', zLabel:'Суммарные повреждения (дефекты/м²)', title:'Энергетическая стимуляция диффузии', category:'rad_diffusion' },
-    80: { xKey:'depths', yKey:'diffusionCoefficient1', zKey:'dRes', xLabel:'Глубина (м)', yLabel:'D₁ (м²/с)', zLabel:'Резонансный вклад в D (м²/с)', title:'Профиль радиационной диффузии', category:'rad_diffusion' },
-    81: { xKey:'ionFlux', yKey:'concentration', zKey:'depths', xLabel:'Поток ионов (м⁻²·с⁻¹)', yLabel:'Концентрация (м⁻³)', zLabel:'Глубина (м)', title:'Концентрация от ионного потока и глубины', category:'flux' },
-    82: { xKey:'ionFlux', yKey:'totalDamage', zKey:'avgT', xLabel:'Поток ионов (м⁻²·с⁻¹)', yLabel:'Суммарные повреждения (дефекты/м²)', zLabel:'Средняя температура (°K)', title:'Скорость дефектообразования', category:'flux' },
-    83: { xKey:'currentDensity', yKey:'ionFlux', zKey:'voltage', xLabel:'Плотность тока (А/м²)', yLabel:'Поток ионов (м⁻²·с⁻¹)', zLabel:'Напряжение (В)', title:'Связь электрического тока и ионного потока', category:'flux' },
-    84: { xKey:'ionFlux', yKey:'totalTransferredEnergy', zKey:'ionEnergy', xLabel:'Поток ионов (м⁻²·с⁻¹)', yLabel:'Полная переданная энергия (Дж)', zLabel:'Энергия иона (эВ)', title:'Мощность энергопередачи', category:'flux' },
-    85: { xKey:'ionFlux', yKey:'fluenceEffRatio', zKey:'resonanceXi', xLabel:'Поток ионов (м⁻²·с⁻¹)', yLabel:'Φ_eff / Φ', zLabel:'Резонансный параметр ξ', title:'Кф усиления потока', category:'flux' },
-    86: {
+    // ==================== PLASMA ====================
+    1: {
+        xKey: 'pressure',
+        yKey: 'electronDensity',
+        zKey: 'voltage',
+        xLabel: 'Давление (Па)',
+        yLabel: 'плотность электронов (м⁻³',
+        zLabel: 'Напряжение (В)',
+        title: 'Плотность электронов от давления',
+        category: 'plasma'
+    },
+    2: {
+        xKey: 'voltage',
+        yKey: 'currentDensity',
+        zKey: 'ionEnergy',
+        xLabel: 'Напряжение (В)',
+        yLabel: 'Плотность тока(А/м²)',
+        zLabel: 'E_иона (Дж)',
+        title: 'Плотность тока от напряжения',
+        category: 'plasma'
+    },
+    3: {
+        xKey: 'voltage',
+        yKey: 'currentDensity',
+        zKey: 'depths',
+        xLabel: 'Напряжение (В)',
+        yLabel: 'Плотность тока(А/м²)',
+        zLabel: 'Глубина (м)',
+        title: 'V · j → Глубина проникновения ионов',
+        category: 'plasma'
+    },
+    4: {
+        xKey: 'avgT',
+        yKey: 'pressure',
+        zKey: 'concentration',
+        xLabel: 'T (°K)',
+        yLabel: 'Давление (Па)',
+        zLabel: 'концентрация (м⁻³)',
+        title: 'T · P → Концентрация',
+        category: 'plasma'
+    },
+    8: {
+        xKey: 'voltage',
+        yKey: 'pressure',
+        zKey: 'electronDensity',
+        xLabel: 'Напряжение (В)',
+        yLabel: 'Давление (Па)',
+        zLabel: 'плотность электронов (м⁻³',
+        title: 'Разрядные характеристики: V·P → n_e',
+        category: 'plasma'
+    },
+    9: {
+        xKey: 'ionEnergy',
+        yKey: 'pressure',
+        zKey: 'depths',
+        xLabel: 'E_иона (эВ)',
+        yLabel: 'Давление (Па)',
+        zLabel: 'Глубина (м)',
+        title: 'Пробег ионов от энергии и давления',
+        category: 'plasma'
+    },
+    10: {
+        xKey: 'voltage',
+        zKey: 'depths',
+        yKey: 'concentration',
+        xLabel: 'Напряжение (В)',
+        zLabel: 'Глубина (м)',
+        yLabel: 'концентрация (м⁻³)',
+        title: 'Зависимость глубины упрочнённого слоя от напряжения и концентрации',
+        category: 'plasma'
+    },
+
+    // ==================== ENERGY ====================
+    11: {
+        xKey: 'voltage',
+        yKey: 'currentDensity',
+        zKey: 'totalTransferredEnergy',
+        xLabel: 'Напряжение (В)',
+        yLabel: 'Плотность тока(А/м²)',
+        zLabel: 'E_полн (Дж)',
+        title: 'Полная энергия от напряжения и плотности тока',
+        category: 'energy'
+    },
+    12: {
+        xKey: 'voltage',
+        zKey: 'avgTransferredPerAtom',
+        yKey: 'concentration',
+        xLabel: 'Напряжение (В)',
+        zLabel: 'Энергия/атом (эВ)',
+        yLabel: 'Концентрация (м⁻³)',
+        title: 'Энергия на атом от напряжения и концентрации',
+        category: 'energy'
+    },
+    13: {
+        xKey: 'voltage',
+        zKey: 'ionEnergy',
+        yKey: 'concentration',
+        xLabel: 'Напряжение (В)',
+        zLabel: 'E_иона (эВ)',
+        yLabel: 'Концентрация (м⁻³)',
+        title: 'Энергия иона от напряжения и концентрации',
+        category: 'energy'
+    },
+    14: {
+        zKey: 'totalTransferredEnergy',
+        yKey: 'voltage',
+        xKey: 'avgT',
+        zLabel: 'E_полн (эВ)',
+        yLabel: 'Напряжение (В)',
+        xLabel: 'T (°K)',
+        title: 'Энергия от температуры и напряжения',
+        category: 'energy'
+    },
+    15: {
+        xKey: 'pressure',
+        zKey: 'totalTransferredEnergy',
+        yKey: 'avgT',
+        xLabel: 'Давление (Па)',
+        zLabel: 'E_полн (эВ)',
+        yLabel: 'T (°K)',
+        title: 'Энергия от давления и температуры',
+        category: 'energy'
+    },
+    16: {
+        xKey: 'voltage',
+        yKey: 'currentDensity',
+        zKey: 'ionEnergy',
+        xLabel: 'Напряжение (В)',
+        yLabel: 'Плотность тока(А/м²)',
+        zLabel: 'E_иона (Дж)',
+        title: 'Энергия иона от напряжения и плотности тока',
+        category: 'energy'
+    },
+    17: {
+        xKey: 'ionEnergy',
+        yKey: 'avgTransferredPerAtom',
+        zKey: 'totalTransferredEnergy',
+        xLabel: 'E_иона (эВ)',
+        yLabel: 'Энергия/атом (эВ)',
+        zLabel: 'E_полн (Дж)',
+        title: 'Распределение энергии иона и энергии, переданной атомам мишени',
+        category: 'energy'
+    },
+    18: {
+        xKey: 'currentDensity',
+        zKey: 'avgTransferredPerAtom',
+        yKey: 'concentration',
+        xLabel: 'Плотность тока(А/м²)',
+        zLabel: 'Энергия/атом (эВ)',
+        yLabel: 'n_деф (м⁻³)',
+        title: 'Энергия/атом от плотности тока и концентрации',
+        category: 'energy'
+    },
+    19: {
+        xKey: 'totalMomentum',
+        yKey: 'ionEnergy',
+        zKey: 'totalTransferredEnergy',
+        xLabel: 'Импульс (кг·м/с)',
+        yLabel: 'E_иона (эВ)',
+        zLabel: 'E_полн (Дж)',
+        title: 'Связь импульса и энергий',
+        category: 'energy'
+    },
+    20: {
+        zKey: 'totalTransferredEnergy',
+        yKey: 'depths',
+        xKey: 'concentration',
+        zLabel: 'E_полн (Дж)',
+        yLabel: 'Глубина (м)',
+        xLabel: 'концентрация (м⁻³)',
+        title: 'Зависимость полной переданной энергии от концентрации и глубины',
+        category: 'energy'
+    },
+
+    // ==================== THERMAL ====================
+    21: {
+        xKey: 'totalTransferredEnergy',
+        yKey: 'depths',
+        zKey: 'avgT',
+        xLabel: 'E_перед (Дж)',
+        yLabel: 'Глубина (м)',
+        zLabel: 'T (°K)',
+        title: 'Температура от переданной энергии и глубины',
+        category: 'thermal'
+    },
+    22: {
+        xKey: 'voltage',
+        yKey: 'depths',
+        zKey: 'avgT',
+        xLabel: 'Напряжение (В)',
+        yLabel: 'Глубина (м)',
+        zLabel: 'T (°K)',
+        title: 'Температура от напряжения и глубины',
+        category: 'thermal'
+    },
+    23: {
+        xKey: 'pressure',
+        yKey: 'depths',
+        zKey: 'avgT',
+        xLabel: 'Давление (Па)',
+        yLabel: 'Глубина (м)',
+        zLabel: 'T (°K)',
+        title: 'Температура от давления и глубины',
+        category: 'thermal'
+    },
+    24: {
+        xKey: 'currentDensity',
+        yKey: 'depths',
+        zKey: 'avgT',
+        xLabel: 'Плотность тока(А/м²)',
+        yLabel: 'Глубина (м)',
+        zLabel: 'T (°K)',
+        title: 'Температура от плотности тока и глубины',
+        category: 'thermal'
+    },
+    25: {
+        xKey: 'currentDensity',
+        yKey: 'totalTransferredEnergy',
+        zKey: 'avgT',
+        xLabel: 'Плотность тока(А/м²)',
+        yLabel: 'E_полн (Дж)',
+        zLabel: 'T (°K)',
+        title: 'Нагрев от плотности тока и переданной энергии',
+        category: 'thermal'
+    },
+
+    // ==================== DIFFUSION ====================
+    26: {
+        zKey: 'diffusionCoefficient1',
+        yKey: 'totalTransferredEnergy',
+        xKey: 'avgT',
+        zLabel: 'D₁ (м²/с)',
+        yLabel: 'E_полн (эВ)',
+        xLabel: 'T (°K)',
+        title: 'D₁ от температуры и переданной энергии',
+        category: 'diffusion'
+    },
+    27: {
+        zKey: 'diffusionCoefficient1',
+        yKey: 'voltage',
+        xKey: 'avgT',
+        zLabel: 'D₁ (м²/с)',
+        yLabel: 'Напряжение (В)',
+        xLabel: 'T (°K)',
+        title: 'D₁ от температуры и напряжения',
+        category: 'diffusion'
+    },
+    28: {
+        zKey: 'diffusionCoefficient2',
+        yKey: 'voltage',
+        xKey: 'avgT',
+        zLabel: 'D₂ (м²/с)',
+        yLabel: 'Напряжение (В)',
+        xLabel: 'T (°K)',
+        title: 'D₂ от температуры и напряжения',
+        category: 'diffusion'
+    },
+    29: {
+        xKey: 'diffusionCoefficient1',
+        yKey: 'diffusionCoefficient2',
+        zKey: 'avgT',
+        xLabel: 'D₁ (м²/с)',
+        yLabel: 'D₂ (м²/с)',
+        zLabel: 'T (°K)',
+        title: 'Сравнение D₁ и D₂ при разных температурах',
+        category: 'diffusion'
+    },
+    30: {
+        xKey: 'voltage',
+        zKey: 'diffusionCoefficient1',
+        yKey: 'avgT',
+        xLabel: 'Напряжение (В)',
+        zLabel: 'D (м²/с)',
+        yLabel: 'T (°K)',
+        title: 'Диффузия D₁ от напряжения и температуры',
+        category: 'diffusion'
+    },
+    31: {
+        xKey: 'avgT',
+        yKey: 'totalDamage',
+        zKey: 'diffusionCoefficient1',
+        xLabel: 'T (°K)',
+        yLabel: 'Повреждения (деф/м²)',
+        zLabel: 'D₁ (м²/с)',
+        title: 'Зависимость коэффициента диффузии D₁ от температуры и повреждений',
+        category: 'diffusion'
+    },
+    32: {
+        xKey: 'avgT',
+        yKey: 'concentration',
+        zKey: 'diffusionCoefficient1',
+        xLabel: 'T (°K)',
+        yLabel: 'концентрация (м⁻³)',
+        zLabel: 'D₁ (м²/с)',
+        title: 'Зависимость коэффициента диффузии D₁ от температуры и концентрации',
+        category: 'diffusion'
+    },
+    33: {
+        xKey: 'totalTransferredEnergy',
+        zKey: 'diffusionCoefficient1',
+        yKey: 'concentration',
+        xLabel: 'E_полн (Дж)',
+        zLabel: 'D₁ (м²/с)',
+        yLabel: 'концентрация (м⁻³)',
+        title: 'Зависимость коэффициента диффузии D₁ от полной переданной энергии и концентрации',
+        category: 'diffusion'
+    },
+    34: {
+        zKey: 'diffusionCoefficient1',
+        yKey: 'depths',
+        xKey: 'concentration',
+        zLabel: 'D₁ (м²/с)',
+        yLabel: 'Глубина (м)',
+        xLabel: 'концентрация (м⁻³)',
+        title: 'Зависимость коэффициента диффузии D₁ от концентрации и глубины',
+        category: 'diffusion'
+    },
+    35: {
+        xKey: 'avgT',
+        zKey: 'diffusionCoefficient2',
+        yKey: 'totalDamage',
+        xLabel: 'T (°K)',
+        zLabel: 'D₂ (м²/с)',
+        yLabel: 'Повреждения (деф/м²)',
+        title: 'Зависимость коэффициента диффузии D₂ от температуры и повреждений',
+        category: 'diffusion'
+    },
+    36: {
+        xKey: 'pressure',
+        yKey: 'avgT',
+        zKey: 'diffusionCoefficient1',
+        xLabel: 'Давление (Па)',
+        yLabel: 'T (°K)',
+        zLabel: 'D₁ (м²/с)',
+        title: 'Зависимость коэффициента диффузии D₁ от давления и температуры',
+        category: 'diffusion'
+    },
+    37: {
+        xKey: 'voltage',
+        zKey: 'diffusionCoefficient2',
+        yKey: 'totalTransferredEnergy',
+        xLabel: 'Напряжение (В)',
+        zLabel: 'D₂ (м²/с)',
+        yLabel: 'E_полн (Дж)',
+        title: 'Зависимость коэффициента диффузии D₂ от напряжения и полной переданной энергии',
+        category: 'diffusion'
+    },
+    38: {
+        zKey: 'diffusionCoefficient1',
+        yKey: 'totalTransferredEnergy',
+        xKey: 'depths',
+        zLabel: 'D₁ (м²/с)',
+        yLabel: 'E_полн (Дж)',
+        xLabel: 'Глубина (м)',
+        title: 'Зависимость коэффициента диффузии D₁ от глубины и полной переданной энергии',
+        category: 'diffusion'
+    },
+
+    // ==================== DAMAGE ====================
+    39: {
+        xKey: 'totalTransferredEnergy',
+        zKey: 'totalDamage',
+        yKey: 'avgT',
+        xLabel: 'E_перед (эВ)',
+        zLabel: 'Повреждения (деф/м²)',
+        yLabel: 'T (°K)',
+        title: 'Зависимость повреждений от переданной энергии и температуры',
+        category: 'damage'
+    },
+    40: {
+        xKey: 'totalTransferredEnergy',
+        yKey: 'totalMomentum',
+        zKey: 'totalDamage',
+        xLabel: 'E_перед (эВ)',
+        yLabel: 'Импульс (кг·м/с)',
+        zLabel: 'Повреждения (деф/м²)',
+        title: 'Зависимость суммарных повреждений от переданной энергии и импульса',
+        category: 'damage'
+    },
+    41: {
+        xKey: 'totalMomentum',
+        yKey: 'totalDisplacement',
+        zKey: 'totalDamage',
+        xLabel: 'Импульс (кг·м/с)',
+        yLabel: 'Смещение (м)',
+        zLabel: 'Повреждения (деф/м²)',
+        title: 'Смещение от импульса и повреждений',
+        category: 'damage'
+    },
+    42: {
+        zKey: 'totalDamage',
+        yKey: 'voltage',
+        xKey: 'avgT',
+        zLabel: 'Повреждения (деф/м²)',
+        yLabel: 'Напряжение (В)',
+        xLabel: 'T (°K)',
+        title: 'Повреждения от температуры и напряжения',
+        category: 'damage'
+    },
+    43: {
+        xKey: 'avgTransferredPerAtom',
+        yKey: 'pressure',
+        zKey: 'totalDamage',
+        xLabel: 'Энергия/атом (эВ)',
+        yLabel: 'Давление (Па)',
+        zLabel: 'Повреждения (деф/м²)',
+        title: 'Повреждения от энергии на атом и давления',
+        category: 'damage'
+    },
+    44: {
+        zKey: 'totalDamage',
+        yKey: 'totalDisplacement',
+        xKey: 'concentration',
+        zLabel: 'Повреждения (деф/м²)',
+        yLabel: 'Смещение (м)',
+        xLabel: 'n_деф (м⁻³)',
+        title: 'Повреждения от концентрации и смещения',
+        category: 'damage'
+    },
+    45: {
+        xKey: 'totalMomentum',
+        zKey: 'totalDamage',
+        yKey: 'avgT',
+        xLabel: 'Импульс (кг·м/с)',
+        zLabel: 'Повреждения (деф/м²)',
+        yLabel: 'T (°K)',
+        title: 'Зависимость радиационных повреждений от переданного импульса и температуры',
+        category: 'damage'
+    },
+    46: {
+        xKey: 'currentDensity',
+        zKey: 'totalDamage',
+        yKey: 'totalTransferredEnergy',
+        xLabel: 'Плотность тока(А/м²)',
+        zLabel: 'Повреждения (деф/м²)',
+        yLabel: 'E_полн (Дж)',
+        title: 'Зависимость радиационных повреждений от плотности ионного тока и полной переданной энергии',
+        category: 'damage'
+    },
+    47: {
+        xKey: 'ionEnergy',
+        yKey: 'totalDisplacement',
+        zKey: 'totalDamage',
+        xLabel: 'E_иона (эВ)',
+        yLabel: 'Смещение (м)',
+        zLabel: 'Повреждения (деф/м²)',
+        title: 'Зависимость суммарных радиационных повреждений от энергии ионов и величины смещения атомов кристаллической решётки',
+        category: 'damage'
+    },
+    48: {
+        xKey: 'voltage',
+        yKey: 'totalDisplacement',
+        zKey: 'depths',
+        xLabel: 'Напряжение (В)',
+        yLabel: 'Смещение (м)',
+        zLabel: 'Глубина (м)',
+        title: 'Глубина проникновения дефектов',
+        category: 'damage'
+    },
+    49: {
+        xKey: 'pressure',
+        yKey: 'totalDamage',
+        zKey: 'totalDisplacement',
+        xLabel: 'Давление (Па)',
+        yLabel: 'Повреждения (деф/м²)',
+        zLabel: 'Смещение (м)',
+        title: 'Влияние давления на смещения',
+        category: 'damage'
+    },
+    50: {
+        xKey: 'totalMomentum',
+        yKey: 'avgT',
+        zKey: 'totalDisplacement',
+        xLabel: 'Импульс (кг·м/с)',
+        yLabel: 'T (°K)',
+        zLabel: 'Смещение (м)',
+        title: 'Термоактивированные смещения',
+        category: 'damage'
+    },
+    51: {
+        xKey: 'concentration',
+        yKey: 'avgT',
+        zKey: 'totalDamage',
+        xLabel: 'концентрация (м⁻³)',
+        yLabel: 'T (°K)',
+        zLabel: 'Повреждения (деф/м²)',
+        title: 'Зависимость суммарных радиационных повреждений от концентрации и температуры',
+        category: 'damage'
+    },
+
+    // ==================== FLUENCE ====================
+    52: {
+        xKey: 'ionFlux',
+        zKey: 'fluence',
+        yKey: 'currentDensity',
+        xLabel: 'Плотность потока ионов (м⁻²·с⁻¹)',
+        zLabel: 'Флюенс (м⁻²)',
+        yLabel: 'Плотность тока(А/м²)',
+        title: 'зависимость накопленного флюенса от плотности потока ионов и плотности ионного тока.',
+        category: 'fluence'
+    },
+    53: {
+        zKey: 'fluence',
+        yKey: 'totalDamage',
+        xKey: 'avgT',
+        zLabel: 'Флюенс (м⁻²)',
+        yLabel: 'Повреждения (деф/м²)',
+        xLabel: 'T (°K)',
+        title: 'зависимость накопленного флюенса от температуры и уровня радиационных повреждений.',
+        category: 'fluence'
+    },
+    54: {
+        zKey: 'fluence',
+        yKey: 'concentration',
+        xKey: 'depths',
+        zLabel: 'Флюенс (м⁻²)',
+        yLabel: 'концентрация (м⁻³)',
+        xLabel: 'Глубина (м)',
+        title: 'зависимость накопленного флюенса от глубины упрочнённого слоя и концентрации внедрённых частиц',
+        category: 'fluence'
+    },
+    60: {
+        xKey: 'voltage',
+        zKey: 'fluence',
+        yKey: 'ionFlux',
+        xLabel: 'Напряжение (В)',
+        zLabel: 'Флюенс (м⁻²)',
+        yLabel: 'плотность потока ионов (м⁻²·с⁻¹)',
+        title: 'зависимость накопленного флюенса от напряжения разряда и плотности потока ионов.',
+        category: 'fluence'
+    },
+    61: {
         xKey: 'fluence',
         yKey: 'angle',
         zKey: 'fluenceEff',
         xLabel: 'Флюенс (м⁻²)',
-        yLabel: 'Угол падения (°)',
-        zLabel: 'Эффективный флюенс (м⁻²)',
+        yLabel: 'Угол (°)',
+        zLabel: 'Φ_eff (м⁻²)',
         title: 'Эффективный флюенс от флюенса и угла',
         category: 'fluence'
     },
-
-    87: {
+    62: {
         xKey: 'fluenceEff',
         yKey: 'totalTransferredEnergy',
         zKey: 'damageRate',
-        xLabel: 'Эффективный флюенс (м⁻²)',
-        yLabel: 'Переданная энергия (Дж)',
-        zLabel: 'Скорость повреждений (дефекты/(м²·с))',
+        xLabel: 'Φ_eff (м⁻²)',
+        yLabel: 'E_перед (Дж)',
+        zLabel: 'Скорость повр. (деф/(м²·с))',
         title: 'Скорость повреждений от эффективного флюенса и энергии',
         category: 'fluence'
     },
-
-    88: {
+    63: {
         xKey: 'fluenceEff',
         yKey: 'damageRate',
         zKey: 'slrFactor',
-        xLabel: 'Эффективный флюенс (м⁻²)',
-        yLabel: 'Скорость повреждений (дефекты/(м²·с))',
+        xLabel: 'Φ_eff (м⁻²)',
+        yLabel: 'Скорость повр. (деф/(м²·с))',
         zLabel: 'SLR-фактор',
         title: 'SLR-фактор от эффективного флюенса и скорости повреждений',
         category: 'fluence'
     },
-
-    89: {
+    64: {
         xKey: 'dCollision',
         yKey: 'slrFactor',
         zKey: 'dSlr',
-        xLabel: 'D_collision (м²/с)',
-        yLabel: 'SLR-фактор',
-        zLabel: 'D_SLR (м²/с)',
-        title: 'Вклад SLR-диффузии от столкновительной диффузии',
-        category: 'fluence'
-    },
-    90: {
-        xKey: 'dCollision',
-        yKey: 'slrFactor',
-        zKey: 'dSlr',
-        xLabel: 'D_collision (м²/с)',
+        xLabel: 'D_coll (м²/с)',
         yLabel: 'SLR-фактор',
         zLabel: 'D_SLR (м²/с)',
         title: 'Вклад SLR-диффузии от столкновительной диффузии',
         category: 'fluence'
     },
 
+    // ==================== SLR ====================
+    65: {
+        xKey: 'fluence',
+        yKey: 'dSlr',
+        zKey: 'totalDamage',
+        xLabel: 'Флюенс (м⁻²)',
+        yLabel: 'dSlr (м²/с)',
+        zLabel: 'Повреждения (деф/м²)',
+        title: 'SLR-диффузия от флюенса и повреждений',
+        category: 'slr'
+    },
+    66: {
+        xKey: 'dSlr',
+        yKey: 'diffusionCoefficient1',
+        zKey: 'avgT',
+        xLabel: 'dSlr (м²/с)',
+        yLabel: 'D₁ (м²/с)',
+        zLabel: 'T (°K)',
+        title: 'Вклад SLR в термическую диффузию',
+        category: 'slr'
+    },
+    67: {
+        xKey: 'voltage',
+        yKey: 'dSlr',
+        zKey: 'currentDensity',
+        xLabel: 'Напряжение (В)',
+        yLabel: 'dSlr (м²/с)',
+        zLabel: 'Плотность тока(А/м²)',
+        title: 'Вклад SLR-диффузии от плотности тока и напряжения',
+        category: 'slr'
+    },
+    68: {
+        xKey: 'totalDamage',
+        yKey: 'dSlr',
+        zKey: 'fluenceEff',
+        xLabel: 'Повреждения (деф/м²)',
+        yLabel: 'dSlr (м²/с)',
+        zLabel: 'Φ_eff (м⁻²)',
+        title: 'Баллистическое перемешивание',
+        category: 'slr'
+    },
+    69: {
+        xKey: 'pressure',
+        yKey: 'dSlr',
+        zKey: 'ionFlux',
+        xLabel: 'Давление (Па)',
+        yLabel: 'dSlr (м²/с)',
+        zLabel: 'J_и (м⁻²·с⁻¹)',
+        title: 'SLR от параметров потока',
+        category: 'slr'
+    },
+
+    // ==================== RAD_DIFFUSION ====================
+    70: {
+        xKey: 'dSlr',
+        yKey: 'dRes',
+        zKey: 'diffusionCoefficient1',
+        xLabel: 'dSlr (м²/с)',
+        yLabel: 'dRes (м²/с)',
+        zLabel: 'D₁ (м²/с)',
+        title: 'Сравнение механизмов радиационной диффузии',
+        category: 'rad_diffusion'
+    },
+    71: {
+        xKey: 'dSlr_plus_dRes',
+        yKey: 'diffusionCoefficient1',
+        zKey: 'avgT',
+        xLabel: 'dSlr + dRes (м²/с)',
+        yLabel: 'D₁ (м²/с)',
+        zLabel: 'T (°K)',
+        title: 'Полная радиационная диффузия',
+        category: 'rad_diffusion'
+    },
+    72: {
+        xKey: 'diffusionCoefficient1',
+        yKey: 'diffusionCoefficient2',
+        zKey: 'fluenceEff',
+        xLabel: 'D₁ (м²/с)',
+        yLabel: 'D₂ (м²/с)',
+        zLabel: 'Φ_eff (м⁻²)',
+        title: 'Сравнение Кфов диффузии от флюенса',
+        category: 'rad_diffusion'
+    },
+    73: {
+        xKey: 'ionEnergy',
+        yKey: 'dSlr_plus_dRes',
+        zKey: 'totalDamage',
+        xLabel: 'E_иона (эВ)',
+        yLabel: 'dSlr + dRes (м²/с)',
+        zLabel: 'Повреждения (деф/м²)',
+        title: 'Энергетическая стимуляция диффузии',
+        category: 'rad_diffusion'
+    },
+    74: {
+        xKey: 'depths',
+        yKey: 'diffusionCoefficient1',
+        zKey: 'dRes',
+        xLabel: 'Глубина (м)',
+        yLabel: 'D₁ (м²/с)',
+        zLabel: 'dRes (м²/с)',
+        title: 'Профиль радиационной диффузии',
+        category: 'rad_diffusion'
+    },
+
+    // ==================== FLUX ====================
+    75: {
+        xKey: 'ionFlux',
+        yKey: 'concentration',
+        zKey: 'depths',
+        xLabel: 'J_и (м⁻²·с⁻¹)',
+        yLabel: 'концентрация (м⁻³)',
+        zLabel: 'Глубина (м)',
+        title: 'Концентрация от ионного потока и глубины',
+        category: 'flux'
+    },
+    76: {
+        xKey: 'ionFlux',
+        yKey: 'totalDamage',
+        zKey: 'avgT',
+        xLabel: 'J_и (м⁻²·с⁻¹)',
+        yLabel: 'Повреждения (деф/м²)',
+        zLabel: 'T (°K)',
+        title: 'Скорость дефектообразования',
+        category: 'flux'
+    },
+    77: {
+        xKey: 'currentDensity',
+        yKey: 'ionFlux',
+        zKey: 'voltage',
+        xLabel: 'Плотность тока(А/м²)',
+        yLabel: 'J_и (м⁻²·с⁻¹)',
+        zLabel: 'Напряжение (В)',
+        title: 'Связь электрического тока и ионного потока',
+        category: 'flux'
+    },
+    78: {
+        xKey: 'ionFlux',
+        yKey: 'totalTransferredEnergy',
+        zKey: 'ionEnergy',
+        xLabel: 'J_и (м⁻²·с⁻¹)',
+        yLabel: 'E_полн (Дж)',
+        zLabel: 'E_иона (эВ)',
+        title: 'Мощность энергопередачи',
+        category: 'flux'
+    },
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -218,6 +918,7 @@ const ChartInteractionState = {
 
 const ChartsState = {
     data: [],
+    filteredData: null,   // null = нет фильтра, массив = отфильтровано по сплаву
     loading: true,
     error: null,
     selectedCategory: 'all',
@@ -238,18 +939,9 @@ function getTrend(values) {
     return avg(v.slice(-chunk)) >= avg(v.slice(0, chunk)) ? 'up' : 'down';
 }
 
-/**
- * Unicode trend arrow for axis title.
- */
 function trendArrow(values, axis) {
     const up = getTrend(values) === 'up';
-
-    // X и Z: рост ←, спад →
-    if (axis === 'x' || axis === 'z') {
-        return up ? ' ←' : ' →';
-    }
-
-    // Y: рост →, спад ←
+    if (axis === 'x' || axis === 'z') return up ? ' ←' : ' →';
     return up ? ' →' : ' ←';
 }
 
@@ -303,21 +995,13 @@ function notify(msg, type = 'info') {
 const { tick: TICK_SIZE, axisTitle: AXIS_TITLE_SIZE, colorbar: CB_SIZE, cbTitle: CB_TITLE_SIZE } =
     EXPORT_CONFIG.fonts.sizes;
 
-/**
- * Builds a Plotly 3D axis config.
- */
 function buildAxis(label, values = [], axis = 'x', extra = {}) {
     const valid  = values.filter(Number.isFinite);
-    const absMax = valid.length ? Math.max(...valid.map(Math.abs)) : 0;
-
-    // Научный стиль для |x| >= 10000 или 0 < |x| < 0.001
     const useScientific = valid.some(v =>
         v !== 0 && (Math.abs(v) >= 10000 || Math.abs(v) < 0.001)
     );
-
     const spread = valid.length > 1 ? Math.max(...valid) - Math.min(...valid) : 0;
     const nticks = spread === 0 ? 2 : Math.min(8, Math.max(4, Math.ceil(Math.log10(spread + 1) + 3)));
-
     const titleText = label + trendArrow(values, axis);
 
     return {
@@ -434,16 +1118,13 @@ class DataLoader {
         const get = item => this.getNestedValue(item, key) ?? 0;
 
         switch (key) {
-            // Конвертация мм → м: делим на 1000
             case 'depths':
                 return data.map(item => (get(item) || 0) / 1000);
 
             case 'slrFactor':
-                // Показываем отклонение от 1 в ppm (parts per million)
-                // или просто умножаем разницу на 10^6 для наглядности
                 return data.map(item => {
                     const val = get(item) || 1;
-                    return (val - 1) * 1e6; // микроотклонения
+                    return (val - 1) * 1e6;
                 });
 
             case 'dSlr_plus_dRes':
@@ -463,25 +1144,38 @@ class DataLoader {
         }
     }
 
+    // ── ИСПРАВЛЕНО: всегда берём активный источник данных ──────────
+    static _getActiveData(data) {
+        // Если фильтр активен — всегда используем filteredData,
+        // независимо от того, какой массив передан снаружи.
+        return ChartsState.filteredData ?? data;
+    }
+
     static prepareChartData(data, config) {
+        const src = this._getActiveData(data);
         return {
-            xValues: this.extractValues(data, config.xKey),
-            yValues: this.extractValues(data, config.yKey),
-            zValues: this.extractValues(data, config.zKey),
+            xValues: this.extractValues(src, config.xKey),
+            yValues: this.extractValues(src, config.yKey),
+            zValues: this.extractValues(src, config.zKey),
         };
     }
 
     static prepareChartDataFiltered(data, config, min, max) {
-        const filtered = filterByPressure(data, min, max);
+        const src = this._getActiveData(data);
+        const filtered = filterByPressure(src, min, max);
         if (!filtered.length) {
             console.warn(`[DataLoader] no data in pressure range ${min}–${max} Pa`);
             return null;
         }
-        return this.prepareChartData(filtered, config);
+        return {
+            xValues: this.extractValues(filtered, config.xKey),
+            yValues: this.extractValues(filtered, config.yKey),
+            zValues: this.extractValues(filtered, config.zKey),
+        };
     }
 }
 
-// ── Helper: nice axis range with rounding up ──────────────────
+// ── Helper: nice axis range ────────────────────────────────────
 function getNiceAxisRange(values, extraMax = null) {
     const valid = values.filter(Number.isFinite);
     if (!valid.length) return { min: 0, max: 10, dtick: 2 };
@@ -489,17 +1183,15 @@ function getNiceAxisRange(values, extraMax = null) {
     let min = Math.min(...valid);
     let max = extraMax !== null ? extraMax : Math.max(...valid);
 
-    // Небольшой запас, чтобы точка не была на самой границе
     const margin = (max - min) * 0.05 || 1;
     min -= margin;
     max += margin;
 
     const range = max - min;
-    const rawStep = range / 5; // ~5-6 делений
+    const rawStep = range / 5;
     const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
     const normalized = rawStep / magnitude;
 
-    // Выбираем «красивый» шаг: 1, 2, 5, 10 × 10ⁿ
     let niceStep;
     if (normalized <= 1) niceStep = 1;
     else if (normalized <= 2.5) niceStep = 2;
@@ -507,7 +1199,6 @@ function getNiceAxisRange(values, extraMax = null) {
     else niceStep = 10;
     niceStep *= magnitude;
 
-    // Округляем границы до кратных niceStep
     const niceMin = Math.floor(min / niceStep) * niceStep;
     const niceMax = Math.ceil(max / niceStep) * niceStep;
 
@@ -519,7 +1210,6 @@ function getNiceAxisRange(values, extraMax = null) {
 // CHART RENDERER
 // ─────────────────────────────────────────────────────────────
 class ChartRenderer {
-    // ── IDW mesh interpolation ──────────────────────────────────────
     static _idw(xn, yn, xV, yV, zV, xMin, xR, yMin, yR) {
         const dists = xV.map((xi, i) => {
             const dx = xn - (xi - xMin) / xR;
@@ -569,7 +1259,6 @@ class ChartRenderer {
         return { min: Math.min(...f), max: Math.max(...f), avg: avg(f) };
     }
 
-    // ── Surface trace factory ───────────────────────────────────────
     static _surfaceTrace(xGrid, yGrid, zGrid, config, colorbarScale = 1) {
         return {
             type: 'surface',
@@ -587,7 +1276,6 @@ class ChartRenderer {
         };
     }
 
-    // ── Interactive 3D chart ────────────────────────────────────────
     static create3DChart(el, data, config) {
         const valid = [data.xValues, data.yValues, data.zValues]
             .flatMap(a => a.filter(Number.isFinite)).length;
@@ -653,7 +1341,6 @@ class ChartRenderer {
             });
     }
 
-    // ── Off-screen high-quality export (PNG & SVG) ──────────────────
     static async renderForExport(chartData, config, camera = null, axisRange = null, format = 'png') {
         const dims = format === 'svg' ? EXPORT_CONFIG.dimensions.svg : EXPORT_CONFIG.dimensions.png;
         const { width, height } = dims;
@@ -810,7 +1497,6 @@ class UIManager {
     static pendingLoads = new Set();
     static MAX_LOADED = 15;
 
-    // ── State display ───────────────────────────────────────────────
     static showLoading() { this._setState('loading'); }
     static showNoData()  { this._setState('noData');  }
     static showCharts()  { this._setState('charts');  }
@@ -823,7 +1509,6 @@ class UIManager {
         document.getElementById('filterControls').style.display= state === 'charts'  ? 'block' : 'none';
     }
 
-    // ── Render all charts ───────────────────────────────────────────
     static renderCharts(data) {
         const grid = document.getElementById('chartsGrid');
         grid.innerHTML = '';
@@ -844,7 +1529,13 @@ class UIManager {
         this.observer = new IntersectionObserver(entries => {
             for (const e of entries) {
                 const id = e.target.dataset.chartId;
-                e.isIntersecting ? this.loadChart(id, data) : this._unloadChart(id);
+                // ── ИСПРАВЛЕНО: всегда передаём ChartsState.data,
+                //    DataLoader._getActiveData сам подставит filteredData если нужно
+                if (e.isIntersecting) {
+                    this.loadChart(id, ChartsState.data);
+                } else {
+                    this._unloadChart(id);
+                }
             }
         }, { rootMargin: '300px' });
 
@@ -864,7 +1555,6 @@ class UIManager {
         if (this.pendingLoads.has(chartId)) return;
         this.pendingLoads.add(chartId);
 
-        // Evict oldest non-active chart if over limit
         if (this.loadedCharts.size >= this.MAX_LOADED) {
             for (const oldest of this.loadedCharts) {
                 if (oldest !== chartId && ChartInteractionState.activeChart !== `chart-${oldest}`) {
@@ -878,10 +1568,11 @@ class UIManager {
         const rangeIdx  = Number(el.dataset.pressureRange ?? -1);
         const pRange    = ChartsState.pressureRanges[chartId];
 
+        // ── ИСПРАВЛЕНО: DataLoader._getActiveData уже учитывает фильтр по сплаву
         const chartData = isPressureChart(config) && rangeIdx >= 0 && pRange
-            ? (DataLoader.prepareChartDataFiltered(data, config, pRange.min, pRange.max)
-                ?? DataLoader.prepareChartData(data, config))
-            : DataLoader.prepareChartData(data, config);
+            ? (DataLoader.prepareChartDataFiltered(ChartsState.data, config, pRange.min, pRange.max)
+                ?? DataLoader.prepareChartData(ChartsState.data, config))
+            : DataLoader.prepareChartData(ChartsState.data, config);
 
         requestAnimationFrame(() => {
             try {
@@ -936,13 +1627,12 @@ class UIManager {
         }).join('');
     }
 
-    // ── Category section ────────────────────────────────────────────
     static _createCategorySection(category, charts, data) {
         const INFO = {
             plasma:        { title: 'Параметры плазмы',                  desc: 'Электронные характеристики и плазменные процессы',        icon: 'fa-atom'             },
             energy:        { title: 'Энергетические характеристики',      desc: 'Перенос и распределение энергии',                         icon: 'fa-fire'             },
             thermal:       { title: 'Температурные профили',              desc: 'Распределение температуры по глубине',                    icon: 'fa-thermometer-half' },
-            diffusion:     { title: 'Диффузионные процессы',              desc: 'Кфы диффузии, радиационные механизмы и профили',  icon: 'fa-chart-line'       },
+            diffusion:     { title: 'Диффузионные процессы',              desc: 'Кфы диффузии, радиационные механизмы и профили',          icon: 'fa-chart-line'       },
             damage:        { title: 'Радиационное повреждение',           desc: 'Дефекты, импульс и смещение атомов',                      icon: 'fa-radiation-alt'    },
             fluence:       { title: 'Флюенс и накопление дозы',           desc: 'Интегральный поток ионов, эффективный флюенс и кинетика', icon: 'fa-clock'            },
             resonance:     { title: 'Резонансные эффекты',                desc: 'Резонансное усиление диффузии и взаимодействие с плазмой', icon: 'fa-wave-square'     },
@@ -967,7 +1657,6 @@ class UIManager {
         return sec;
     }
 
-    // ── Single chart card ───────────────────────────────────────────
     static _createChartCard(id, config, data) {
         const card      = document.createElement('div');
         card.className  = 'chart-card';
@@ -979,90 +1668,165 @@ class UIManager {
         const colorscale = COLORSCALE_MAP[config.category] ?? 'Viridis';
         const swatch     = SWATCH_CSS[colorscale] ?? SWATCH_CSS.Viridis;
 
-        const pressureHtml = hasPressure ? `
-            <div class="pressure-range-control" id="pressure-control-${id}">
-                <div class="pressure-range-label">
-                    <i class="fas fa-chart-simple"></i>
-                    <span>Диапазон давления (Па):</span>
-                </div>
-                <div class="pressure-preset-row">
-                    <select class="pressure-preset" id="pressure-preset-${id}"
-                            onchange="setPressurePreset(${id}, this.value)">
-                        <option value="full">📊 Весь диапазон</option>
-                        <option value="0.1-5">📉 0,1 – 5 Па</option>
-                        <option value="5-15">📈 5 – 15 Па</option>
-                        <option value="15-100">📊 15 – 100 Па</option>
-                    </select>
-                </div>
-                <div class="pressure-slider-container">
-                    <span class="pressure-min-value" id="pressure-min-display-${id}">${pRange.min.toFixed(2)}</span>
-                    <input type="range" class="pressure-slider"     id="pressure-slider-${id}"
-                           min="${pRange.min}" max="${pRange.max}" step="0.1" value="${pRange.max}">
-                    <span class="pressure-max-value" id="pressure-max-display-${id}">${pRange.max.toFixed(2)}</span>
-                    <input type="range" class="pressure-slider-min" id="pressure-slider-min-${id}"
-                           min="${pRange.min}" max="${pRange.max}" step="0.1" value="${pRange.min}">
-                </div>
-                <div class="pressure-range-buttons">
-                    <button class="pressure-reset-btn" onclick="resetPressureRange(${id})">
-                        <i class="fas fa-undo"></i> Сброс
-                    </button>
-                </div>
-            </div>` : '';
+        const pressureControlsHtml = hasPressure ? `
+        <div class="pressure-range-control" id="pressure-control-${id}">
+            <div class="pressure-range-label">
+                <i class="fas fa-chart-simple"></i>
+                <span>Диапазон давления (Па):</span>
+            </div>
+            <div class="pressure-preset-row">
+                <select class="pressure-preset" id="pressure-preset-${id}"
+                        onchange="setPressurePreset(${id}, this.value)">
+                    <option value="full"> Весь диапазон</option>
+                    <option value="0.1-5">📉 0,1 – 5 Па</option>
+                    <option value="5-15">📈 5 – 15 Па</option>
+                    <option value="15-100">📊 15 – 100 Па</option>
+                </select>
+            </div>
+            <div class="pressure-slider-container">
+                <span class="pressure-min-value" id="pressure-min-display-${id}">${pRange.min.toFixed(2)}</span>
+                <input type="range" class="pressure-slider"     id="pressure-slider-${id}"
+                       min="${pRange.min}" max="${pRange.max}" step="0.1" value="${pRange.max}">
+                <span class="pressure-max-value" id="pressure-max-display-${id}">${pRange.max.toFixed(2)}</span>
+                <input type="range" class="pressure-slider-min" id="pressure-slider-min-${id}"
+                       min="${pRange.min}" max="${pRange.max}" step="0.1" value="${pRange.min}">
+            </div>
+            <div class="pressure-range-buttons">
+                <button class="pressure-reset-btn" onclick="resetPressureRange(${id})">
+                    <i class="fas fa-undo"></i> Сброс
+                </button>
+            </div>
+        </div>` : '';
+
+        const pressureInfo = getPressureRangeForChart(data, id);
+        const pressureInfoHtml = pressureInfo ? `
+        <div class="chart-info-item pressure-info" title="Диапазон давления в данных">
+            <i class="fas fa-compress-arrows-alt"></i>
+            <span class="chart-info-label">Давление:</span>
+            <span class="chart-info-value pressure-value">${pressureInfo.label}</span>
+        </div>` : '';
+
+        const voltageInfo = getVoltageRangeForChart(data, id);
+        const voltageInfoHtml = voltageInfo ? `
+        <div class="chart-info-item voltage-info" title="Диапазон напряжения в данных">
+            <i class="fas fa-bolt"></i>
+            <span class="chart-info-label">Напряжение:</span>
+            <span class="chart-info-value voltage-value">${voltageInfo.label}</span>
+        </div>` : '';
+
+        const voltageByPressure = getVoltageByPressureRanges(data);
+        const voltageByPressureHtml = voltageByPressure.length ? `
+        <div class="voltage-by-pressure-section">
+            <div class="voltage-by-pressure-title">
+                <i class="fas fa-layer-group"></i>
+                <span>Напряжение по диапазонам давления:</span>
+            </div>
+            <div class="voltage-by-pressure-list">
+                ${voltageByPressure.map(item => `
+                    <div class="voltage-by-pressure-item">
+                        <span class="pressure-range-label">📊 ${item.pressureLabel}:</span>
+                        <span class="voltage-range-value">⚡ ${item.voltageLabel}</span>
+                        <span class="data-points-count">(${item.count} точек)</span>
+                    </div>
+                `).join('')}
+            </div>
+        </div>` : '';
 
         card.innerHTML = `
-            <div class="chart-header">
-                <div class="chart-title">
-                    <div class="chart-number">${id}</div>
-                    <h3>${config.title}</h3>
-                </div>
-                <div class="chart-actions">
-                    <button class="chart-btn" onclick="downloadChart(${id})"     title="Скачать PNG"><i class="fas fa-download"></i></button>
-                    <button class="chart-btn" onclick="fullscreenChart(${id})"   title="На весь экран"><i class="fas fa-expand"></i></button>
-                </div>
+    <div class="chart-header">
+        <div class="chart-title">
+            <div class="chart-number">${id}</div>
+            <h3>${config.title}</h3>
+        </div>
+        <div class="chart-actions">
+            <button class="chart-btn" onclick="downloadChart(${id})"    title="Скачать PNG"><i class="fas fa-download"></i></button>
+            <button class="chart-btn" onclick="fullscreenChart(${id})"  title="На весь экран"><i class="fas fa-expand"></i></button>
+        </div>
+    </div>
+    ${pressureControlsHtml}
+    <div class="chart-body">
+        <div class="chart-container" id="chart-${id}"
+             data-chart-id="${id}" data-loaded="false" data-pressure-range="-1">
+            <div class="chart-placeholder">
+                <i class="fas fa-chart-area"></i>
+                <span>График загрузится при прокрутке…</span>
             </div>
-            ${pressureHtml}
-            <div class="chart-body">
-                <div class="chart-container" id="chart-${id}"
-                     data-chart-id="${id}" data-loaded="false" data-pressure-range="-1">
-                    <div class="chart-placeholder">
-                        <i class="fas fa-chart-area"></i>
-                        <span>График загрузится при прокрутке…</span>
-                    </div>
-                </div>
-            </div>
-            <div class="chart-legend" id="legend-${id}">
-                <div class="chart-legend-item">
-                    <div class="chart-legend-swatch" style="background:${swatch}"></div>
-                    <span><strong>Z</strong> ${config.zLabel}</span>
-                </div>
-                <div class="chart-legend-item">
-                    <span class="axis-badge axis-x">X</span><span>${config.xLabel}</span>
-                </div>
-                <div class="chart-legend-item">
-                    <span class="axis-badge axis-y">Y</span><span>${config.yLabel}</span>
-                </div>
-                <div class="legend-trends"></div>
-            </div>
-            <div class="word-export-bar">
-                <button class="btn-word"     onclick="downloadChartForWord(${id})"><i class="fas fa-file-word"></i> Экспорт в Word</button>
-                <button class="btn-png-word" onclick="downloadChartPng(${id})"><i class="fas fa-image"></i> PNG HD</button>
-                <span class="export-hint" title="Угол обзора сохранится"><i class="fas fa-video"></i> Сохраняет угол</span>
-            </div>
-            <div class="chart-info">
-                ${[
-            ['fa-arrow-down','Мин',   stats.min.toExponential(2)],
-            ['fa-arrow-up',  'Макс',  stats.max.toExponential(2)],
-            ['fa-equals',    'Средн', stats.avg.toExponential(2)],
-            ['fa-database',  'Точек', chartData.xValues.length],
+        </div>
+    </div>
+    <div class="chart-axis-ranges-wrapper" id="axis-ranges-${id}"></div>
+    <div class="chart-legend" id="legend-${id}">
+        <div class="chart-legend-item">
+            <div class="chart-legend-swatch" style="background:${swatch}"></div>
+            <span><strong>Z</strong> ${config.zLabel}</span>
+        </div>
+        <div class="chart-legend-item">
+            <span class="axis-badge axis-x">X</span><span>${config.xLabel}</span>
+        </div>
+        <div class="chart-legend-item">
+            <span class="axis-badge axis-y">Y</span><span>${config.yLabel}</span>
+        </div>
+        <div class="legend-trends"></div>
+    </div>
+    <div class="word-export-bar">
+        <button class="btn-word"     onclick="downloadChartForWord(${id})"><i class="fas fa-file-word"></i> Экспорт в Word</button>
+        <button class="btn-png-word" onclick="downloadChartPng(${id})"><i class="fas fa-image"></i> PNG HD</button>
+        <span class="export-hint" title="Угол обзора сохранится"><i class="fas fa-video"></i> Сохраняет угол</span>
+    </div>
+    ${AlloySelector.buildResultBadge(data)}
+    <div class="chart-info">
+        ${pressureInfoHtml}
+        ${voltageInfoHtml}
+        ${voltageByPressureHtml}
+        ${[
+            ['fa-arrow-down', 'Мин',   stats.min.toExponential(2)],
+            ['fa-arrow-up',   'Макс',  stats.max.toExponential(2)],
+            ['fa-equals',     'Средн', stats.avg.toExponential(2)],
+            ['fa-database',   'Точек', chartData.xValues.length],
         ].map(([icon, label, val]) => `
-                    <div class="chart-info-item">
-                        <i class="fas ${icon}"></i>
-                        <span class="chart-info-label">${label}:</span>
-                        <span class="chart-info-value">${val}</span>
-                    </div>`).join('')}
-            </div>`;
-
+            <div class="chart-info-item">
+                <i class="fas ${icon}"></i>
+                <span class="chart-info-label">${label}:</span>
+                <span class="chart-info-value">${val}</span>
+            </div>
+        `).join('')}
+    </div>
+`;
+        setTimeout(() => UIManager._renderAxisRanges(id, data), 0);
         return card;
+    }
+
+    static _renderAxisRanges(chartId, data) {
+        const wrapper = document.getElementById(`axis-ranges-${chartId}`);
+        if (!wrapper) return;
+
+        const config = CHART_CONFIGS[chartId];
+        const pRange = ChartsState.pressureRanges[chartId] ?? null;
+
+        // ── ИСПРАВЛЕНО: используем активные данные (с учётом фильтра по сплаву)
+        let sourceData = ChartsState.filteredData ?? data;
+        if (isPressureChart(config) && pRange) {
+            const fd = filterByPressure(sourceData, pRange.min, pRange.max);
+            if (fd.length) sourceData = fd;
+        }
+
+        const ranges = getGlobalRanges(sourceData);
+        if (!ranges.length) { wrapper.innerHTML = ''; return; }
+
+        wrapper.innerHTML = `
+    <div class="chart-axis-ranges">
+        <div class="chart-axis-ranges-title">
+            <i class="fas fa-sliders-h"></i>
+            <span>Диапазоны параметров</span>
+        </div>
+        <div class="chart-axis-ranges-text">
+            ${ranges.map(info => `
+                <div class="axis-range-row">
+                    <span class="axis-range-name">${info.label}:</span>
+                    <span class="axis-range-val">${info.rangeStr}</span>
+                </div>
+            `).join('')}
+        </div>
+    </div>`;
     }
 }
 
@@ -1085,6 +1849,8 @@ function getChartDataForExport(chartId) {
     const config = CHART_CONFIGS[chartId];
     const pRange = ChartsState.pressureRanges[chartId] ?? null;
 
+    // ── ИСПРАВЛЕНО: DataLoader._getActiveData применяется внутри,
+    //    поэтому просто передаём ChartsState.data
     if (!isPressureChart(config) || !pRange) {
         return {
             chartData:  DataLoader.prepareChartData(ChartsState.data, config),
@@ -1300,7 +2066,7 @@ function buildSingleChartWordContent(lib, chartId, config, chartData, imgBytes, 
 }
 
 // ─────────────────────────────────────────────────────────────
-// PRESSURE CONTROLS (global, referenced from HTML)
+// PRESSURE CONTROLS
 // ─────────────────────────────────────────────────────────────
 
 window.setPressurePreset = function(chartId, preset) {
@@ -1350,7 +2116,6 @@ window.initPressureControls = function(chartId) {
     const cur = ChartsState.pressureRanges[chartId];
     _syncPressureSliders(chartId, cur.min, cur.max);
 
-    // Set correct preset selection
     const sel = document.getElementById(`pressure-preset-${chartId}`);
     if (sel) {
         const isClose = (a, b) => Math.abs(a - b) < 0.01;
@@ -1389,6 +2154,7 @@ function _reloadChart(chartId) {
         UIManager.loadedCharts.delete(String(chartId));
         UIManager.loadChart(String(chartId), ChartsState.data);
     }
+    UIManager._renderAxisRanges(chartId, ChartsState.data);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1525,7 +2291,6 @@ async function exportChartsToWord(chartIds) {
             new PageBreak(),
         ];
 
-        // Group by category
         const byCategory = {};
         for (const id of chartIds) {
             (byCategory[CHART_CONFIGS[id].category] ??= []).push(id);
@@ -1552,6 +2317,7 @@ async function exportChartsToWord(chartIds) {
                     rendered++;
                     updateProgress(rendered, totalRenders);
 
+                    // ── ИСПРАВЛЕНО: DataLoader._getActiveData учитывает filteredData
                     const filteredData = preset
                         ? DataLoader.prepareChartDataFiltered(ChartsState.data, config, preset.min, preset.max)
                         : DataLoader.prepareChartData(ChartsState.data, config);
@@ -1682,7 +2448,7 @@ function updateCategoryCounts() {
 // ─────────────────────────────────────────────────────────────
 
 document.addEventListener('DOMContentLoaded', async () => {
-    console.log('[Charts] v10.0 init…');
+    console.log('[Charts] v10.1 init…');
     if (!window.PlasmaAuth?.requireAuth() || !await window.PlasmaAuth.verifyAuth()) return;
 
     try {
@@ -1695,6 +2461,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         UIManager.renderCharts(data);
         updateCategoryCounts();
+        AlloySelector.build(data);
 
         setTimeout(() => {
             for (const id of Object.keys(CHART_CONFIGS)) {
@@ -1710,4 +2477,263 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 });
 
-console.log('[Charts] v10.0 loaded.');
+console.log('[Charts] v10.1 loaded.');
+
+// ═══════════════════════════════════════════════════════════════════
+// ALLOY SELECTOR
+// ═══════════════════════════════════════════════════════════════════
+
+const AlloySelector = {
+    activeKey: null,
+
+    _makeKey(record) {
+        const atoms = (record.atomComposition ?? [])
+            .slice()
+            .sort((a, b) => (a.atom?.atomName ?? '').localeCompare(b.atom?.atomName ?? ''))
+            .map(a => `${a.atom?.atomName ?? '?'}:${+(a.fraction ?? 0).toFixed(4)}`)
+            .join(',');
+        const ions = (record.ionComposition ?? [])
+            .slice()
+            .sort((a, b) => (a.ion?.name ?? '').localeCompare(b.ion?.name ?? ''))
+            .map(i => `${i.ion?.name ?? '?'}:${+(i.fraction ?? 0).toFixed(4)}`)
+            .join(',');
+        return `A[${atoms}]_I[${ions}]`;
+    },
+
+    extractAlloys(data) {
+        const map = new Map();
+        for (const r of data) {
+            const key = this._makeKey(r);
+            if (!map.has(key)) {
+                map.set(key, {
+                    key,
+                    atomComposition: r.atomComposition ?? [],
+                    ionComposition:  r.ionComposition  ?? [],
+                    count:      0,
+                    resultIds:  [],
+                });
+            }
+            const entry = map.get(key);
+            entry.count++;
+            if (r.id) entry.resultIds.push(r.id);
+        }
+        return [...map.values()].sort((a, b) => b.count - a.count);
+    },
+
+    filterByKey(data, key) {
+        if (!key) return data;
+        return data.filter(r => this._makeKey(r) === key);
+    },
+
+    buildResultBadge(data) {
+        if (!data || !data.length) return '';
+        const alloys = this.extractAlloys(data);
+        if (!alloys.length) return '';
+        if (alloys.length === 1) return this._badgeSingle(alloys[0]);
+        return this._badgeMulti(alloys);
+    },
+
+    _badgeSingle(alloy) {
+        const { atomHtml, ionHtml } = this._renderCompositionChips(alloy);
+        if (!atomHtml && !ionHtml) return '';
+        return `
+<div class="ab-wrap">
+  <div class="ab-header">
+    <i class="fas fa-layer-group"></i><span>Состав сплава</span>
+    <span class="ab-count">${alloy.count} запис.</span>
+  </div>
+  <div class="ab-body">
+    ${atomHtml ? `<div class="ab-row"><span class="ab-label ab-label--atom"><i class="fas fa-atom"></i>Мишень</span><div class="ab-chips">${atomHtml}</div></div>` : ''}
+    ${atomHtml && ionHtml ? '<div class="ab-sep"></div>' : ''}
+    ${ionHtml  ? `<div class="ab-row"><span class="ab-label ab-label--ion"><i class="fas fa-bolt"></i>Ионы</span><div class="ab-chips">${ionHtml}</div></div>` : ''}
+  </div>
+</div>`;
+    },
+
+    _badgeMulti(alloys) {
+        const rows = alloys.slice(0, 5).map(a => {
+            const { atomHtml, ionHtml } = this._renderCompositionChips(a, true);
+            return `<div class="ab-multi-row">
+              ${atomHtml ? `<span class="ab-multi-section">${atomHtml}</span>` : ''}
+              ${atomHtml && ionHtml ? '<span class="ab-multi-divider">|</span>' : ''}
+              ${ionHtml ? `<span class="ab-multi-section ab-multi-section--ion">${ionHtml}</span>` : ''}
+              <span class="ab-multi-cnt">${a.count}×</span>
+            </div>`;
+        }).join('');
+        const more = alloys.length > 5
+            ? `<div class="ab-multi-more">+${alloys.length - 5} вариантов</div>` : '';
+        return `
+<div class="ab-wrap ab-wrap--multi">
+  <div class="ab-header">
+    <i class="fas fa-layer-group"></i><span>Составы сплава</span>
+    <span class="ab-count">${alloys.length} вариантов</span>
+  </div>
+  <div class="ab-multi-body">${rows}${more}</div>
+</div>`;
+    },
+
+    _renderCompositionChips(alloy, compact = false) {
+        const toRoman = n => {
+            const map=[[8,'VIII'],[7,'VII'],[6,'VI'],[5,'V'],[4,'IV'],[3,'III'],[2,'II'],[1,'I']];
+            for(const [v,r] of map) if(n>=v) return r; return String(n);
+        };
+        const fmtPct = f => Math.round((f ?? 0) * 100);
+
+        const atomHtml = (alloy.atomComposition ?? [])
+            .map(ac => {
+                const name = ac.atom?.atomName ?? '?';
+                const val  = ac.atom?.valence  ?? null;
+                const pct  = fmtPct(ac.fraction);
+                const sup  = val ? `<sup>(${toRoman(val)})</sup>` : '';
+                return compact
+                    ? `<span class="abc-atom abc-sm">${name}${sup}<em>${pct}%</em></span>`
+                    : `<span class="abc-atom">${name}${sup}<em>${pct}%</em></span>`;
+            }).join(compact ? '' : '<span class="abc-dot">·</span>');
+
+        const ionHtml = (alloy.ionComposition ?? [])
+            .map(ic => {
+                const name   = ic.ion?.name   ?? '?';
+                const charge = ic.ion?.charge ?? null;
+                const pct    = fmtPct(ic.fraction);
+                const sup    = charge != null
+                    ? `<sup>${charge > 0 ? '+' : ''}${charge}</sup>` : '';
+                return compact
+                    ? `<span class="abc-ion abc-sm">${name}${sup}<em>${pct}%</em></span>`
+                    : `<span class="abc-ion">${name}${sup}<em>${pct}%</em></span>`;
+            }).join(compact ? '' : '<span class="abc-dot">·</span>');
+
+        return { atomHtml, ionHtml };
+    },
+
+    build(data) {
+        const panel = document.getElementById('alloySelectorPanel');
+        if (!panel) return;
+        const alloys = this.extractAlloys(data);
+        if (!alloys.length) { panel.style.display = 'none'; return; }
+        panel.style.display = 'block';
+        panel.innerHTML = this._panelHtml(alloys, data.length);
+    },
+
+    _panelHtml(alloys, total) {
+        const cards = alloys.map((a, idx) => {
+            const { atomHtml, ionHtml } = this._renderCompositionChips(a);
+            return `
+<button class="as-card" data-key="${a.key}" data-idx="${idx}"
+        onclick="AlloySelector.select(this)"
+        title="${a.count} результатов с этим составом">
+  <div class="as-card-inner">
+    ${atomHtml ? `<div class="as-section as-section--atom">
+      <span class="as-section-label"><i class="fas fa-atom"></i>Мишень</span>
+      <div class="as-chips">${atomHtml}</div>
+    </div>` : ''}
+    ${atomHtml && ionHtml ? '<div class="as-card-sep"></div>' : ''}
+    ${ionHtml ? `<div class="as-section as-section--ion">
+      <span class="as-section-label"><i class="fas fa-bolt"></i>Ионы</span>
+      <div class="as-chips">${ionHtml}</div>
+    </div>` : ''}
+  </div>
+  <div class="as-card-footer">
+    <span class="as-card-cnt"><i class="fas fa-database"></i>${a.count} записей</span>
+    <span class="as-card-check"><i class="fas fa-check-circle"></i></span>
+  </div>
+</button>`;
+        }).join('');
+
+        return `
+<div class="as-header">
+  <div class="as-title">
+    <i class="fas fa-flask"></i>
+    <div>
+      <h3>Выбор сплава</h3>
+      <p id="asSub">Выберите состав — графики обновятся автоматически</p>
+    </div>
+  </div>
+  <button class="as-reset" id="asResetBtn" onclick="AlloySelector.reset()" style="display:none">
+    <i class="fas fa-undo"></i> Показать все
+  </button>
+</div>
+<div class="as-grid">${cards}</div>`;
+    },
+
+    // ── ИСПРАВЛЕНО: select теперь корректно обновляет все графики ────
+    select(btn) {
+        const key = btn.dataset.key;
+
+        document.querySelectorAll('.as-card.active').forEach(c => c.classList.remove('active'));
+
+        if (this.activeKey === key) {
+            // Повторный клик — сброс фильтра
+            this.activeKey = null;
+            ChartsState.filteredData = null;
+            const resetBtn = document.getElementById('asResetBtn');
+            if (resetBtn) resetBtn.style.display = 'none';
+            const sub = document.getElementById('asSub');
+            if (sub) sub.textContent = 'Выберите состав — графики обновятся автоматически';
+            _refreshAllLoadedCharts();
+            notify('Фильтр по сплаву сброшен', 'info');
+            return;
+        }
+
+        btn.classList.add('active');
+        this.activeKey = key;
+
+        const filtered = this.filterByKey(ChartsState.data, key);
+        ChartsState.filteredData = filtered;
+
+        const sub = document.getElementById('asSub');
+        if (sub) sub.textContent = `Выбран состав: ${filtered.length} из ${ChartsState.data.length} записей`;
+
+        const resetBtn = document.getElementById('asResetBtn');
+        if (resetBtn) resetBtn.style.display = 'flex';
+
+        // ── ИСПРАВЛЕНО: передаём без аргументов — источник берётся из ChartsState
+        _refreshAllLoadedCharts();
+        notify(`Сплав выбран: ${filtered.length} записей`, 'success');
+    },
+
+    reset() {
+        this.activeKey = null;
+        ChartsState.filteredData = null;
+        document.querySelectorAll('.as-card.active').forEach(c => c.classList.remove('active'));
+        const resetBtn = document.getElementById('asResetBtn');
+        if (resetBtn) resetBtn.style.display = 'none';
+        const sub = document.getElementById('asSub');
+        if (sub) sub.textContent = 'Выберите состав — графики обновятся автоматически';
+        // ── ИСПРАВЛЕНО: без аргументов
+        _refreshAllLoadedCharts();
+        notify('Показаны все записи', 'info');
+    },
+};
+
+window.AlloySelector = AlloySelector;
+
+// ── ИСПРАВЛЕНО: _refreshAllLoadedCharts не принимает аргументов.
+//    DataLoader._getActiveData сам читает ChartsState.filteredData.
+function _refreshAllLoadedCharts() {
+    const ids = [...UIManager.loadedCharts];
+
+    // Сначала помечаем все графики как незагруженные и чистим Set
+    for (const id of ids) {
+        const el = document.getElementById(`chart-${id}`);
+        if (el) {
+            try { window.Plotly?.purge(el); } catch (_) {}
+            el.dataset.loaded = 'false';
+            el.innerHTML = `<div class="chart-placeholder">
+                <i class="fas fa-chart-area"></i>
+                <span>Обновление данных…</span>
+            </div>`;
+        }
+    }
+    UIManager.loadedCharts.clear();
+
+    // Перерисовываем все, что были загружены
+    requestAnimationFrame(() => {
+        for (const id of ids) {
+            // Всегда передаём ChartsState.data — DataLoader._getActiveData
+            // подставит filteredData если фильтр активен
+            UIManager.loadChart(id, ChartsState.data);
+        }
+    });
+}
+
+console.log('[AlloySelector] v10.1 loaded.');

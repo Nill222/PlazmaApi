@@ -655,3 +655,483 @@
 .filter-tab-user.active i {
     color: #fff;
 }
+
+/* Pressure info highlight */
+.chart-info .pressure-info {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 6px;
+    padding: 4px 8px;
+    margin-bottom: 8px;
+    order: -1; /* Show first */
+}
+
+.chart-info .pressure-info .chart-info-label {
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.chart-info .pressure-info .chart-info-value {
+    color: #ffffff;
+    font-weight: 700;
+    font-size: 0.95em;
+}
+
+.chart-info .pressure-info i {
+    color: #ffffff;
+}
+
+/* Pressure info highlight */
+.chart-info .pressure-info {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 6px;
+    padding: 4px 8px;
+    margin-bottom: 8px;
+    order: -1; /* Show first */
+}
+
+.chart-info .pressure-info .chart-info-label,
+.chart-info .pressure-info .chart-info-value,
+.chart-info .pressure-info i {
+    color: #ffffff;
+}
+
+/* Voltage info highlight */
+.chart-info .voltage-info {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    border-radius: 6px;
+    padding: 4px 8px;
+    margin-bottom: 8px;
+    order: -1; /* Show first */
+}
+
+.chart-info .voltage-info .chart-info-label,
+.chart-info .voltage-info .chart-info-value,
+.chart-info .voltage-info i {
+    color: #ffffff;
+}
+
+/* If both pressure and voltage exist, pressure first */
+.chart-info .pressure-info {
+    order: -2;
+}
+
+.chart-info .voltage-info {
+    order: -1;
+}
+
+/* Voltage by pressure section */
+.voltage-by-pressure-section {
+    background: linear-gradient(135deg, #f0f4ff 0%, #e8f0fe 100%);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 12px;
+    border: 1px solid #c7d2fe;
+}
+
+.voltage-by-pressure-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 0.9em;
+    color: #1e40af;
+    margin-bottom: 10px;
+}
+
+.voltage-by-pressure-title i {
+    font-size: 1.1em;
+}
+
+.voltage-by-pressure-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.voltage-by-pressure-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    background: #ffffff;
+    border-radius: 6px;
+    font-size: 0.85em;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.voltage-by-pressure-item .pressure-range-label {
+    font-weight: 600;
+    color: #667eea;
+    min-width: 120px;
+}
+
+.voltage-by-pressure-item .voltage-range-value {
+    font-weight: 700;
+    color: #f5576c;
+    flex: 1;
+}
+
+.voltage-by-pressure-item .data-points-count {
+    font-size: 0.8em;
+    color: #64748b;
+    font-style: italic;
+}
+
+/* Pressure info highlight */
+.chart-info .pressure-info {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 6px;
+    padding: 4px 8px;
+    margin-bottom: 8px;
+    order: -1;
+}
+
+.chart-info .pressure-info .chart-info-label,
+.chart-info .pressure-info .chart-info-value,
+.chart-info .pressure-info i {
+    color: #ffffff;
+}
+
+/* Voltage info highlight */
+.chart-info .voltage-info {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    border-radius: 6px;
+    padding: 4px 8px;
+    margin-bottom: 8px;
+    order: -1;
+}
+
+.chart-info .voltage-info .chart-info-label,
+.chart-info .voltage-info .chart-info-value,
+.chart-info .voltage-info i {
+    color: #ffffff;
+}
+
+/* If both pressure and voltage exist, pressure first */
+.chart-info .pressure-info {
+    order: -2;
+}
+
+.chart-info .voltage-info {
+    order: -1;
+}
+
+/* ── Axis Ranges Info Block ──────────────────────────────────── */
+.chart-axis-ranges {
+    padding: 10px 16px;
+    background: #f8faff;
+    border-top: 1px solid #e0e7ff;
+}
+
+.chart-axis-ranges-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #6366f1;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 8px;
+}
+
+.chart-axis-ranges-text {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px 24px;
+}
+
+.axis-range-row {
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    font-size: 0.8125rem;
+    line-height: 1.6;
+}
+
+.axis-range-name {
+    color: #374151;
+    font-weight: 600;
+    white-space: nowrap;
+    min-width: 110px;
+}
+
+.axis-range-val {
+    color: #111827;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    user-select: all;
+}
+
+@media (max-width: 600px) {
+    .chart-axis-ranges-text {
+        grid-template-columns: 1fr;
+    }
+}
+/* ═══════════════════════════════════════════════════════════════
+   ALLOY BADGE — бейдж состава в карточке графика
+   ═══════════════════════════════════════════════════════════════ */
+
+.ab-wrap {
+    margin: 12px 0 6px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fafbff;
+    font-size: 0.82rem;
+}
+
+.ab-header {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 14px;
+    background: linear-gradient(90deg,#f0f4ff,#fafbff);
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #3730a3;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.ab-count {
+    margin-left: auto;
+    font-size: .7rem;
+    background: #e0e7ff;
+    color: #3730a3;
+    padding: 2px 7px;
+    border-radius: 20px;
+}
+
+.ab-body { padding: 10px 14px; display: flex; flex-direction: column; gap: 8px; }
+
+.ab-row { display: flex; align-items: flex-start; gap: 10px; flex-wrap: wrap; }
+
+.ab-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: .71rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    white-space: nowrap;
+    padding-top: 5px;
+    min-width: 60px;
+}
+.ab-label--atom { color: #4338ca; }
+.ab-label--ion  { color: #b45309; }
+
+.ab-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.ab-sep   { height: 1px; background: #e2e8f0; }
+
+/* chips */
+.abc-atom, .abc-ion {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 3px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: .82rem;
+    line-height: 1;
+    white-space: nowrap;
+}
+.abc-atom {
+    background: #eef2ff;
+    color: #4338ca;
+    border: 1.5px solid #c7d2fe;
+}
+.abc-ion {
+    background: #fffbeb;
+    color: #92400e;
+    border: 1.5px solid #fde68a;
+}
+.abc-atom em, .abc-ion em {
+    font-style: normal;
+    font-weight: 800;
+    font-size: .72rem;
+    opacity: .85;
+    margin-left: 2px;
+}
+.abc-dot { color: #94a3b8; font-size: .75rem; align-self: center; padding: 0 1px; }
+
+/* compact (multi) */
+.abc-sm { padding: 3px 8px; font-size: .76rem; }
+.ab-wrap--multi .ab-multi-body { padding: 8px 14px; display: flex; flex-direction: column; gap: 5px; }
+.ab-multi-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding: 4px 8px;
+    background: #f8faff;
+    border-radius: 7px;
+    border: 1px solid #e8edf8;
+}
+.ab-multi-section    { display: flex; flex-wrap: wrap; gap: 4px; }
+.ab-multi-divider    { color: #cbd5e1; font-size: .85rem; }
+.ab-multi-cnt        { margin-left: auto; font-size: .71rem; font-weight: 700; color: #94a3b8; }
+.ab-multi-more       { font-size: .73rem; color: #94a3b8; font-weight: 600; text-align: center; padding: 3px 8px; }
+
+/* ═══════════════════════════════════════════════════════════════
+   ALLOY SELECTOR PANEL — панель выбора сплава над графиками
+   ═══════════════════════════════════════════════════════════════ */
+
+.as-panel {
+    background: #fff;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 18px;
+    padding: 22px 26px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 20px rgba(99,102,241,.08);
+}
+
+/* Header */
+.as-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.as-title {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+.as-title > i {
+    font-size: 1.4rem;
+    color: #6366f1;
+    margin-top: 3px;
+}
+.as-title h3 { margin: 0 0 3px; font-size: 1.05rem; font-weight: 700; color: #1e293b; }
+.as-title p  { margin: 0; font-size: .8rem; color: #64748b; }
+
+.as-reset {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 7px 16px;
+    border: 1.5px solid #c7d2fe;
+    background: #eef2ff;
+    border-radius: 10px;
+    font-size: .8rem;
+    font-weight: 600;
+    color: #4338ca;
+    cursor: pointer;
+    transition: all .18s ease;
+    white-space: nowrap;
+}
+.as-reset:hover { background: #e0e7ff; border-color: #818cf8; }
+
+/* Grid of alloy cards */
+.as-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+/* Single alloy card */
+.as-card {
+    display: flex;
+    flex-direction: column;
+    border: 2px solid #e2e8f0;
+    border-radius: 14px;
+    background: #f8fafc;
+    cursor: pointer;
+    transition: all .2s ease;
+    min-width: 200px;
+    max-width: 340px;
+    flex: 1 1 220px;
+    text-align: left;
+    overflow: hidden;
+    position: relative;
+}
+
+.as-card:hover {
+    border-color: #818cf8;
+    background: #fafbff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(99,102,241,.15);
+}
+
+.as-card.active {
+    border-color: #6366f1;
+    background: linear-gradient(135deg, #eef2ff 0%, #f0fdf4 100%);
+    box-shadow: 0 4px 16px rgba(99,102,241,.25);
+}
+
+.as-card-inner {
+    padding: 14px 16px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+}
+
+/* Section inside card (atoms or ions) */
+.as-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.as-section-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+.as-section--atom .as-section-label { color: #4338ca; }
+.as-section--ion  .as-section-label { color: #b45309; }
+
+.as-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+
+.as-card-sep {
+    height: 1px;
+    background: #e2e8f0;
+    margin: 0 -16px;
+}
+
+/* Card footer */
+.as-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 16px;
+    background: rgba(0,0,0,.025);
+    border-top: 1px solid #e2e8f0;
+    font-size: .74rem;
+}
+
+.as-card-cnt {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.as-card-check {
+    color: #6366f1;
+    font-size: .9rem;
+    opacity: 0;
+    transition: opacity .15s;
+}
+
+.as-card.active .as-card-check { opacity: 1; }
+.as-card.active .as-card-footer { background: rgba(99,102,241,.07); }
+.as-card.active .as-card-cnt    { color: #4338ca; font-weight: 700; }
+
+@media (max-width: 768px) {
+    .as-panel { padding: 14px; }
+    .as-grid  { gap: 8px; }
+    .as-card  { min-width: 160px; }
+}
